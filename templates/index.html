@@ -22,6 +22,7 @@
                         </button>
                         <select class="bg-gray-100 rounded-lg px-3 py-2">
                             <option>English</option>
+                            <option>Tiếng Việt</option>
                             <option>Español</option>
                             <option>Français</option>
                         </select>
@@ -34,6 +35,17 @@
             <div class="text-center mb-12">
                 <h2 class="text-4xl font-extrabold text-gray-900 sm:text-5xl">PDF Tools</h2>
                 <p class="mt-3 text-xl text-gray-500">Simple, powerful PDF tools for everyone</p>
+            </div>
+
+            <!-- Thêm alert box cho thông báo lỗi -->
+            <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">Lỗi!</strong>
+                <span id="errorMessage" class="block sm:inline">Đã xảy ra lỗi.</span>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                    <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                    </svg>
+                </span>
             </div>
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -77,10 +89,14 @@
                     </div>
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Convert PDF</h3>
                     <p class="mt-2 text-sm text-gray-500">Transform PDFs to DOCX or vice versa</p>
-                    <form action="/convert" method="post" enctype="multipart/form-data" class="mt-4">
+                    <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="mt-4">
+                        <!-- Thêm CSRF token -->
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
                         <div class="mb-4">
                             <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
                         </div>
+                        <p class="text-xs text-gray-500 mb-2">Giới hạn kích thước: 16MB</p>
                         <select name="conversion_type" id="conversionType" class="w-full p-2 mb-4 border rounded-lg text-gray-700" required>
                             <option value="" disabled selected>Select conversion type</option>
                             <option value="pdf_docx">PDF ↔ DOCX</option>
@@ -88,7 +104,11 @@
                             <option value="pdf_excel">PDF ↔ Excel</option>
                             <option value="pdf_jpg">PDF ↔ JPG</option>
                         </select>
-                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">Convert Now</button>
+                        <div id="loadingIndicator" class="hidden text-center mb-2">
+                            <div class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600"></div>
+                            <span class="ml-2">Đang chuyển đổi...</span>
+                        </div>
+                        <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">Convert Now</button>
                     </form>
                 </div>
 
@@ -123,60 +143,149 @@
 
             if (fileName) {
                 const extension = fileName.split('.').pop();
-                const selectedConversion = conversionTypeSelect.value;
 
-                // Chỉ tự động điều chỉnh nếu chọn "PDF ↔ DOCX"
-                if (selectedConversion === 'pdf_docx') {
-                    if (extension === 'pdf') {
-                        conversionTypeSelect.value = 'pdf_docx'; // PDF to DOCX
-                    } else if (extension === 'docx') {
-                        conversionTypeSelect.value = 'pdf_docx'; // DOCX to PDF
-                    }
+                // Tự động chọn loại chuyển đổi dựa trên phần mở rộng file
+                if (extension === 'pdf') {
+                    conversionTypeSelect.value = 'pdf_docx';
+                } else if (extension === 'docx') {
+                    conversionTypeSelect.value = 'pdf_docx';
+                } else if (extension === 'ppt' || extension === 'pptx') {
+                    conversionTypeSelect.value = 'pdf_ppt';
+                } else if (extension === 'xls' || extension === 'xlsx') {
+                    conversionTypeSelect.value = 'pdf_excel';
+                } else if (extension === 'jpg' || extension === 'jpeg') {
+                    conversionTypeSelect.value = 'pdf_jpg';
                 }
             }
         });
 
-        // Đảm bảo giá trị conversion_type được gửi đúng
-        document.querySelector('form').addEventListener('submit', function(e) {
+        // Hiển thị thông báo lỗi
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('hidden');
+        }
+
+        // Ẩn thông báo lỗi
+        function hideError() {
+            document.getElementById('errorAlert').classList.add('hidden');
+        }
+
+        // Xử lý form submit với AJAX
+        document.getElementById('convertForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
             const fileInput = document.getElementById('fileInput');
             const conversionTypeSelect = document.getElementById('conversionType');
-            const fileName = fileInput.files[0]?.name.toLowerCase();
-            const selectedConversion = conversionTypeSelect.value;
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const convertButton = document.getElementById('convertButton');
 
-            if (fileName) {
-                const extension = fileName.split('.').pop();
-                let actualConversionType = selectedConversion;
-
-                // Tự động xác định hướng chuyển đổi dựa trên đuôi file
-                if (selectedConversion === 'pdf_docx') {
-                    if (extension === 'pdf') {
-                        actualConversionType = 'pdf_to_docx';
-                    } else if (extension === 'docx') {
-                        actualConversionType = 'docx_to_pdf';
-                    }
-                } else if (selectedConversion === 'pdf_ppt') {
-                    if (extension === 'pdf') {
-                        actualConversionType = 'pdf_to_ppt';
-                    } else if (extension === 'ppt' || extension === 'pptx') {
-                        actualConversionType = 'ppt_to_pdf';
-                    }
-                } else if (selectedConversion === 'pdf_excel') {
-                    if (extension === 'pdf') {
-                        actualConversionType = 'pdf_to_excel';
-                    } else if (extension === 'xls' || extension === 'xlsx') {
-                        actualConversionType = 'excel_to_pdf';
-                    }
-                } else if (selectedConversion === 'pdf_jpg') {
-                    if (extension === 'pdf') {
-                        actualConversionType = 'pdf_to_jpg';
-                    } else if (extension === 'jpg' || extension === 'jpeg') {
-                        actualConversionType = 'jpg_to_pdf';
-                    }
-                }
-
-                // Cập nhật giá trị conversion_type trước khi gửi form
-                conversionTypeSelect.value = actualConversionType;
+            // Kiểm tra file
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showError('Vui lòng chọn một file để chuyển đổi.');
+                return;
             }
+
+            const file = fileInput.files[0];
+
+            // Kiểm tra kích thước file (16MB)
+            if (file.size > 16 * 1024 * 1024) {
+                showError('File quá lớn. Giới hạn là 16MB.');
+                return;
+            }
+
+            // Kiểm tra loại chuyển đổi
+            if (!conversionTypeSelect.value) {
+                showError('Vui lòng chọn loại chuyển đổi.');
+                return;
+            }
+
+            const fileName = file.name.toLowerCase();
+            const extension = fileName.split('.').pop();
+            let actualConversionType = conversionTypeSelect.value;
+
+            // Tự động xác định hướng chuyển đổi dựa trên đuôi file
+            if (conversionTypeSelect.value === 'pdf_docx') {
+                if (extension === 'pdf') {
+                    actualConversionType = 'pdf_to_docx';
+                } else if (extension === 'docx') {
+                    actualConversionType = 'docx_to_pdf';
+                } else {
+                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ DOCX.');
+                    return;
+                }
+            } else if (conversionTypeSelect.value === 'pdf_ppt') {
+                if (extension === 'pdf') {
+                    actualConversionType = 'pdf_to_ppt';
+                } else if (extension === 'ppt' || extension === 'pptx') {
+                    actualConversionType = 'ppt_to_pdf';
+                } else {
+                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ PPT.');
+                    return;
+                }
+            } else if (conversionTypeSelect.value === 'pdf_excel') {
+                if (extension === 'pdf') {
+                    actualConversionType = 'pdf_to_excel';
+                } else if (extension === 'xls' || extension === 'xlsx') {
+                    actualConversionType = 'excel_to_pdf';
+                } else {
+                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ Excel.');
+                    return;
+                }
+            } else if (conversionTypeSelect.value === 'pdf_jpg') {
+                if (extension === 'pdf') {
+                    actualConversionType = 'pdf_to_jpg';
+                } else if (extension === 'jpg' || extension === 'jpeg') {
+                    actualConversionType = 'jpg_to_pdf';
+                } else {
+                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ JPG.');
+                    return;
+                }
+            }
+
+            // Tạo FormData
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('conversion_type', actualConversionType);
+
+            // Hiển thị loading và ẩn nút convert
+            loadingIndicator.classList.remove('hidden');
+            convertButton.disabled = true;
+
+            // Gửi request
+            fetch('/convert', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Có lỗi xảy ra trong quá trình chuyển đổi.');
+                    });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Tạo URL và tải về file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const convertedExtension = actualConversionType.split('_to_')[1];
+                a.href = url;
+                a.download = `converted_${file.name.split('.')[0]}.${convertedExtension}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            })
+            .catch(error => {
+                showError(error.message);
+            })
+            .finally(() => {
+                // Ẩn loading và hiện lại nút convert
+                loadingIndicator.classList.add('hidden');
+                convertButton.disabled = false;
+            });
         });
     </script>
 </body>

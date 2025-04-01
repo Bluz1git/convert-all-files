@@ -13,13 +13,13 @@ RUN apt-get update --fix-missing && \
 
 # Cài đặt Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir Flask==2.1.3 Werkzeug==2.1.2 pdf2docx==0.5.8
+    pip install --no-cache-dir Flask==2.1.3 Werkzeug==2.1.2 pdf2docx==0.5.8 img2pdf PyMuPDF
 
 # Sao chép mã nguồn
 COPY .. .
 
 # Thiết lập biến môi trường
-ENV PORT=5001
+ENV PORT=5003
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]
