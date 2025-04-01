@@ -12,12 +12,19 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài LibreOffice tối giản
+# Thêm repository để cài đặt LibreOffice
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    gnupg \
+    && echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/debian.list \
+    && apt-get update
+
+# Cài LibreOffice (bao gồm headless mode)
+RUN apt-get install -y --no-install-recommends \
     libreoffice-writer \
     libreoffice-impress \
-    libreoffice-headless \
+    libreoffice \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
