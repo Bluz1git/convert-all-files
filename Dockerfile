@@ -1,18 +1,21 @@
+# Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
 
+# Set environment variables to prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Etc/UTC
+
+# Create working directory
 WORKDIR /app
 
-# Cài đặt Python và pip trước tiên
-RUN apt-get update --fix-missing && \
+# Install system dependencies in a single RUN layer to reduce image size
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    # Python and pip
     python3 \
     python3-pip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Sau đó cài đặt các phụ thuộc khác
-RUN apt-get update --fix-missing && \
-    apt-get install -y --no-install-recommends \
+    python3-venv \
+    # LibreOffice and dependencies
     libreoffice \
     libreoffice-writer \
     libreoffice-impress \
@@ -23,26 +26,47 @@ RUN apt-get update --fix-missing && \
     libreoffice-common \
     libreoffice-calc \
     unoconv \
+    # Java runtime
     openjdk-11-jre \
+    # PDF and image processing
+    poppler-utils \
+    tesseract-ocr \
+    # X11 dependencies for headless LibreOffice
     libsm6 \
     libxext6 \
     libxrender1 \
+    libgl1 \
+    # Clean up apt cache
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Create necessary directories
+    && mkdir -p /app/templates /app/static /app/uploads \
+    # Set proper permissions
+    && chmod 755 /app/uploads
 
-# Tạo cấu trúc thư mục
-RUN mkdir -p /app/templates /app/static /app/uploads
-
-# Cài đặt các Python packages
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy templates và static files
-COPY templates/* /app/templates/
-COPY static/* /app/static/
+# Install Python dependencies
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
-# Copy toàn bộ mã nguồn
-COPY . .
+# Copy application files
+COPY templates/ /app/templates/
+COPY static/ /app/static/
+COPY app.py /app/
 
-# Chạy ứng dụng
+# Set environment variables for LibreOffice
+ENV HOME=/tmp \
+    LIBREOFFICE_PROFILE=/tmp/libreoffice_profile \
+    PATH="/usr/lib/libreoffice/program:$PATH"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5003/health || exit 1
+
+# Expose the Flask port
+EXPOSE 5003
+
+# Run the application
 CMD ["python3", "app.py"]
