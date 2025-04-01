@@ -20,13 +20,14 @@ RUN apt-get update --fix-missing && \
     && echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/debian.list \
     && apt-get update
 
-# Cài LibreOffice và default-jre
+# Cài LibreOffice và Java
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
+    libreoffice \
     libreoffice-writer \
     libreoffice-impress \
-    libreoffice \
-    default-jre \
+    libreoffice-java-common \
+    openjdk-11-jre \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
