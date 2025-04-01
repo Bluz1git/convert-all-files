@@ -3,7 +3,7 @@ FROM python:3.9-slim
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080 \
+    PORT=5003 \
     UPLOAD_FOLDER=/app/uploads \
     GUNICORN_WORKERS=2 \
     GUNICORN_THREADS=2 \
