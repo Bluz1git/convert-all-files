@@ -1,0 +1,10 @@
+[phases.setup]
+nixPkgs = ['python39', 'python39Packages.pip', 'libreoffice']
+cmds = [
+    "pip install --upgrade pip setuptools wheel",
+    "pip install Flask==2.1.3 Werkzeug==2.1.2 pdf2docx==0.5.8",
+    "ln -s $(which soffice) /usr/local/bin/soffice"
+]
+
+[phases.start]
+cmd = "python app.py"
