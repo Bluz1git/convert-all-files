@@ -20,6 +20,7 @@ RUN apt-get update --fix-missing && \
     libreoffice \
     libreoffice-writer \
     libreoffice-impress \
+    libreoffice-draw \
     libreoffice-java-common \
     libreoffice-base \
     openjdk-11-jre \
