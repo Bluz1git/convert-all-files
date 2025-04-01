@@ -1,36 +1,33 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.9-slim
 
 WORKDIR /app
 
-# Cài đặt phụ thuộc hệ thống
+# 1. Cài đặt các phụ thuộc cơ bản trước
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     wget \
     ca-certificates \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    libreoffice-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Tạo thư mục uploads
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+# 2. Cài LibreOffice phiên bản tối giản
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libreoffice-writer \  # Chỉ cài bộ Writer
+    libreoffice-headless \  # Không cần GUI
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 3. Cài các thư viện hỗ trợ
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    default-jre-headless \  # Java runtime nhẹ
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Sao chép mã nguồn
-COPY . .
-
-# Giảm kích thước image (tùy chọn)
-RUN apt-get remove -y build-essential python3-dev && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
-
-# Chạy ứng dụng
-CMD ["python", "app.py"]
+# Các bước tiếp theo...
