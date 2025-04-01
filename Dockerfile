@@ -12,6 +12,9 @@ RUN apt-get update --fix-missing && \
     libxext6 \
     libxrender1 \
     wget \
+    openjdk-11-jre \
+    default-jre \
+    unoconv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,6 +28,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Sao chép mã nguồn
 COPY . .
+
+# Thiết lập biến môi trường Java
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH $JAVA_HOME/bin:$PATH
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]

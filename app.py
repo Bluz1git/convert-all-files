@@ -184,30 +184,22 @@ def convert_file():
             try:
                 # Thử nhiều phương pháp chuyển đổi
                 conversion_methods = [
-                    # Phương pháp 1: Chuyển trực tiếp PDF sang PPTX
+                    # Phương pháp 1: Sử dụng unoconv
+                    lambda: subprocess.run([
+                        'unoconv',
+                        '-f', 'pptx',
+                        '-o', UPLOAD_FOLDER,
+                        input_path
+                    ], capture_output=True, text=True, check=True, timeout=60),
+
+                    # Phương pháp 2: Sử dụng LibreOffice
                     lambda: subprocess.run([
                         SOFFICE_PATH,
                         '--headless',
                         '--convert-to', 'pptx',
                         '--outdir', UPLOAD_FOLDER,
                         input_path
-                    ], capture_output=True, text=True, check=True, timeout=60),
-
-                    # Phương pháp 2: Chuyển PDF sang HTML, rồi từ HTML sang PPTX
-                    lambda: subprocess.run([
-                        SOFFICE_PATH,
-                        '--headless',
-                        '--convert-to', 'html',
-                        '--outdir', UPLOAD_FOLDER,
-                        input_path
-                    ], capture_output=True, text=True, check=True, timeout=60) or
-                            subprocess.run([
-                                SOFFICE_PATH,
-                                '--headless',
-                                '--convert-to', 'pptx',
-                                '--outdir', UPLOAD_FOLDER,
-                                os.path.join(UPLOAD_FOLDER, f"{base_filename}.html")
-                            ], capture_output=True, text=True, check=True, timeout=60)
+                    ], capture_output=True, text=True, check=True, timeout=60)
                 ]
 
                 # Biến để theo dõi kết quả chuyển đổi
@@ -229,7 +221,7 @@ def convert_file():
                         new_files = after_files - before_files
 
                         # Tìm file PPTX
-                        pptx_files = [f for f in new_files if f.endswith('.pptx')]
+                        pptx_files = [f for f in new_files if f.lower().endswith('.pptx')]
 
                         if pptx_files:
                             # Đổi tên file PPTX đầu tiên tìm được
@@ -249,11 +241,6 @@ def convert_file():
                 if not conversion_successful:
                     logger.error("Không thể chuyển đổi PDF sang PPTX bằng bất kỳ phương pháp nào")
                     return "Lỗi: Không thể chuyển đổi PDF sang PPTX", 500
-
-                # Xóa các file HTML tạm
-                for file in os.listdir(UPLOAD_FOLDER):
-                    if file.endswith('.html'):
-                        os.remove(os.path.join(UPLOAD_FOLDER, file))
 
             except Exception as e:
                 logger.error(f"Lỗi chuyển đổi PDF sang PPTX: {str(e)}")
