@@ -14,13 +14,14 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt LibreOffice và Java
+# Cài đặt LibreOffice đầy đủ, Java, và các gói phụ trợ
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libreoffice \
     libreoffice-writer \
     libreoffice-impress \
     libreoffice-java-common \
+    libreoffice-base \
     openjdk-11-jre \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
