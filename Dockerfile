@@ -2,42 +2,41 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Cài đặt các gói cần thiết từng bước
+# 1. Cài đặt các phụ thuộc hệ thống theo từng bước
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     wget \
     ca-certificates \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Cài đặt libreoffice riêng
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libreoffice \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Cài đặt các thư viện hỗ trợ
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Tạo thư mục uploads
-RUN mkdir -p /app/uploads
+# 2. Cài LibreOffice phiên bản nhẹ hơn
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libreoffice-writer \  # Chỉ cài bộ Writer thay vì toàn bộ LibreOffice
+    libreoffice-headless \  # Chế độ không cần GUI
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Python dependencies
+# 3. Tạo thư mục uploads với quyền phù hợp
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+
+# 4. Cài đặt thư viện Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Sao chép mã nguồn
+# 5. Sao chép mã nguồn
 COPY . .
 
-# Chạy ứng dụng
+# 6. Chạy ứng dụng
 CMD ["python", "app.py"]
+# Thêm vào cuối Dockerfile để giảm kích thước
+RUN apt-get remove -y build-essential python3-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
