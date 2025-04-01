@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Cài đặt các gói cần thiết, bỏ openjdk-11-jre
+# Cài đặt các gói cần thiết
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -12,14 +12,19 @@ RUN apt-get update --fix-missing && \
     rm -rf /var/lib/apt/lists/*
 
 # Cài đặt Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir Flask==2.1.3 Werkzeug==2.1.2 pdf2docx==0.5.8 img2pdf PyMuPDF
+    pip install --no-cache-dir -r requirements.txt
 
 # Sao chép mã nguồn
-COPY .. .
+COPY . .
+
+# Đảm bảo thư mục templates và uploads tồn tại
+RUN mkdir -p templates uploads
 
 # Thiết lập biến môi trường
 ENV PORT=5003
+ENV PYTHONUNBUFFERED=1
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]

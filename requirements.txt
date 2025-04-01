@@ -3,4 +3,5 @@ Werkzeug==2.1.2
 pdf2docx==0.5.8
 img2pdf
 PyMuPDF
-Flask-WTF==1.0.1  # Cho CSRF protection
+Flask-WTF==1.0.1
+gunicorn==20.1.0
