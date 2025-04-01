@@ -1,8 +1,15 @@
 FROM python:3.9-slim
 
+# Tăng cường bảo mật và performance
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=5003
+
 WORKDIR /app
 
-# Cài đặt các gói cần thiết, bao gồm libreoffice
+# Cài đặt các gói hệ thống
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -10,35 +17,31 @@ RUN apt-get update --fix-missing && \
     libreoffice \
     fonts-liberation \
     fonts-dejavu \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Tạo symbolic link cho soffice để đảm bảo nó nằm trong PATH
-RUN which soffice && ln -sf $(which soffice) /usr/local/bin/soffice || echo "soffice not found"
+# Tạo symbolic link chắc chắn cho soffice
+RUN ln -sf $(which soffice) /usr/local/bin/soffice
 
-# Sao chép requirements trước
+# Sao chép và cài đặt requirements
 COPY requirements.txt .
-
-# Cài đặt Python dependencies với xử lý lỗi tốt hơn - tách riêng các thư viện có thể gây xung đột
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir wheel setuptools && \
-    pip install --no-cache-dir flask werkzeug PyPDF2 && \
-    pip install --no-cache-dir pdf2docx opencv-python-headless && \
-    pip install --no-cache-dir pdfplumber reportlab && \
-    pip install --no-cache-dir PyMuPDF img2pdf python-docx
-
-# Tạo thư mục uploads và thiết lập quyền
-RUN mkdir -p /app/uploads && chmod 755 /app/uploads
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn
 
 # Sao chép mã nguồn
 COPY . .
 
-# Thiết lập biến môi trường
-ENV PORT=5003
-ENV PYTHONUNBUFFERED=1
+# Tạo thư mục uploads với quyền phù hợp
+RUN mkdir -p /app/uploads && chmod 755 /app/uploads
 
-# Kiểm tra libreoffice có hoạt động không
-RUN soffice --version || echo "WARNING: LibreOffice not working correctly"
+# Kiểm tra LibreOffice
+RUN soffice --version || echo "WARNING: LibreOffice might not work correctly"
 
-# Chạy ứng dụng
-CMD ["python", "app.py"]
+# Healthcheck để kiểm tra ứng dụng
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:$PORT/ || exit 1
+
+# Sử dụng Gunicorn để quản lý WSGI
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "4", "--threads", "2", "--timeout", "120", "app:app"]

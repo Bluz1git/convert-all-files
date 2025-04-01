@@ -10,8 +10,20 @@ from pdf2docx import Converter
 import tempfile
 import PyPDF2
 import shutil
+# Nâng cấp logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Log ra console
+        logging.FileHandler('app.log', encoding='utf-8')  # Log ra file
+    ]
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder='templates')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Giới hạn file 16MB
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 
 # Cấu hình logging
 logging.basicConfig(level=logging.INFO)
@@ -349,7 +361,39 @@ def cleanup(exception=None):
                     os.unlink(file_path)
             except Exception:
                 pass
+@app.before_request
+def log_request_info():
+    logger.info('Request headers: %s', request.headers)
+    logger.info('Request method: %s', request.method)
+
+@app.after_request
+def add_header(response):
+    # Thêm các headers để tăng performance và bảo mật
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
+
+# Xử lý lỗi tập trung
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    logger.error('File quá lớn: %s', error)
+    return 'File quá lớn. Giới hạn tối đa 16MB.', 413
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5003)))
+@app.before_request
+def log_request_info():
+    logger.info('Request headers: %s', request.headers)
+    logger.info('Request method: %s', request.method)
+
+@app.after_request
+def add_header(response):
+    # Thêm các headers để tăng performance và bảo mật
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
+
+# Xử lý lỗi tập trung
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    logger.error('File quá lớn: %s', error)
+    return 'File quá lớn. Giới hạn tối đa 16MB.', 413
