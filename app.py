@@ -140,6 +140,21 @@ def convert_pdf_to_pptx_python(input_path, output_path):
         return False
 
 
+def convert_jpg_to_pdf(input_path, output_path):
+    try:
+        image = Image.open(input_path)
+        # Convert to RGB if image is in CMYK mode
+        if image.mode == 'CMYK':
+            image = image.convert('RGB')
+
+        # Create a new PDF with the image
+        image.save(output_path, "PDF", resolution=100.0)
+        return True
+    except Exception as e:
+        logger.error(f"JPG to PDF conversion error: {e}")
+        return False
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -180,8 +195,10 @@ def convert_file():
             'docx_to_pdf': ('docx', 'pdf'),
             'pdf_to_ppt': ('pdf', 'pptx'),
             'ppt_to_pdf': (['ppt', 'pptx'], 'pdf'),
+            'jpg_to_pdf': (['jpg', 'jpeg'], 'pdf'),
             'pdf_docx': ('pdf', 'docx') if ext == 'pdf' else ('docx', 'pdf'),
-            'pdf_ppt': ('pdf', 'pptx') if ext == 'pdf' else (['ppt', 'pptx'], 'pdf')
+            'pdf_ppt': ('pdf', 'pptx') if ext == 'pdf' else (['ppt', 'pptx'], 'pdf'),
+            'image_pdf': (['jpg', 'jpeg'], 'pdf') if ext in ['jpg', 'jpeg'] else ('pdf', 'jpg')
         }
 
         if conversion_type not in conversions:
@@ -258,6 +275,10 @@ def convert_file():
             else:
                 raise Exception("Conversion failed - no output file")
 
+        elif conversion_type in ['jpg_to_pdf', 'image_pdf'] and ext in ['jpg', 'jpeg']:
+            if not convert_jpg_to_pdf(input_path, output_path):
+                raise Exception("JPG to PDF conversion failed")
+
         else:
             return "Unsupported conversion", 400
 
@@ -268,7 +289,9 @@ def convert_file():
         mimetypes = {
             'pdf': 'application/pdf',
             'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg'
         }
 
         return Response(
