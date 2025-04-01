@@ -79,12 +79,14 @@
                     <p class="mt-2 text-sm text-gray-500">Transform PDFs to DOCX or vice versa</p>
                     <form action="/convert" method="post" enctype="multipart/form-data" class="mt-4">
                         <div class="mb-4">
-                            <input type="file" name="file" id="fileInput" accept=".pdf,.docx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                            <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
                         </div>
-                        <select name="conversion_type" class="w-full p-2 mb-4 border rounded-lg text-gray-700" required>
+                        <select name="conversion_type" id="conversionType" class="w-full p-2 mb-4 border rounded-lg text-gray-700" required>
                             <option value="" disabled selected>Select conversion type</option>
-                            <option value="pdf_to_docx">PDF to DOCX</option>
-                            <option value="docx_to_pdf">DOCX to PDF</option>
+                            <option value="pdf_docx">PDF ↔ DOCX</option>
+                            <option value="pdf_ppt">PDF ↔ PPT</option>
+                            <option value="pdf_excel">PDF ↔ Excel</option>
+                            <option value="pdf_jpg">PDF ↔ JPG</option>
                         </select>
                         <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">Convert Now</button>
                     </form>
@@ -112,5 +114,70 @@
             </div>
         </main>
     </div>
+    <script>
+        // Tự động nhận diện đuôi file và điều chỉnh conversion_type
+        document.getElementById('fileInput').addEventListener('change', function() {
+            const fileInput = this;
+            const conversionTypeSelect = document.getElementById('conversionType');
+            const fileName = fileInput.files[0]?.name.toLowerCase();
+
+            if (fileName) {
+                const extension = fileName.split('.').pop();
+                const selectedConversion = conversionTypeSelect.value;
+
+                // Chỉ tự động điều chỉnh nếu chọn "PDF ↔ DOCX"
+                if (selectedConversion === 'pdf_docx') {
+                    if (extension === 'pdf') {
+                        conversionTypeSelect.value = 'pdf_docx'; // PDF to DOCX
+                    } else if (extension === 'docx') {
+                        conversionTypeSelect.value = 'pdf_docx'; // DOCX to PDF
+                    }
+                }
+            }
+        });
+
+        // Đảm bảo giá trị conversion_type được gửi đúng
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('fileInput');
+            const conversionTypeSelect = document.getElementById('conversionType');
+            const fileName = fileInput.files[0]?.name.toLowerCase();
+            const selectedConversion = conversionTypeSelect.value;
+
+            if (fileName) {
+                const extension = fileName.split('.').pop();
+                let actualConversionType = selectedConversion;
+
+                // Tự động xác định hướng chuyển đổi dựa trên đuôi file
+                if (selectedConversion === 'pdf_docx') {
+                    if (extension === 'pdf') {
+                        actualConversionType = 'pdf_to_docx';
+                    } else if (extension === 'docx') {
+                        actualConversionType = 'docx_to_pdf';
+                    }
+                } else if (selectedConversion === 'pdf_ppt') {
+                    if (extension === 'pdf') {
+                        actualConversionType = 'pdf_to_ppt';
+                    } else if (extension === 'ppt' || extension === 'pptx') {
+                        actualConversionType = 'ppt_to_pdf';
+                    }
+                } else if (selectedConversion === 'pdf_excel') {
+                    if (extension === 'pdf') {
+                        actualConversionType = 'pdf_to_excel';
+                    } else if (extension === 'xls' || extension === 'xlsx') {
+                        actualConversionType = 'excel_to_pdf';
+                    }
+                } else if (selectedConversion === 'pdf_jpg') {
+                    if (extension === 'pdf') {
+                        actualConversionType = 'pdf_to_jpg';
+                    } else if (extension === 'jpg' || extension === 'jpeg') {
+                        actualConversionType = 'jpg_to_pdf';
+                    }
+                }
+
+                // Cập nhật giá trị conversion_type trước khi gửi form
+                conversionTypeSelect.value = actualConversionType;
+            }
+        });
+    </script>
 </body>
 </html>
