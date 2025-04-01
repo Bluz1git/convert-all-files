@@ -19,10 +19,13 @@ RUN which soffice && ln -sf $(which soffice) /usr/local/bin/soffice || echo "sof
 # Sao chép requirements trước
 COPY requirements.txt .
 
-# Cài đặt Python dependencies với xử lý lỗi tốt hơn
+# Cài đặt Python dependencies với xử lý lỗi tốt hơn - tách riêng các thư viện có thể gây xung đột
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir wheel setuptools && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir flask werkzeug PyPDF2 && \
+    pip install --no-cache-dir pdf2docx opencv-python-headless && \
+    pip install --no-cache-dir pdfplumber reportlab && \
+    pip install --no-cache-dir PyMuPDF img2pdf python-docx
 
 # Tạo thư mục uploads và thiết lập quyền
 RUN mkdir -p /app/uploads && chmod 755 /app/uploads
