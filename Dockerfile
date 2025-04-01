@@ -1,18 +1,15 @@
 FROM python:3.9-slim
 
-# Môi trường và biến
+# Thiết lập biến môi trường
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PORT=8080 \
+    UPLOAD_FOLDER=/app/uploads \
+    GUNICORN_WORKERS=2 \
+    GUNICORN_THREADS=2 \
+    GUNICORN_TIMEOUT=120
 
-# Sử dụng port mặc định của Railway
-ARG PORT=5003
-ENV PORT=${PORT}
-
-WORKDIR /app
-
-# Cài đặt các gói hệ thống
+# Cài đặt các phụ thuộc hệ thống - giảm kích thước image
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -20,30 +17,44 @@ RUN apt-get update --fix-missing && \
     libreoffice \
     fonts-liberation \
     fonts-dejavu \
-    curl \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    poppler-utils \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/*
 
-# Sao chép và cài đặt requirements
-COPY requirements.txt .
+# Tạo và cấu hình thư mục ứng dụng
+RUN useradd -m appuser && \
+    mkdir -p ${UPLOAD_FOLDER} && \
+    chown appuser:appuser ${UPLOAD_FOLDER}
+
+WORKDIR /app
+
+# Copy và cài đặt requirements trước để tận dụng cache Docker
+COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn
+    pip install --no-cache-dir -r requirements.txt
 
-# Sao chép mã nguồn
-COPY . .
+# Copy mã nguồn ứng dụng
+COPY --chown=appuser:appuser . .
 
-# Tạo thư mục uploads với quyền phù hợp
-RUN mkdir -p /app/uploads && chmod 755 /app/uploads
+# Chuyển sang user không phải root
+USER appuser
 
-# Kiểm tra LibreOffice
-RUN soffice --version || echo "WARNING: LibreOffice might not work correctly"
+# Kiểm tra sức khỏe ứng dụng (sử dụng wget thay vì curl để giảm dependencies)
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
 
-# Expose port
-EXPOSE ${PORT}
+# Mở cổng (chỉ mang tính khai báo)
+EXPOSE $PORT
 
-# Chi tiết logging và debugging
-RUN echo "Port being used: $PORT"
-
-# Sử dụng shell form để đảm bảo biến môi trường được mở rộng
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 4 --threads 2 --timeout 120 app:app
+# Chạy ứng dụng với Gunicorn (sử dụng biến môi trường cho cấu hình)
+CMD gunicorn --bind 0.0.0.0:$PORT \
+    --workers ${GUNICORN_WORKERS} \
+    --threads ${GUNICORN_THREADS} \
+    --timeout ${GUNICORN_TIMEOUT} \
+    --access-logfile - \
+    --error-logfile - \
+    app:app
