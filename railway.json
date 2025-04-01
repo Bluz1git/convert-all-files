@@ -6,7 +6,7 @@
         "watchPatterns": ["**/*.py", "**/requirements.txt", "**/templates/**"]
     },
     "deploy": {
-        "startCommand": "gunicorn --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-2} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-120} --access-logfile - --error-logfile - app:app",
+        "startCommand": "gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120 --access-logfile - --error-logfile - app:app",
         "healthcheckPath": "/health",
         "healthcheckTimeout": 10,
         "healthcheckInterval": 30,
@@ -14,8 +14,6 @@
         "restartPolicyMaxRetries": 5,
         "env": {
             "UPLOAD_FOLDER": "/app/uploads",
-            "GUNICORN_WORKERS": "2",
-            "GUNICORN_THREADS": "2",
             "GUNICORN_TIMEOUT": "120"
         }
     }
