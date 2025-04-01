@@ -1,3 +1,66 @@
+from flask import Flask, request, send_file, render_template, Response, flash
+import os
+import time
+import subprocess
+import logging
+from werkzeug.utils import secure_filename
+from pdf2docx import Converter
+import img2pdf  # Để chuyển JPG sang PDF
+import fitz  # PyMuPDF để chuyển PDF sang JPG
+
+app = Flask(__name__, template_folder='templates')
+app.secret_key = os.urandom(24)  # Cần thiết cho flash messages
+
+# Cấu hình logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Cấu hình thư mục tạm
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'jpg', 'jpeg'}
+MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB giới hạn
+
+# Cấu hình giới hạn kích thước file
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def safe_remove(file_path, retries=5, delay=1):
+    for _ in range(retries):
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return True
+        except Exception as e:
+            logger.warning(f"Không thể xóa file {file_path}: {e}")
+            time.sleep(delay)
+    return False
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+# Thêm hàm để dọn dẹp file tạm định kỳ
+def cleanup_temp_files(max_age_seconds=3600):  # Mặc định 1 giờ
+    """Xóa các file tạm cũ hơn max_age_seconds"""
+    if not os.path.exists(UPLOAD_FOLDER):
+        return
+
+    current_time = time.time()
+    for filename in os.listdir(UPLOAD_FOLDER):
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if os.path.isfile(file_path):
+            file_age = current_time - os.path.getmtime(file_path)
+            if file_age > max_age_seconds:
+                safe_remove(file_path)
+                logger.info(f"Đã xóa file tạm cũ: {file_path}")
+
+
 @app.route('/convert', methods=['POST'])
 def convert_file():
     input_path = None
@@ -132,3 +195,7 @@ def convert_file():
                 safe_remove(input_path)
         except Exception as e:
             logger.error(f"Error cleaning up input file: {str(e)}")
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5003)))
