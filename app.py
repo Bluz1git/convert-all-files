@@ -205,37 +205,155 @@ def convert_file():
             if actual_output_path != output_path:
                 os.rename(actual_output_path, output_path)
 
+
         elif actual_conversion == 'pdf_to_ppt':
+
             base_filename = filename.rsplit('.', 1)[0]
+
             output_filename = f"converted_{base_filename}.pptx"
+
             output_path = os.path.join(UPLOAD_FOLDER, output_filename)
 
             try:
-                # Chuyển đổi trực tiếp PDF sang PPTX
-                result = subprocess.run([
-                    SOFFICE_PATH,
-                    '--headless',
-                    '--convert-to', 'pptx',
-                    '--outdir', UPLOAD_FOLDER,
-                    input_path
-                ], capture_output=True, text=True, check=True, timeout=60)
-                logger.info(f"PDF to PPTX conversion stdout: {result.stdout}")
-                logger.info(f"PDF to PPTX conversion stderr: {result.stderr}")
 
-                # Kiểm tra file đầu ra
-                actual_output_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx")
-                if os.path.exists(actual_output_path):
-                    if actual_output_path != output_path:
-                        os.rename(actual_output_path, output_path)
+                # Phương pháp 1: Chuyển đổi gián tiếp thông qua odp (OpenDocument Presentation)
+
+                temp_odp = os.path.join(UPLOAD_FOLDER, f"{base_filename}.odp")
+
+                # Bước 1: Chuyển PDF sang ODP
+
+                result1 = subprocess.run([
+
+                    SOFFICE_PATH,
+
+                    '--headless',
+
+                    '--convert-to', 'odp',
+
+                    '--outdir', UPLOAD_FOLDER,
+
+                    input_path
+
+                ], capture_output=True, text=True, check=True, timeout=120)
+
+                logger.info(f"PDF to ODP conversion stdout: {result1.stdout}")
+
+                logger.info(f"PDF to ODP conversion stderr: {result1.stderr}")
+
+                # Kiểm tra file ODP có tồn tại không
+
+                if not os.path.exists(temp_odp):
+
+                    logger.error(f"Không tạo được file ODP trung gian: {temp_odp}")
+
+                    # Phương pháp thay thế: Thử trực tiếp với tùy chọn khác
+
+                    logger.info("Thử phương pháp thay thế...")
+
+                    result_alt = subprocess.run([
+
+                        SOFFICE_PATH,
+
+                        '--headless',
+
+                        '--infilter="draw_pdf_import"',
+
+                        '--convert-to', 'pptx',
+
+                        '--outdir', UPLOAD_FOLDER,
+
+                        input_path
+
+                    ], capture_output=True, text=True, check=True, timeout=120)
+
+                    # Kiểm tra file đầu ra
+
+                    actual_output_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx")
+
+                    if os.path.exists(actual_output_path):
+
+                        if actual_output_path != output_path:
+                            os.rename(actual_output_path, output_path)
+
+                        logger.info(f"Đã tạo PPTX thành công với phương pháp thay thế")
+
+                    else:
+
+                        raise Exception("Không thể chuyển đổi PDF sang PPTX với cả hai phương pháp")
+
                 else:
-                    logger.error("Không tìm thấy file PPTX sau khi chuyển đổi")
-                    return "Lỗi: Không thể chuyển đổi PDF sang PPTX", 500
+
+                    # Bước 2: Chuyển ODP sang PPTX
+
+                    result2 = subprocess.run([
+
+                        SOFFICE_PATH,
+
+                        '--headless',
+
+                        '--convert-to', 'pptx',
+
+                        '--outdir', UPLOAD_FOLDER,
+
+                        temp_odp
+
+                    ], capture_output=True, text=True, check=True, timeout=120)
+
+                    logger.info(f"ODP to PPTX conversion stdout: {result2.stdout}")
+
+                    logger.info(f"ODP to PPTX conversion stderr: {result2.stderr}")
+
+                    # Kiểm tra file đầu ra
+
+                    actual_output_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx")
+
+                    if os.path.exists(actual_output_path):
+
+                        if actual_output_path != output_path:
+                            os.rename(actual_output_path, output_path)
+
+                        # Xóa file ODP trung gian
+
+                        safe_remove(temp_odp)
+
+                    else:
+
+                        logger.error("Không tìm thấy file PPTX sau khi chuyển đổi từ ODP")
+
+                        raise Exception("Không thể tạo file PPTX từ file ODP trung gian")
+
 
             except subprocess.CalledProcessError as e:
+
                 logger.error(f"Lỗi chuyển đổi PDF sang PPTX: {e}")
+
                 logger.error(f"stdout: {e.stdout}")
+
                 logger.error(f"stderr: {e.stderr}")
-                return f"Lỗi khi chuyển đổi: {str(e)}", 500
+
+                # Thử phương pháp cuối cùng: sử dụng unoconv nếu có sẵn
+
+                try:
+
+                    logger.info("Thử dùng unoconv...")
+
+                    subprocess.run(['unoconv', '-f', 'pptx', '-o', output_path, input_path],
+
+                                   check=True, timeout=180)
+
+                    if os.path.exists(output_path):
+
+                        logger.info("Chuyển đổi thành công sử dụng unoconv")
+
+                    else:
+
+                        raise Exception("unoconv không tạo được file đầu ra")
+
+                except Exception as e2:
+
+                    logger.error(f"Lỗi khi thử phương pháp cuối cùng: {e2}")
+
+                    return f"Lỗi khi chuyển đổi PDF sang PPTX: Không có bộ lọc phù hợp", 500
 
         elif actual_conversion == 'ppt_to_pdf':
             output_filename = f"converted_{filename.rsplit('.', 1)[0]}.pdf"
