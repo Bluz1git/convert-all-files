@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 # Cấu hình thư mục tạm
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 
 
@@ -117,6 +116,7 @@ def convert_file():
             logger.error("No conversion type selected")
             return "Please select a conversion type", 400
 
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         try:
             os.chmod(UPLOAD_FOLDER, 0o755)
         except Exception as e:
@@ -180,71 +180,59 @@ def convert_file():
             base_filename = filename.rsplit('.', 1)[0]
             output_filename = f"converted_{base_filename}.pptx"
             output_path = os.path.join(UPLOAD_FOLDER, output_filename)
+            temp_html_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.html")
 
             try:
-                # Thử nhiều phương pháp chuyển đổi
-                conversion_methods = [
-                    # Phương pháp 1: Sử dụng unoconv
-                    lambda: subprocess.run([
-                        'unoconv',
-                        '-f', 'pptx',
-                        '-o', UPLOAD_FOLDER,
-                        input_path
-                    ], capture_output=True, text=True, check=True, timeout=60),
+                # Convert PDF to HTML
+                html_result = subprocess.run([
+                    SOFFICE_PATH,
+                    '--headless',
+                    '--convert-to', 'html',
+                    '--outdir', UPLOAD_FOLDER,
+                    input_path
+                ], capture_output=True, text=True, check=True, timeout=60)
+                logger.info(f"PDF to HTML conversion stdout: {html_result.stdout}")
+                logger.info(f"PDF to HTML conversion stderr: {html_result.stderr}")
 
-                    # Phương pháp 2: Sử dụng LibreOffice
-                    lambda: subprocess.run([
-                        SOFFICE_PATH,
-                        '--headless',
-                        '--convert-to', 'pptx',
-                        '--outdir', UPLOAD_FOLDER,
-                        input_path
-                    ], capture_output=True, text=True, check=True, timeout=60)
+                # Convert HTML to PPTX
+                pptx_result = subprocess.run([
+                    SOFFICE_PATH,
+                    '--headless',
+                    '--convert-to', 'pptx',
+                    '--outdir', UPLOAD_FOLDER,
+                    temp_html_path
+                ], capture_output=True, text=True, check=True, timeout=60)
+                logger.info(f"HTML to PPTX conversion stdout: {pptx_result.stdout}")
+                logger.info(f"HTML to PPTX conversion stderr: {pptx_result.stderr}")
+
+                # Tìm file PPTX được tạo ra
+                possible_pptx_paths = [
+                    os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx"),
+                    os.path.join(UPLOAD_FOLDER, f"converted_{base_filename}.pptx")
                 ]
 
-                # Biến để theo dõi kết quả chuyển đổi
-                conversion_successful = False
+                found_pptx = False
+                for pptx_path in possible_pptx_paths:
+                    if os.path.exists(pptx_path):
+                        if pptx_path != output_path:
+                            os.rename(pptx_path, output_path)
+                        found_pptx = True
+                        break
 
-                # Thử từng phương pháp chuyển đổi
-                for method in conversion_methods:
-                    try:
-                        # Tìm tất cả các file có thể được tạo ra
-                        before_files = set(os.listdir(UPLOAD_FOLDER))
-
-                        # Thực hiện chuyển đổi
-                        result = method()
-                        logger.info(f"Conversion method result stdout: {result.stdout}")
-                        logger.info(f"Conversion method result stderr: {result.stderr}")
-
-                        # Tìm file mới được tạo ra
-                        after_files = set(os.listdir(UPLOAD_FOLDER))
-                        new_files = after_files - before_files
-
-                        # Tìm file PPTX
-                        pptx_files = [f for f in new_files if f.lower().endswith('.pptx')]
-
-                        if pptx_files:
-                            # Đổi tên file PPTX đầu tiên tìm được
-                            first_pptx = pptx_files[0]
-                            full_pptx_path = os.path.join(UPLOAD_FOLDER, first_pptx)
-
-                            if full_pptx_path != output_path:
-                                os.rename(full_pptx_path, output_path)
-
-                            conversion_successful = True
-                            break
-                    except Exception as conversion_error:
-                        logger.warning(f"Conversion method failed: {conversion_error}")
-                        continue
-
-                # Kiểm tra kết quả cuối cùng
-                if not conversion_successful:
-                    logger.error("Không thể chuyển đổi PDF sang PPTX bằng bất kỳ phương pháp nào")
+                if not found_pptx:
+                    logger.error("Không tìm thấy file PPTX sau khi chuyển đổi")
                     return "Lỗi: Không thể chuyển đổi PDF sang PPTX", 500
 
-            except Exception as e:
-                logger.error(f"Lỗi chuyển đổi PDF sang PPTX: {str(e)}")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Lỗi chuyển đổi PDF sang PPTX: {e}")
+                logger.error(f"stdout: {e.stdout}")
+                logger.error(f"stderr: {e.stderr}")
                 return f"Lỗi khi chuyển đổi: {str(e)}", 500
+
+            finally:
+                # Xóa file HTML tạm
+                if os.path.exists(temp_html_path):
+                    os.remove(temp_html_path)
 
         elif actual_conversion == 'ppt_to_pdf':
             output_filename = f"converted_{filename.rsplit('.', 1)[0]}.pdf"
