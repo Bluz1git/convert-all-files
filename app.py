@@ -177,34 +177,62 @@ def convert_file():
                 os.rename(actual_output_path, output_path)
 
         elif actual_conversion == 'pdf_to_ppt':
-            output_filename = f"converted_{filename.rsplit('.', 1)[0]}.pptx"
+            base_filename = filename.rsplit('.', 1)[0]
+            output_filename = f"converted_{base_filename}.pptx"
             output_path = os.path.join(UPLOAD_FOLDER, output_filename)
-            temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{filename.rsplit('.', 1)[0]}.html")
+            temp_html_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.html")
 
-            # Convert PDF to HTML
-            subprocess.run([
-                SOFFICE_PATH,
-                '--headless',
-                '--convert-to', 'html',
-                '--outdir', UPLOAD_FOLDER,
-                input_path
-            ], capture_output=True, text=True, check=True, timeout=60)
+            try:
+                # Convert PDF to HTML
+                html_result = subprocess.run([
+                    SOFFICE_PATH,
+                    '--headless',
+                    '--convert-to', 'html',
+                    '--outdir', UPLOAD_FOLDER,
+                    input_path
+                ], capture_output=True, text=True, check=True, timeout=60)
+                logger.info(f"PDF to HTML conversion stdout: {html_result.stdout}")
+                logger.info(f"PDF to HTML conversion stderr: {html_result.stderr}")
 
-            # Convert HTML to PPTX
-            actual_output_path = os.path.join(UPLOAD_FOLDER, f"temp_{filename.rsplit('.', 1)[0]}.pptx")
-            subprocess.run([
-                SOFFICE_PATH,
-                '--headless',
-                '--convert-to', 'pptx',
-                '--outdir', UPLOAD_FOLDER,
-                temp_path
-            ], capture_output=True, text=True, check=True, timeout=60)
+                # Convert HTML to PPTX
+                pptx_result = subprocess.run([
+                    SOFFICE_PATH,
+                    '--headless',
+                    '--convert-to', 'pptx',
+                    '--outdir', UPLOAD_FOLDER,
+                    temp_html_path
+                ], capture_output=True, text=True, check=True, timeout=60)
+                logger.info(f"HTML to PPTX conversion stdout: {pptx_result.stdout}")
+                logger.info(f"HTML to PPTX conversion stderr: {pptx_result.stderr}")
 
-            if actual_output_path != output_path:
-                os.rename(actual_output_path, output_path)
+                # Tìm file PPTX được tạo ra
+                possible_pptx_paths = [
+                    os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx"),
+                    os.path.join(UPLOAD_FOLDER, f"converted_{base_filename}.pptx")
+                ]
 
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+                found_pptx = False
+                for pptx_path in possible_pptx_paths:
+                    if os.path.exists(pptx_path):
+                        if pptx_path != output_path:
+                            os.rename(pptx_path, output_path)
+                        found_pptx = True
+                        break
+
+                if not found_pptx:
+                    logger.error("Không tìm thấy file PPTX sau khi chuyển đổi")
+                    return "Lỗi: Không thể chuyển đổi PDF sang PPTX", 500
+
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Lỗi chuyển đổi PDF sang PPTX: {e}")
+                logger.error(f"stdout: {e.stdout}")
+                logger.error(f"stderr: {e.stderr}")
+                return f"Lỗi khi chuyển đổi: {str(e)}", 500
+
+            finally:
+                # Xóa file HTML tạm
+                if os.path.exists(temp_html_path):
+                    os.remove(temp_html_path)
 
         elif actual_conversion == 'ppt_to_pdf':
             output_filename = f"converted_{filename.rsplit('.', 1)[0]}.pdf"
