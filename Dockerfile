@@ -2,20 +2,26 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Cài đặt các gói cần thiết
+# Cài đặt các gói cần thiết từng bước
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     wget \
     ca-certificates \
-    software-properties-common \
-    gnupg \
-    && wget -O - https://download.documentfoundation.org/libreoffice/repos/deb/RPM-GPG-KEY-LibreOffice | apt-key add - \
-    && echo "deb https://download.documentfoundation.org/libreoffice/repos/deb/stable/ ./" >> /etc/apt/sources.list.d/libreoffice.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt libreoffice riêng
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libreoffice \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt các thư viện hỗ trợ
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
