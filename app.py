@@ -87,9 +87,62 @@ def safe_remove(file_path, retries=5, delay=1):
     return False
 
 
+def get_pdf_page_size(pdf_path):
+    """Lấy kích thước trang PDF (đơn vị points)"""
+    with open(pdf_path, 'rb') as f:
+        reader = PyPDF2.PdfReader(f)
+        page = reader.pages[0]
+        width = float(page.mediabox.width)
+        height = float(page.mediabox.height)
+        return width, height
+
+
+def setup_slide_size(prs, pdf_path):
+    """Thiết lập kích thước slide dựa trên PDF"""
+    try:
+        # Lấy kích thước trang PDF (đơn vị points)
+        pdf_width_pt, pdf_height_pt = get_pdf_page_size(pdf_path)
+
+        # Chuyển đổi từ points sang inches (1 inch = 72 points)
+        pdf_width_in = pdf_width_pt / 72
+        pdf_height_in = pdf_height_pt / 72
+
+        # Giới hạn kích thước tối đa của PowerPoint (13.33 inches)
+        max_size = 13.33
+
+        # Tính tỷ lệ giữa chiều rộng và cao
+        ratio = pdf_width_in / pdf_height_in
+
+        # Điều chỉnh kích thước để phù hợp với giới hạn PowerPoint
+        if pdf_width_in > max_size or pdf_height_in > max_size:
+            if ratio > 1:  # Ngang
+                prs.slide_width = Inches(max_size)
+                prs.slide_height = Inches(max_size / ratio)
+            else:  # Dọc
+                prs.slide_height = Inches(max_size)
+                prs.slide_width = Inches(max_size * ratio)
+        else:
+            prs.slide_width = Inches(pdf_width_in)
+            prs.slide_height = Inches(pdf_height_in)
+
+        logger.info(f"Thiết lập kích thước slide: {pdf_width_in:.2f} x {pdf_height_in:.2f} inches")
+        return prs
+    except Exception as e:
+        logger.warning(f"Không thể đọc kích thước PDF, sử dụng kích thước mặc định: {e}")
+        prs.slide_width = Inches(10)
+        prs.slide_height = Inches(7.5)
+        return prs
+
+
 def pdf_to_pptx_auto_fit(pdf_path, pptx_path):
     """Chuyển PDF sang PPTX bằng cách trích xuất nội dung văn bản"""
     try:
+        # Tạo presentation
+        prs = Presentation()
+
+        # Thiết lập kích thước slide dựa trên PDF
+        prs = setup_slide_size(prs, pdf_path)
+
         # Chuyển PDF sang Word để lấy nội dung
         docx_path = os.path.join(UPLOAD_FOLDER, "temp.docx")
         cv = Converter(pdf_path)
@@ -98,11 +151,6 @@ def pdf_to_pptx_auto_fit(pdf_path, pptx_path):
 
         # Đọc nội dung từ file Word
         doc = Document(docx_path)
-        prs = Presentation()
-
-        # Thiết lập kích thước slide
-        prs.slide_width = Inches(10)  # Rộng 10 inches
-        prs.slide_height = Inches(7.5)  # Cao 7.5 inches
 
         # Thêm nội dung văn bản vào slide
         for para in doc.paragraphs:
@@ -144,20 +192,11 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
         if not images:
             raise ValueError("Không tìm thấy trang nào trong PDF")
 
-        # Tạo presentation với tỷ lệ phù hợp
+        # Tạo presentation
         prs = Presentation()
 
-        # Xác định tỷ lệ trang từ trang đầu tiên
-        first_page = images[0]
-        page_ratio = first_page.width / first_page.height
-
-        # Thiết lập kích thước slide dựa trên tỷ lệ trang (16:9 hoặc 4:3)
-        if abs(page_ratio - 16 / 9) < abs(page_ratio - 4 / 3):
-            prs.slide_width = Inches(10)
-            prs.slide_height = Inches(5.625)  # Tỷ lệ 16:9
-        else:
-            prs.slide_width = Inches(10)
-            prs.slide_height = Inches(7.5)  # Tỷ lệ 4:3
+        # Thiết lập kích thước slide dựa trên PDF
+        prs = setup_slide_size(prs, input_path)
 
         blank_layout = prs.slide_layouts[6]  # Layout trống
 
