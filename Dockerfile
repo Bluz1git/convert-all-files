@@ -1,18 +1,20 @@
-FROM python:3.11-bullseye
+FROM ubuntu:22.04
 
 WORKDIR /app
 
-# Cài đặt phụ thuộc cơ bản
+# Cài đặt các phụ thuộc cơ bản và Python
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
-    build-essential \
+    python3.11 \
+    python3-pip \
     python3-dev \
+    build-essential \
     wget \
     ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài LibreOffice và Java
+# Cài đặt LibreOffice và Java
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libreoffice \
@@ -23,7 +25,7 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài các thư viện hỗ trợ
+# Cài đặt các thư viện hỗ trợ X11 (cho LibreOffice headless)
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libsm6 \
@@ -32,12 +34,12 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Python packages
+# Cài đặt các Python packages
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy code
+# Copy toàn bộ mã nguồn
 COPY . .
 
 # Chạy ứng dụng
-CMD ["python", "app.py"]
+CMD ["python3", "app.py"]
