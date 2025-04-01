@@ -11,13 +11,17 @@ import PyPDF2
 import shutil
 from pdf2image import convert_from_path
 from pptx import Presentation
-from pptx.util import Inches
+from pptx.util import Inches, Pt
 from io import BytesIO
 from PIL import Image
+from docx import Document
 
 app = Flask(__name__, template_folder='templates')
 
-# Configure logging
+# Cấu hình giới hạn upload file 100MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+
+# Cấu hình logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -25,18 +29,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configure upload folder
+# Cấu hình thư mục upload
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 
 
-# Health check endpoint
+# Endpoint kiểm tra tình trạng server
 @app.route('/health')
 def health_check():
     return 'OK', 200
 
 
 def find_libreoffice():
+    """Tìm đường dẫn đến LibreOffice trên hệ thống"""
     possible_paths = [
         'soffice',
         '/usr/bin/soffice',
@@ -51,82 +56,133 @@ def find_libreoffice():
                 result = subprocess.run([path, '--version'],
                                         capture_output=True, text=True, check=False)
                 if result.returncode == 0:
-                    logger.info(f"Found LibreOffice at: {path}")
+                    logger.info(f"Tìm thấy LibreOffice tại: {path}")
                     return path
         except Exception as e:
-            logger.warning(f"Error checking LibreOffice at {path}: {e}")
+            logger.warning(f"Lỗi khi kiểm tra LibreOffice tại {path}: {e}")
 
-    logger.warning("Using default 'soffice' path")
+    logger.warning("Sử dụng đường dẫn mặc định 'soffice'")
     return 'soffice'
 
 
 SOFFICE_PATH = find_libreoffice()
-logger.info(f"Using LibreOffice path: {SOFFICE_PATH}")
+logger.info(f"Sử dụng đường dẫn LibreOffice: {SOFFICE_PATH}")
 
 
 def allowed_file(filename):
+    """Kiểm tra phần mở rộng file có hợp lệ không"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def safe_remove(file_path, retries=5, delay=1):
+    """Xóa file an toàn với nhiều lần thử"""
     for i in range(retries):
         try:
             if os.path.exists(file_path):
                 os.remove(file_path)
                 return True
         except Exception as e:
-            logger.warning(f"Failed to remove {file_path} (attempt {i + 1}): {e}")
+            logger.warning(f"Không thể xóa {file_path} (lần thử {i + 1}): {e}")
             time.sleep(delay)
     return False
 
 
-def convert_pdf_to_pptx_python(input_path, output_path):
+def pdf_to_pptx_auto_fit(pdf_path, pptx_path):
+    """Chuyển PDF sang PPTX bằng cách trích xuất nội dung văn bản"""
     try:
-        # Convert PDF to images with high quality
+        # Chuyển PDF sang Word để lấy nội dung
+        docx_path = os.path.join(UPLOAD_FOLDER, "temp.docx")
+        cv = Converter(pdf_path)
+        cv.convert(docx_path, start=0, end=None)
+        cv.close()
+
+        # Đọc nội dung từ file Word
+        doc = Document(docx_path)
+        prs = Presentation()
+
+        # Thiết lập kích thước slide
+        prs.slide_width = Inches(10)  # Rộng 10 inches
+        prs.slide_height = Inches(7.5)  # Cao 7.5 inches
+
+        # Thêm nội dung văn bản vào slide
+        for para in doc.paragraphs:
+            if para.text.strip():  # Bỏ qua đoạn trống
+                slide = prs.slides.add_slide(prs.slide_layouts[1])  # Layout "Tiêu đề và nội dung"
+                text_frame = slide.shapes[1].text_frame
+                text_frame.text = para.text
+
+                # Tự động điều chỉnh kích thước font
+                for paragraph in text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        run.font.size = Pt(12)
+
+        # Xử lý bảng biểu nếu có
+        for table in doc.tables:
+            slide = prs.slides.add_slide(prs.slide_layouts[5])  # Layout trống
+            cols, rows = len(table.columns), len(table.rows)
+            left, top, width, height = Inches(1), Inches(1), Inches(8), Inches(5)
+            table_shape = slide.shapes.add_table(rows, cols, left, top, width, height).table
+
+            for i, row in enumerate(table.rows):
+                for j, cell in enumerate(row.cells):
+                    table_shape.cell(i, j).text = cell.text
+
+        prs.save(pptx_path)
+        safe_remove(docx_path)
+        return True
+    except Exception as e:
+        logger.warning(f"Lỗi chuyển đổi PDF sang PPTX (phương pháp văn bản): {e}")
+        return False
+
+
+def _convert_pdf_to_pptx_images(input_path, output_path):
+    """Chuyển PDF sang PPTX bằng cách chuyển từng trang thành hình ảnh"""
+    try:
+        # Chuyển PDF thành các hình ảnh chất lượng cao
         images = convert_from_path(input_path, dpi=300, fmt='jpeg')
 
         if not images:
-            raise ValueError("No pages found in PDF")
+            raise ValueError("Không tìm thấy trang nào trong PDF")
 
-        # Create presentation with proper aspect ratio
+        # Tạo presentation với tỷ lệ phù hợp
         prs = Presentation()
 
-        # Detect page ratio from first page
+        # Xác định tỷ lệ trang từ trang đầu tiên
         first_page = images[0]
         page_ratio = first_page.width / first_page.height
 
-        # Set slide size based on page ratio (16:9 or 4:3)
+        # Thiết lập kích thước slide dựa trên tỷ lệ trang (16:9 hoặc 4:3)
         if abs(page_ratio - 16 / 9) < abs(page_ratio - 4 / 3):
             prs.slide_width = Inches(10)
-            prs.slide_height = Inches(5.625)  # 16:9 ratio
+            prs.slide_height = Inches(5.625)  # Tỷ lệ 16:9
         else:
             prs.slide_width = Inches(10)
-            prs.slide_height = Inches(7.5)  # 4:3 ratio
+            prs.slide_height = Inches(7.5)  # Tỷ lệ 4:3
 
-        blank_layout = prs.slide_layouts[6]
+        blank_layout = prs.slide_layouts[6]  # Layout trống
 
         for image in images:
-            # Use in-memory buffer instead of temp files
+            # Sử dụng bộ đệm trong bộ nhớ thay vì file tạm
             img_bytes = BytesIO()
             image.save(img_bytes, format='JPEG', quality=95)
             img_bytes.seek(0)
 
             slide = prs.slides.add_slide(blank_layout)
 
-            # Calculate image dimensions to maintain aspect ratio
+            # Tính toán kích thước hình ảnh để giữ nguyên tỷ lệ
             img_ratio = image.width / image.height
             slide_ratio = prs.slide_width / prs.slide_height
 
             if img_ratio > slide_ratio:
-                # Image is wider than slide - fit to width
+                # Hình ảnh rộng hơn slide - fit theo chiều rộng
                 width = prs.slide_width
                 height = width / img_ratio
             else:
-                # Image is taller than slide - fit to height
+                # Hình ảnh cao hơn slide - fit theo chiều cao
                 height = prs.slide_height
                 width = height * img_ratio
 
-            # Center the image
+            # Căn giữa hình ảnh
             left = (prs.slide_width - width) / 2
             top = (prs.slide_height - height) / 2
 
@@ -136,59 +192,75 @@ def convert_pdf_to_pptx_python(input_path, output_path):
         return True
 
     except Exception as e:
-        logger.error(f"PDF to PPTX conversion error: {e}")
+        logger.warning(f"Lỗi chuyển đổi PDF sang PPTX (phương pháp hình ảnh): {e}")
         return False
 
 
+def convert_pdf_to_pptx_python(input_path, output_path):
+    """Chuyển PDF sang PPTX sử dụng cả 2 phương pháp"""
+    # Thử phương pháp hình ảnh trước
+    if _convert_pdf_to_pptx_images(input_path, output_path):
+        return True
+
+    # Nếu không thành công, thử phương pháp văn bản
+    if pdf_to_pptx_auto_fit(input_path, output_path):
+        return True
+
+    return False
+
+
 def convert_jpg_to_pdf(input_path, output_path):
+    """Chuyển đổi JPG sang PDF"""
     try:
         image = Image.open(input_path)
-        # Convert to RGB if image is in CMYK mode
+        # Chuyển sang RGB nếu ảnh ở chế độ CMYK
         if image.mode == 'CMYK':
             image = image.convert('RGB')
 
-        # Create a new PDF with the image
+        # Tạo PDF mới từ hình ảnh
         image.save(output_path, "PDF", resolution=100.0)
         return True
     except Exception as e:
-        logger.error(f"JPG to PDF conversion error: {e}")
+        logger.error(f"Lỗi chuyển đổi JPG sang PDF: {e}")
         return False
 
 
 @app.route('/')
 def index():
+    """Trang chủ hiển thị form upload"""
     return render_template('index.html')
 
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
+    """Xử lý chuyển đổi file"""
     input_path = output_path = None
     try:
-        # Validate input
+        # Kiểm tra file upload
         if 'file' not in request.files:
-            return "No file uploaded", 400
+            return "Không có file được tải lên", 400
 
         file = request.files['file']
         if not file or file.filename == '':
-            return "No file selected", 400
+            return "Không có file được chọn", 400
 
         if not allowed_file(file.filename):
-            return "Invalid file type", 400
+            return "Loại file không hợp lệ", 400
 
         conversion_type = request.form.get('conversion_type')
         if not conversion_type:
-            return "No conversion type selected", 400
+            return "Không chọn loại chuyển đổi", 400
 
-        # Prepare upload directory
+        # Chuẩn bị thư mục upload
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-        # Save uploaded file
+        # Lưu file upload
         filename = secure_filename(file.filename)
         input_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(input_path)
-        logger.info(f"File saved: {input_path}")
+        logger.info(f"File đã lưu: {input_path}")
 
-        # Determine conversion type
+        # Xác định loại chuyển đổi
         ext = filename.rsplit('.', 1)[1].lower()
         conversions = {
             'pdf_to_docx': ('pdf', 'docx'),
@@ -202,21 +274,21 @@ def convert_file():
         }
 
         if conversion_type not in conversions:
-            return "Invalid conversion type", 400
+            return "Loại chuyển đổi không hợp lệ", 400
 
         valid_exts, out_ext = conversions[conversion_type]
         if isinstance(valid_exts, list):
             if ext not in valid_exts:
-                return "File type mismatch", 400
+                return "Loại file không phù hợp", 400
         elif ext != valid_exts:
-            return "File type mismatch", 400
+            return "Loại file không phù hợp", 400
 
-        # Generate output filename
+        # Tạo tên file output
         base_name = filename.rsplit('.', 1)[0]
         output_filename = f"converted_{base_name}.{out_ext}"
         output_path = os.path.join(UPLOAD_FOLDER, output_filename)
 
-        # Perform conversion
+        # Thực hiện chuyển đổi
         if conversion_type in ['pdf_to_docx', 'pdf_docx'] and ext == 'pdf':
             cv = Converter(input_path)
             cv.convert(output_path)
@@ -235,10 +307,10 @@ def convert_file():
             if os.path.exists(temp_output):
                 os.rename(temp_output, output_path)
             else:
-                raise Exception("Conversion failed - no output file")
+                raise Exception("Chuyển đổi thất bại - không có file output")
 
         elif conversion_type in ['pdf_to_ppt', 'pdf_ppt'] and ext == 'pdf':
-            # Try LibreOffice first
+            # Thử dùng LibreOffice trước
             try:
                 result = subprocess.run([
                     SOFFICE_PATH,
@@ -253,12 +325,12 @@ def convert_file():
                 if os.path.exists(temp_output):
                     os.rename(temp_output, output_path)
                 else:
-                    raise Exception("LibreOffice conversion failed")
+                    raise Exception("LibreOffice chuyển đổi thất bại")
 
             except Exception as e:
-                logger.warning(f"LibreOffice failed, trying python-pptx: {e}")
+                logger.warning(f"LibreOffice thất bại, chuyển sang python-pptx: {e}")
                 if not convert_pdf_to_pptx_python(input_path, output_path):
-                    raise Exception("All conversion methods failed")
+                    raise Exception("Tất cả phương pháp chuyển đổi đều thất bại")
 
         elif conversion_type in ['ppt_to_pdf', 'pdf_ppt'] and ext in ['ppt', 'pptx']:
             result = subprocess.run([
@@ -273,16 +345,16 @@ def convert_file():
             if os.path.exists(temp_output):
                 os.rename(temp_output, output_path)
             else:
-                raise Exception("Conversion failed - no output file")
+                raise Exception("Chuyển đổi thất bại - không có file output")
 
         elif conversion_type in ['jpg_to_pdf', 'image_pdf'] and ext in ['jpg', 'jpeg']:
             if not convert_jpg_to_pdf(input_path, output_path):
-                raise Exception("JPG to PDF conversion failed")
+                raise Exception("Chuyển đổi JPG sang PDF thất bại")
 
         else:
-            return "Unsupported conversion", 400
+            return "Chuyển đổi không được hỗ trợ", 400
 
-        # Return converted file
+        # Trả về file đã chuyển đổi
         with open(output_path, 'rb') as f:
             file_data = f.read()
 
@@ -301,10 +373,11 @@ def convert_file():
         )
 
     except Exception as e:
-        logger.error(f"Conversion error: {e}")
-        return f"Conversion failed: {str(e)}", 500
+        logger.error(f"Lỗi chuyển đổi: {e}")
+        return f"Chuyển đổi thất bại: {str(e)}", 500
 
     finally:
+        # Dọn dẹp file tạm
         for path in [input_path, output_path]:
             if path and os.path.exists(path):
                 safe_remove(path)
@@ -312,6 +385,7 @@ def convert_file():
 
 @app.teardown_appcontext
 def cleanup(exception=None):
+    """Dọn dẹp các file cũ trong thư mục upload"""
     if not os.path.exists(UPLOAD_FOLDER):
         return
 
@@ -323,12 +397,12 @@ def cleanup(exception=None):
                 if os.path.isfile(path) and os.path.getmtime(path) < now - 3600:
                     safe_remove(path)
             except Exception as e:
-                logger.error(f"Cleanup error for {path}: {e}")
+                logger.error(f"Lỗi khi dọn dẹp {path}: {e}")
     except Exception as e:
-        logger.error(f"Cleanup error: {e}")
+        logger.error(f"Lỗi khi dọn dẹp: {e}")
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5003))
-    logger.info(f"Starting server on port {port}")
+    logger.info(f"Khởi động server trên cổng {port}")
     app.run(host='0.0.0.0', port=port)
