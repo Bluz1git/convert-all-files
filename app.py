@@ -26,13 +26,11 @@ logger = logging.getLogger(__name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 
-
 # Health check endpoint
 @app.route('/health')
 def health_check():
     """Endpoint kiểm tra tình trạng ứng dụng"""
     return 'OK', 200
-
 
 # Tìm đường dẫn LibreOffice
 def find_libreoffice():
@@ -59,7 +57,6 @@ def find_libreoffice():
     logger.warning("LibreOffice not found in expected locations")
     return 'soffice'
 
-
 # Lấy đường dẫn LibreOffice
 SOFFICE_PATH = find_libreoffice()
 logger.info(f"Using LibreOffice path: {SOFFICE_PATH}")
@@ -71,10 +68,8 @@ try:
 except Exception as e:
     logger.error(f"LibreOffice check failed: {e}")
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 def safe_remove(file_path, retries=5, delay=1):
     for _ in range(retries):
@@ -87,11 +82,9 @@ def safe_remove(file_path, retries=5, delay=1):
             time.sleep(delay)
     return False
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
@@ -180,46 +173,25 @@ def convert_file():
             base_filename = filename.rsplit('.', 1)[0]
             output_filename = f"converted_{base_filename}.pptx"
             output_path = os.path.join(UPLOAD_FOLDER, output_filename)
-            temp_html_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.html")
 
             try:
-                # Convert PDF to HTML
-                html_result = subprocess.run([
-                    SOFFICE_PATH,
-                    '--headless',
-                    '--convert-to', 'html',
-                    '--outdir', UPLOAD_FOLDER,
-                    input_path
-                ], capture_output=True, text=True, check=True, timeout=60)
-                logger.info(f"PDF to HTML conversion stdout: {html_result.stdout}")
-                logger.info(f"PDF to HTML conversion stderr: {html_result.stderr}")
-
-                # Convert HTML to PPTX
-                pptx_result = subprocess.run([
+                # Chuyển đổi trực tiếp PDF sang PPTX
+                result = subprocess.run([
                     SOFFICE_PATH,
                     '--headless',
                     '--convert-to', 'pptx',
                     '--outdir', UPLOAD_FOLDER,
-                    temp_html_path
+                    input_path
                 ], capture_output=True, text=True, check=True, timeout=60)
-                logger.info(f"HTML to PPTX conversion stdout: {pptx_result.stdout}")
-                logger.info(f"HTML to PPTX conversion stderr: {pptx_result.stderr}")
+                logger.info(f"PDF to PPTX conversion stdout: {result.stdout}")
+                logger.info(f"PDF to PPTX conversion stderr: {result.stderr}")
 
-                # Tìm file PPTX được tạo ra
-                possible_pptx_paths = [
-                    os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx"),
-                    os.path.join(UPLOAD_FOLDER, f"converted_{base_filename}.pptx")
-                ]
-
-                found_pptx = False
-                for pptx_path in possible_pptx_paths:
-                    if os.path.exists(pptx_path):
-                        if pptx_path != output_path:
-                            os.rename(pptx_path, output_path)
-                        found_pptx = True
-                        break
-
-                if not found_pptx:
+                # Kiểm tra file đầu ra
+                actual_output_path = os.path.join(UPLOAD_FOLDER, f"{base_filename}.pptx")
+                if os.path.exists(actual_output_path):
+                    if actual_output_path != output_path:
+                        os.rename(actual_output_path, output_path)
+                else:
                     logger.error("Không tìm thấy file PPTX sau khi chuyển đổi")
                     return "Lỗi: Không thể chuyển đổi PDF sang PPTX", 500
 
@@ -229,23 +201,22 @@ def convert_file():
                 logger.error(f"stderr: {e.stderr}")
                 return f"Lỗi khi chuyển đổi: {str(e)}", 500
 
-            finally:
-                # Xóa file HTML tạm
-                if os.path.exists(temp_html_path):
-                    os.remove(temp_html_path)
-
         elif actual_conversion == 'ppt_to_pdf':
             output_filename = f"converted_{filename.rsplit('.', 1)[0]}.pdf"
             output_path = os.path.join(UPLOAD_FOLDER, output_filename)
             actual_output_path = os.path.join(UPLOAD_FOLDER, filename.rsplit('.', 1)[0] + '.pdf')
 
-            subprocess.run([
+            result = subprocess.run([
                 SOFFICE_PATH,
                 '--headless',
                 '--convert-to', 'pdf',
                 '--outdir', UPLOAD_FOLDER,
                 input_path
             ], capture_output=True, text=True, check=True, timeout=60)
+
+            if not os.path.exists(actual_output_path):
+                logger.error(f"Output file not created: {actual_output_path}")
+                return "Error converting PPT to PDF", 500
 
             if actual_output_path != output_path:
                 os.rename(actual_output_path, output_path)
@@ -282,7 +253,6 @@ def convert_file():
         if output_path and os.path.exists(output_path):
             safe_remove(output_path)
 
-
 @app.teardown_appcontext
 def cleanup(exception=None):
     if os.path.exists(UPLOAD_FOLDER):
@@ -293,7 +263,6 @@ def cleanup(exception=None):
                     os.unlink(file_path)
             except Exception:
                 pass
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5003))
