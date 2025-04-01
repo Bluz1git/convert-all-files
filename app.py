@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, render_template, Response
 import os
+import sys
 import time
 import subprocess
 import logging
@@ -10,20 +11,8 @@ from pdf2docx import Converter
 import tempfile
 import PyPDF2
 import shutil
-# Nâng cấp logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),  # Log ra console
-        logging.FileHandler('app.log', encoding='utf-8')  # Log ra file
-    ]
-)
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder='templates')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Giới hạn file 16MB
-app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 
 # Cấu hình logging
 logging.basicConfig(level=logging.INFO)
@@ -361,39 +350,49 @@ def cleanup(exception=None):
                     os.unlink(file_path)
             except Exception:
                 pass
-@app.before_request
-def log_request_info():
-    logger.info('Request headers: %s', request.headers)
-    logger.info('Request method: %s', request.method)
-
-@app.after_request
-def add_header(response):
-    # Thêm các headers để tăng performance và bảo mật
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    return response
-
-# Xử lý lỗi tập trung
-@app.errorhandler(413)
-def request_entity_too_large(error):
-    logger.error('File quá lớn: %s', error)
-    return 'File quá lớn. Giới hạn tối đa 16MB.', 413
 
 
-@app.before_request
-def log_request_info():
-    logger.info('Request headers: %s', request.headers)
-    logger.info('Request method: %s', request.method)
+def get_port():
+    """
+    Lấy port một cách an toàn với nhiều phương án dự phòng
+    """
+    # Thử các nguồn port khác nhau
+    port_sources = [
+        os.environ.get('PORT'),  # Ưu tiên biến môi trường PORT
+        os.environ.get('RAILWAY_STATIC_URL'),  # Biến của Railway
+        5003,  # Mặc định từ file gốc
+    ]
 
-@app.after_request
-def add_header(response):
-    # Thêm các headers để tăng performance và bảo mật
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    return response
+    for port in port_sources:
+        try:
+            # Chuyển đổi sang số nguyên
+            port = int(port) if port is not None else None
 
-# Xử lý lỗi tập trung
-@app.errorhandler(413)
-def request_entity_too_large(error):
-    logger.error('File quá lớn: %s', error)
-    return 'File quá lớn. Giới hạn tối đa 16MB.', 413
+            # Kiểm tra port hợp lệ
+            if port and 1024 <= port <= 65535:
+                logger.info(f"Using port: {port}")
+                return port
+        except (TypeError, ValueError):
+            continue
+
+    # Nếu không tìm được port
+    logger.warning("Could not determine port, using default 5003")
+    return 5003
+
+
+if __name__ == '__main__':
+    port = get_port()
+
+    # Log thông tin khởi động
+    logger.info(f"Starting application on port {port}")
+
+    try:
+        app.run(
+            host='0.0.0.0',
+            port=port,
+            threaded=True,
+            debug=False
+        )
+    except Exception as e:
+        logger.error(f"Application startup failed: {e}")
+        sys.exit(1)
