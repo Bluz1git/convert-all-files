@@ -26,6 +26,12 @@ RUN apt-get install -y --no-install-recommends \
     libreoffice-impress \
     libreoffice \
     && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    # Thêm phần này sau khi cài đặt LibreOffice
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
+    default-jre \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Cài các thư viện hỗ trợ
