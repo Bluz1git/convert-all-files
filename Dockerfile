@@ -12,7 +12,7 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài LibreOffice tối giản cho DOCX và PPT
+# Cài LibreOffice tối giản
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libreoffice-writer \
@@ -27,7 +27,6 @@ RUN apt-get update --fix-missing && \
     libsm6 \
     libxext6 \
     libxrender1 \
-    default-jre-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
