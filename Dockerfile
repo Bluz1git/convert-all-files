@@ -2,8 +2,8 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# 1. Cài đặt các phụ thuộc cơ bản trước
-RUN apt-get update && \
+# Cài đặt phụ thuộc cơ bản
+RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
@@ -12,22 +12,31 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Cài LibreOffice phiên bản tối giản
-RUN apt-get update && \
+# Cài LibreOffice tối giản cho DOCX và PPT
+RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
-    libreoffice-writer \  # Chỉ cài bộ Writer
-    libreoffice-headless \  # Không cần GUI
+    libreoffice-writer \
+    libreoffice-impress \
+    libreoffice-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Cài các thư viện hỗ trợ
-RUN apt-get update && \
+# Cài các thư viện hỗ trợ
+RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
-    default-jre-headless \  # Java runtime nhẹ
+    default-jre-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Các bước tiếp theo...
+# Cài đặt Python packages
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy code
+COPY . .
+
+# Chạy ứng dụng
+CMD ["python", "app.py"]
