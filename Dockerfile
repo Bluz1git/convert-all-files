@@ -3,7 +3,9 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Cài đặt phụ thuộc cơ bản
-RUN apt-get update --fix-missing && \
+RUN echo "deb http://archive.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb http://archive.debian.org/debian-security buster/updates main contrib non-free" >> /etc/apt/sources.list && \
+    apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
@@ -13,15 +15,17 @@ RUN apt-get update --fix-missing && \
     && rm -rf /var/lib/apt/lists/*
 
 # Thêm repository để cài đặt LibreOffice
-RUN apt-get update --fix-missing && \
+RUN echo "deb http://archive.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list && \
+    apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     apt-transport-https \
     gnupg \
-    && echo "deb http://deb.debian.org/debian buster main contrib non-free" >> /etc/apt/sources.list.d/debian.list \
-    && apt-get update
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Cài LibreOffice và Java
-RUN apt-get update --fix-missing && \
+RUN echo "deb http://archive.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list && \
+    apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libreoffice \
     libreoffice-writer \
@@ -32,7 +36,8 @@ RUN apt-get update --fix-missing && \
     && rm -rf /var/lib/apt/lists/*
 
 # Cài các thư viện hỗ trợ
-RUN apt-get update --fix-missing && \
+RUN echo "deb http://archive.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list && \
+    apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
