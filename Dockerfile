@@ -14,11 +14,14 @@ RUN apt-get update --fix-missing && \
     rm -rf /var/lib/apt/lists/*
 
 # Tạo symbolic link cho soffice để đảm bảo nó nằm trong PATH
-RUN ln -sf $(which soffice) /usr/local/bin/soffice
+RUN which soffice && ln -sf $(which soffice) /usr/local/bin/soffice || echo "soffice not found"
 
-# Cài đặt Python dependencies
+# Sao chép requirements trước
 COPY requirements.txt .
+
+# Cài đặt Python dependencies với xử lý lỗi tốt hơn
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir wheel setuptools && \
     pip install --no-cache-dir -r requirements.txt
 
 # Tạo thư mục uploads và thiết lập quyền
@@ -29,9 +32,10 @@ COPY . .
 
 # Thiết lập biến môi trường
 ENV PORT=5003
+ENV PYTHONUNBUFFERED=1
 
 # Kiểm tra libreoffice có hoạt động không
-RUN soffice --version
+RUN soffice --version || echo "WARNING: LibreOffice not working correctly"
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]

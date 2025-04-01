@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from pdf2docx import Converter
 import tempfile
 import PyPDF2
-import shutil
+import shutil  # shutil là module tiêu chuẩn của Python, không cần cài đặt qua pip
 
 app = Flask(__name__, template_folder='templates')
 
@@ -52,6 +52,9 @@ def find_libreoffice():
     # Thông báo nếu không tìm thấy
     logger.warning("LibreOffice not found in expected locations")
     return 'soffice'  # Sử dụng giá trị mặc định nếu không tìm thấy
+
+
+# Code tiếp theo giữ nguyên...
 
 
 # Lấy đường dẫn LibreOffice

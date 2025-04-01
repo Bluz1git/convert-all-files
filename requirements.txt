@@ -10,4 +10,3 @@ PyPDF2==3.0.1
 PyMuPDF==1.22.5
 img2pdf==0.4.4
 python-docx==0.8.11
-shutil==0.0.1
