@@ -2,8 +2,15 @@ FROM ubuntu:22.04
 
 WORKDIR /app
 
-# Cài đặt các phụ thuộc cơ bản và Python
-# Thêm vào phần apt-get trong Dockerfile
+# Cài đặt Python và pip trước tiên
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Sau đó cài đặt các phụ thuộc khác
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     libreoffice \
@@ -17,25 +24,6 @@ RUN apt-get update --fix-missing && \
     libreoffice-calc \
     unoconv \
     openjdk-11-jre \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Cài đặt LibreOffice đầy đủ, Java, và các gói phụ trợ
-RUN apt-get update --fix-missing && \
-    apt-get install -y --no-install-recommends \
-    libreoffice \
-    libreoffice-writer \
-    libreoffice-impress \
-    libreoffice-draw \
-    libreoffice-java-common \
-    libreoffice-base \
-    openjdk-11-jre \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Cài đặt các thư viện hỗ trợ X11 (cho LibreOffice headless)
-RUN apt-get update --fix-missing && \
-    apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
