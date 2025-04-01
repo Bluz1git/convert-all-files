@@ -14,6 +14,7 @@
         "restartPolicyMaxRetries": 5,
         "env": {
             "UPLOAD_FOLDER": "/app/uploads",
+            "RAILWAY_PORT": "$PORT",
             "PYTHONUNBUFFERED": "1",
             "PYTHONDONTWRITEBYTECODE": "1"
         }

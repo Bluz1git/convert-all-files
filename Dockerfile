@@ -3,6 +3,7 @@ FROM python:3.9-slim
 # Thiết lập biến môi trường
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    RAILWAY_PORT=5003 \
     UPLOAD_FOLDER=/app/uploads \
     GUNICORN_WORKERS=2 \
     GUNICORN_THREADS=2 \
@@ -44,7 +45,7 @@ COPY --chown=appuser:appuser . .
 USER appuser
 
 # Chạy ứng dụng với Gunicorn
-CMD gunicorn --bind 0.0.0.0:$PORT \
+CMD gunicorn --bind 0.0.0.0:${RAILWAY_PORT} \
     --workers 2 \
     --threads 2 \
     --timeout 120 \

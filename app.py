@@ -268,15 +268,11 @@ def cleanup(exception=None):
                 pass
 
 
+
 def get_port():
     """Lấy port từ biến môi trường hoặc giá trị mặc định"""
-    port = os.environ.get('PORT', None)
-
-    # Nếu không có PORT, sử dụng port mặc định
-    if port is None:
-        logger.warning("No PORT environment variable found, using default 5003")
-        return 5003
-
+    # Ưu tiên lấy RAILWAY_PORT, nếu không có mới lấy PORT
+    port = os.environ.get('RAILWAY_PORT') or os.environ.get('PORT', '5003')
     try:
         # Loại bỏ ký tự '$' nếu có
         port = port.lstrip('$')
@@ -284,7 +280,7 @@ def get_port():
         if 1024 <= port <= 65535:
             logger.info(f"Using port: {port}")
             return port
-    except (ValueError, TypeError):
+    except (ValueError, AttributeError):
         pass
 
     logger.warning(f"Invalid port {port}, using default 5003")
