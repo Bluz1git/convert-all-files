@@ -14,6 +14,8 @@
         "restartPolicyMaxRetries": 5,
         "env": {
             "UPLOAD_FOLDER": "/app/uploads",
+            "GUNICORN_WORKERS": "2",
+            "GUNICORN_THREADS": "2",
             "GUNICORN_TIMEOUT": "120"
         }
     }
