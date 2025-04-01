@@ -26,11 +26,13 @@ logger = logging.getLogger(__name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 
+
 # Health check endpoint
 @app.route('/health')
 def health_check():
     """Endpoint kiểm tra tình trạng ứng dụng"""
     return 'OK', 200
+
 
 # Tìm đường dẫn LibreOffice
 def find_libreoffice():
@@ -43,19 +45,42 @@ def find_libreoffice():
         '/usr/lib/libreoffice/program/soffice',
     ]
 
+    # Trước tiên thử gọi 'soffice' thông qua PATH
+    try:
+        result = subprocess.run(['soffice', '--version'],
+                                capture_output=True, text=True, check=False)
+        if result.returncode == 0:
+            logger.info(f"Tìm thấy LibreOffice trong PATH")
+            return 'soffice'
+    except Exception as e:
+        logger.warning(f"Không tìm thấy LibreOffice trong PATH: {e}")
+
+    # Sau đó thử các đường dẫn cụ thể
     for path in possible_paths:
         try:
             if os.path.isfile(path):
-                logger.info(f"Found LibreOffice at: {path}")
-                return path
+                # Kiểm tra xem nó có thực sự hoạt động không trước khi trả về
+                result = subprocess.run([path, '--version'],
+                                        capture_output=True, text=True, check=False)
+                if result.returncode == 0:
+                    logger.info(f"Tìm thấy LibreOffice hoạt động tại: {path}")
+                    return path
             elif shutil.which(path):
-                logger.info(f"Found LibreOffice in PATH: {shutil.which(path)}")
-                return shutil.which(path)
-        except Exception:
+                full_path = shutil.which(path)
+                # Kiểm tra xem nó có hoạt động không
+                result = subprocess.run([full_path, '--version'],
+                                        capture_output=True, text=True, check=False)
+                if result.returncode == 0:
+                    logger.info(f"Tìm thấy LibreOffice hoạt động tại: {full_path}")
+                    return full_path
+        except Exception as e:
+            logger.warning(f"Đã thử LibreOffice tại {path} nhưng gặp lỗi: {e}")
             continue
 
-    logger.warning("LibreOffice not found in expected locations")
+    # Trở về giá trị mặc định
+    logger.warning("Không tìm thấy LibreOffice trong các vị trí dự kiến, sử dụng mặc định 'soffice'")
     return 'soffice'
+
 
 # Lấy đường dẫn LibreOffice
 SOFFICE_PATH = find_libreoffice()
@@ -68,23 +93,34 @@ try:
 except Exception as e:
     logger.error(f"LibreOffice check failed: {e}")
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def safe_remove(file_path, retries=5, delay=1):
-    for _ in range(retries):
+    """Xóa tệp an toàn với số lần thử lại và trì hoãn."""
+    if not os.path.exists(file_path):
+        logger.debug(f"Tệp không tồn tại, không cần xóa: {file_path}")
+        return True
+
+    for i in range(retries):
         try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            os.remove(file_path)
+            logger.debug(f"Đã xóa tệp thành công: {file_path}")
             return True
         except Exception as e:
-            logger.warning(f"Không thể xóa file {file_path}: {e}")
+            logger.warning(f"Không thể xóa tệp {file_path} (lần thử {i + 1}/{retries}): {e}")
             time.sleep(delay)
+
+    logger.error(f"Không thể xóa tệp sau {retries} lần thử: {file_path}")
     return False
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
@@ -253,16 +289,31 @@ def convert_file():
         if output_path and os.path.exists(output_path):
             safe_remove(output_path)
 
+
 @app.teardown_appcontext
 def cleanup(exception=None):
-    if os.path.exists(UPLOAD_FOLDER):
+    """Dọn dẹp các tệp tạm khi context kết thúc."""
+    if not os.path.exists(UPLOAD_FOLDER):
+        return
+
+    try:
+        # Xóa các tệp cũ hơn 1 giờ
+        current_time = time.time()
+        one_hour_ago = current_time - 3600
+
         for filename in os.listdir(UPLOAD_FOLDER):
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             try:
                 if os.path.isfile(file_path):
-                    os.unlink(file_path)
-            except Exception:
-                pass
+                    # Kiểm tra thời gian sửa đổi
+                    file_mod_time = os.path.getmtime(file_path)
+                    if file_mod_time < one_hour_ago:
+                        safe_remove(file_path)
+            except Exception as e:
+                logger.error(f"Lỗi khi dọn dẹp tệp {file_path}: {e}")
+    except Exception as e:
+        logger.error(f"Lỗi khi dọn dẹp thư mục tạm: {e}")
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5003))

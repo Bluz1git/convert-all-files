@@ -36,9 +36,16 @@ RUN apt-get update --fix-missing && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Tạo cấu trúc thư mục
+RUN mkdir -p /app/templates /app/static /app/uploads
+
 # Cài đặt các Python packages
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy templates và static files
+COPY templates/* /app/templates/
+COPY static/* /app/static/
 
 # Copy toàn bộ mã nguồn
 COPY . .
