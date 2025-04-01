@@ -3,7 +3,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Cài đặt các gói cần thiết
-RUN apt-get update --fix-missing && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
@@ -12,9 +12,7 @@ RUN apt-get update --fix-missing && \
     libxext6 \
     libxrender1 \
     wget \
-    openjdk-11-jre \
-    default-jre \
-    unoconv \
+    software-properties-common \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,12 +24,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Cài đặt unoconv
+RUN pip install unoconv
+
 # Sao chép mã nguồn
 COPY . .
-
-# Thiết lập biến môi trường Java
-ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH $JAVA_HOME/bin:$PATH
 
 # Chạy ứng dụng
 CMD ["python", "app.py"]
