@@ -245,15 +245,14 @@ def convert_file():
             headers={'Content-Disposition': f'attachment; filename={output_filename}'}
         )
 
-    except subprocess.TimeoutExpired:
-        logger.error("Conversion timed out")
-        return "Error: Conversion took too long", 500
     except Exception as e:
-        logger.error(f"Error during conversion: {str(e)}")
-        return f"Error during conversion: {str(e)}", 500
+        logger.error(f"Lỗi khi chuyển đổi: {str(e)}")
+        return f"Lỗi khi chuyển đổi: {str(e)}", 500
     finally:
-        safe_remove(input_path)
-        safe_remove(output_path)
+        if input_path and os.path.exists(input_path):
+            safe_remove(input_path)
+        if output_path and os.path.exists(output_path):
+            safe_remove(output_path)
 
 
 @app.teardown_appcontext
@@ -268,36 +267,7 @@ def cleanup(exception=None):
                 pass
 
 
-
-def get_port():
-    """Lấy port từ biến môi trường hoặc giá trị mặc định"""
-    # Ưu tiên lấy RAILWAY_PORT, nếu không có mới lấy PORT
-    port = os.environ.get('RAILWAY_PORT') or os.environ.get('PORT', '5003')
-    try:
-        # Loại bỏ ký tự '$' nếu có
-        port = port.lstrip('$')
-        port = int(port)
-        if 1024 <= port <= 65535:
-            logger.info(f"Using port: {port}")
-            return port
-    except (ValueError, AttributeError):
-        pass
-
-    logger.warning(f"Invalid port {port}, using default 5003")
-    return 5003
-
-
 if __name__ == '__main__':
-    port = get_port()
-    logger.info(f"Starting application on port {port}")
-
-    try:
-        app.run(
-            host='0.0.0.0',
-            port=port,
-            threaded=True,
-            debug=False
-        )
-    except Exception as e:
-        logger.error(f"Application startup failed: {e}")
-        sys.exit(1)
+    port = int(os.environ.get('PORT', 5003))
+    logger.info(f"Starting server on port {port}")
+    app.run(host='0.0.0.0', port=port)
