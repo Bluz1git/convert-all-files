@@ -5,11 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Tools - Easy PDF Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .card {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Form card needs more space */
+        .form-card {
+            height: auto;
+        }
+
+        @media (max-width: 640px) {
+            .main-container {
+                padding: 0.5rem;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen">
-        <nav class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<body>
+    <div class="main-container">
+        <nav class="bg-white shadow-sm rounded-xl mb-6">
+            <div class="max-w-7xl mx-auto px-4 py-2">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex-shrink-0">
                         <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1>
@@ -31,26 +80,26 @@
             </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-extrabold text-gray-900 sm:text-5xl">PDF Tools</h2>
-                <p class="mt-3 text-xl text-gray-500">Simple, powerful PDF tools for everyone</p>
-            </div>
+        <div class="text-center mb-8">
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">PDF Tools</h2>
+            <p class="mt-3 text-lg sm:text-xl text-gray-500">Simple, powerful PDF tools for everyone</p>
+        </div>
 
-            <!-- Thêm alert box cho thông báo lỗi -->
-            <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">Lỗi!</strong>
-                <span id="errorMessage" class="block sm:inline">Đã xảy ra lỗi.</span>
-                <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                    <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                    </svg>
-                </span>
-            </div>
+        <!-- Thêm alert box cho thông báo lỗi -->
+        <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Lỗi!</strong>
+            <span id="errorMessage" class="block sm:inline">Đã xảy ra lỗi.</span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                </svg>
+            </span>
+        </div>
 
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <!-- Các chức năng khác giữ nguyên -->
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Compress PDF -->
+            <div class="card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -59,8 +108,11 @@
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Compress PDF</h3>
                     <p class="mt-2 text-sm text-gray-500">Reduce file size while maintaining quality</p>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+            <!-- Merge PDF -->
+            <div class="card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -69,8 +121,11 @@
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Merge PDF</h3>
                     <p class="mt-2 text-sm text-gray-500">Combine multiple PDFs into one file</p>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+            <!-- Split PDF -->
+            <div class="card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
@@ -79,29 +134,27 @@
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Split PDF</h3>
                     <p class="mt-2 text-sm text-gray-500">Extract pages from your PDF</p>
                 </div>
+            </div>
 
-                <!-- Convert PDF với form -->
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
+            <!-- Convert PDF với form -->
+            <div class="card form-card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </div>
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Convert PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Transform PDFs to DOCX or vice versa</p>
+                    <p class="mt-2 text-sm text-gray-500">Transform PDFs to other formats or vice versa</p>
                     <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="mt-4">
-                        <!-- Thêm CSRF token -->
-                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-
                         <div class="mb-4">
-                            <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                            <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.jpg,.jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
                         </div>
                         <p class="text-xs text-gray-500 mb-2">Giới hạn kích thước: 16MB</p>
                         <select name="conversion_type" id="conversionType" class="w-full p-2 mb-4 border rounded-lg text-gray-700" required>
                             <option value="" disabled selected>Select conversion type</option>
                             <option value="pdf_docx">PDF ↔ DOCX</option>
                             <option value="pdf_ppt">PDF ↔ PPT</option>
-                            <option value="pdf_excel">PDF ↔ Excel</option>
                             <option value="pdf_jpg">PDF ↔ JPG</option>
                         </select>
                         <div id="loadingIndicator" class="hidden text-center mb-2">
@@ -111,8 +164,11 @@
                         <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">Convert Now</button>
                     </form>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+            <!-- Rotate PDF -->
+            <div class="card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -121,8 +177,11 @@
                     <h3 class="mt-4 text-lg font-medium text-gray-900">Rotate PDF</h3>
                     <p class="mt-2 text-sm text-gray-500">Change page orientation</p>
                 </div>
+            </div>
 
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+            <!-- Edit PDF -->
+            <div class="card">
+                <div class="bg-white p-6 card-content">
                     <div class="bg-blue-100 rounded-lg p-3 inline-block">
                         <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -132,8 +191,9 @@
                     <p class="mt-2 text-sm text-gray-500">Modify text and images in your PDF</p>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
+
     <script>
         // Tự động nhận diện đuôi file và điều chỉnh conversion_type
         document.getElementById('fileInput').addEventListener('change', function() {
@@ -146,13 +206,12 @@
 
                 // Tự động chọn loại chuyển đổi dựa trên phần mở rộng file
                 if (extension === 'pdf') {
+                    // Mặc định để PDF -> DOCX, người dùng có thể thay đổi
                     conversionTypeSelect.value = 'pdf_docx';
                 } else if (extension === 'docx') {
                     conversionTypeSelect.value = 'pdf_docx';
                 } else if (extension === 'ppt' || extension === 'pptx') {
                     conversionTypeSelect.value = 'pdf_ppt';
-                } else if (extension === 'xls' || extension === 'xlsx') {
-                    conversionTypeSelect.value = 'pdf_excel';
                 } else if (extension === 'jpg' || extension === 'jpeg') {
                     conversionTypeSelect.value = 'pdf_jpg';
                 }
@@ -203,7 +262,7 @@
 
             const fileName = file.name.toLowerCase();
             const extension = fileName.split('.').pop();
-            let actualConversionType = conversionTypeSelect.value;
+            let actualConversionType = '';
 
             // Tự động xác định hướng chuyển đổi dựa trên đuôi file
             if (conversionTypeSelect.value === 'pdf_docx') {
@@ -222,15 +281,6 @@
                     actualConversionType = 'ppt_to_pdf';
                 } else {
                     showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ PPT.');
-                    return;
-                }
-            } else if (conversionTypeSelect.value === 'pdf_excel') {
-                if (extension === 'pdf') {
-                    actualConversionType = 'pdf_to_excel';
-                } else if (extension === 'xls' || extension === 'xlsx') {
-                    actualConversionType = 'excel_to_pdf';
-                } else {
-                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ Excel.');
                     return;
                 }
             } else if (conversionTypeSelect.value === 'pdf_jpg') {
