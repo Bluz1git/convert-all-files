@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# Thiết lập biến môi trường
+# Environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8080 \
@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1 \
     GUNICORN_THREADS=2 \
     GUNICORN_TIMEOUT=120
 
-# Cài đặt các phụ thuộc hệ thống - giảm kích thước image
+# Install system dependencies
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -25,36 +25,36 @@ RUN apt-get update --fix-missing && \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/*
 
-# Tạo và cấu hình thư mục ứng dụng
+# Create and configure application directory
 RUN useradd -m appuser && \
     mkdir -p ${UPLOAD_FOLDER} && \
     chown appuser:appuser ${UPLOAD_FOLDER}
 
 WORKDIR /app
 
-# Copy và cài đặt requirements trước để tận dụng cache Docker
+# Copy and install requirements
 COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy mã nguồn ứng dụng
+# Copy application source
 COPY --chown=appuser:appuser . .
 
-# Chuyển sang user không phải root
+# Switch to non-root user
 USER appuser
 
-# Kiểm tra sức khỏe ứng dụng (sử dụng wget thay vì curl để giảm dependencies)
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
 
-# Mở cổng (chỉ mang tính khai báo)
+# Expose port
 EXPOSE $PORT
 
-# Chạy ứng dụng với Gunicorn (sử dụng biến môi trường cho cấu hình)
+# Run application with explicit values
 CMD gunicorn --bind 0.0.0.0:$PORT \
-    --workers ${GUNICORN_WORKERS} \
-    --threads ${GUNICORN_THREADS} \
-    --timeout ${GUNICORN_TIMEOUT} \
+    --workers 2 \
+    --threads 2 \
+    --timeout 120 \
     --access-logfile - \
     --error-logfile - \
     app:app
