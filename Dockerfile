@@ -14,40 +14,43 @@ RUN apt-get update && \
     # Python and pip
     python3 \
     python3-pip \
-    python3-venv \
+    # python3-venv # Không thực sự cần trong container
     # LibreOffice and dependencies
     libreoffice \
+    # Các thành phần này thường được cài cùng 'libreoffice' nhưng để rõ ràng cũng không sao
     libreoffice-writer \
     libreoffice-impress \
     libreoffice-draw \
     libreoffice-java-common \
-    libreoffice-base \
-    libreoffice-core \
+    # libreoffice-base # Có thể không cần thiết
+    # libreoffice-core # Đã bao gồm trong 'libreoffice'
     libreoffice-common \
-    libreoffice-calc \
-    unoconv \
-    # Java runtime
-    openjdk-11-jre \
+    # libreoffice-calc # Có thể không cần thiết
+    # unoconv # Không còn dùng, xóa đi
+    # Java runtime cho LibreOffice (OpenJDK 11 hoặc 17 đều ổn)
+    openjdk-17-jre-headless \ # Hoặc openjdk-11-jre-headless
     # PDF and image processing
-    poppler-utils \
-    tesseract-ocr \
-    # X11 dependencies for headless LibreOffice
+    poppler-utils \ # Cần cho pdf2image
+    # tesseract-ocr # Không còn dùng, xóa đi
+    # X11 dependencies for headless LibreOffice (Giữ lại các thư viện này)
     libsm6 \
     libxext6 \
     libxrender1 \
     libgl1 \
+    # Curl cần cho HEALTHCHECK
+    curl \
     # Clean up apt cache
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     # Create necessary directories
     && mkdir -p /app/templates /app/static /app/uploads \
-    # Set proper permissions
-    && chmod 755 /app/uploads
+    # Set proper permissions (777 đơn giản cho container, có thể chặt hơn nếu muốn)
+    && chmod 777 /app/uploads
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies (sẽ cài waitress từ requirements.txt đã cập nhật)
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir -r requirements.txt
 
@@ -56,17 +59,17 @@ COPY templates/ /app/templates/
 COPY static/ /app/static/
 COPY app.py /app/
 
-# Set environment variables for LibreOffice
+# Set environment variables for LibreOffice user profile
 ENV HOME=/tmp \
-    LIBREOFFICE_PROFILE=/tmp/libreoffice_profile \
-    PATH="/usr/lib/libreoffice/program:$PATH"
+    LIBREOFFICE_PROFILE=/tmp/libreoffice_profile
+    # PATH="/usr/lib/libreoffice/program:$PATH" # Dòng này vẫn OK, dù find_libreoffice() có thể tự tìm
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+# Health check (dùng cổng mặc định 5003, Railway sẽ tự điều hướng hoặc inject PORT)
+HEALTHCHECK --interval=30s --timeout=15s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:5003/health || exit 1
 
-# Expose the Flask port
+# Expose the default Flask port (Railway sẽ dùng $PORT được inject)
 EXPOSE 5003
 
-# Run the application
+# Run the application using waitress (thông qua logic trong app.py)
 CMD ["python3", "app.py"]
