@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"> <!-- Lang attribute sẽ được cập nhật bởi JS -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Tools - Easy PDF Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- == BƯỚC 1: Đảm bảo dòng này ĐÃ BỎ COMMENT để liên kết styles.css == -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        /* CSS nội tuyến - bạn có thể giữ hoặc chuyển hết sang styles.css */
+        /* Lưu ý: Nếu bạn chuyển hết sang styles.css, thẻ <style> này có thể xóa */
         body {
             background-color: #f0f2f5;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-
         .main-container {
             flex: 1;
             width: 100%;
@@ -22,42 +25,95 @@
             margin: 0 auto;
             padding: 1rem;
         }
-
         .card {
             border-radius: 20px;
+            background-color: #ffffff;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             height: 100%;
             display: flex;
             flex-direction: column;
         }
-
         .card:hover {
-            transform: translateY(-5px);
+             transform: translateY(-5px);
+             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
         }
-
         .card-content {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            padding: 1.5rem; /* p-6 */
+        }
+        /* Khung màu bao icon và title */
+        .card-header-box {
+            position: relative;
+            padding: 1rem 1rem 1rem 3.5rem; /* Giữ padding trái cho icon */
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+         .card-header-box .icon-wrapper {
+             position: absolute;
+             left: 1rem;
+             top: 50%;
+             transform: translateY(-50%);
+         }
+         .card-header-box h3 {
+            /* Các style cơ bản cho H3 */
+            font-weight: 600;
+            line-height: 1.4;
+            color: inherit;
+            width: 100%; /* Giữ width để dễ định vị */
+            /* BỎ text-align: center; ở đây nếu bạn muốn kiểm soát hoàn toàn bằng inline style */
+            /* text-align: center; */
+
+             /* Style mặc định về font-size và position (sẽ bị inline style ghi đè nếu có) */
+            /* Font size và position sẽ được set bằng inline style */
+        }
+        /* Định dạng cho phần mô tả (ngoài box) */
+        .card-description {
+             font-size: 0.875rem; /* text-sm */
+             color: #6b7280; /* text-gray-500 */
+             margin-bottom: 1rem; /* mb-4 */
         }
 
-        /* Form card needs more space */
-        .form-card {
-            height: auto;
+        .form-card { height: auto; }
+        .main-title {
+            font-family: 'Roboto', 'Noto Sans', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.025em;
         }
-
-        @media (max-width: 640px) {
-            .main-container {
-                padding: 0.5rem;
-            }
+        /* Spinner styles */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Style for disabled button */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        @media (max-width: 640px) { .main-container { padding: 0.5rem; } }
     </style>
 </head>
 <body>
     <div class="main-container">
         <nav class="bg-white shadow-sm rounded-xl mb-6">
+           <!-- Nav content -->
             <div class="max-w-7xl mx-auto px-4 py-2">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex-shrink-0">
@@ -65,15 +121,13 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <button class="p-2 rounded-lg hover:bg-gray-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                         </button>
-                        <select class="bg-gray-100 rounded-lg px-3 py-2">
-                            <option>English</option>
-                            <option>Tiếng Việt</option>
-                            <option>Español</option>
-                            <option>Français</option>
+                        <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm">
+                            <option value="en">English</option>
+                            <option value="vi">Tiếng Việt</option>
                         </select>
                     </div>
                 </div>
@@ -81,262 +135,446 @@
         </nav>
 
         <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">PDF Tools</h2>
-            <p class="mt-3 text-lg sm:text-xl text-gray-500">Simple, powerful PDF tools for everyone</p>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF Tools</h2>
+            <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful PDF tools for everyone</p>
         </div>
 
-        <!-- Thêm alert box cho thông báo lỗi -->
-        <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong class="font-bold">Lỗi!</strong>
-            <span id="errorMessage" class="block sm:inline">Đã xảy ra lỗi.</span>
+        <!-- Alert box cho thông báo lỗi -->
+        <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+            <!-- Error content -->
+             <strong class="font-bold lang-error-title">Error!</strong>
+            <span id="errorMessage" class="block sm:inline">Error occurred.</span>
             <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <title>Close</title>
                     <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
                 </svg>
             </span>
         </div>
 
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Compress PDF -->
-            <div class="card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Compress PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Reduce file size while maintaining quality</p>
-                </div>
-            </div>
-
-            <!-- Merge PDF -->
-            <div class="card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Merge PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Combine multiple PDFs into one file</p>
-                </div>
-            </div>
-
-            <!-- Split PDF -->
-            <div class="card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Split PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Extract pages from your PDF</p>
-                </div>
-            </div>
-
             <!-- Convert PDF với form -->
             <div class="card form-card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
+                <div class="card-content">
+                    <!-- Khung chứa Icon (trái) và Title (giữa) -->
+                    <div class="card-header-box bg-blue-100 text-blue-800">
+                        <div class="icon-wrapper">
+                             <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </div>
+                         <!-- Title với style inline -->
+                         <h3 class="lang-convert-title"
+                             style="position: relative; left: 60px; font-size: 1.2rem;">
+                             Convert PDF <!-- Nội dung này sẽ bị JS ghi đè -->
+                         </h3>
                     </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Convert PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Transform PDFs to other formats or vice versa</p>
-                    <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="mt-4">
+                    <!-- Mô tả (ngoài box) -->
+                     <p class="card-description lang-convert-desc">Transform PDFs to other formats or vice versa</p>
+
+                    <!-- Phần Form -->
+                    <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
+                         <!-- Form fields -->
+                          <div class="mb-4 flex-grow">
+                            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label>
+                            <div class="relative">
+                                <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.jpg,.jpeg"
+                                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                                <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400">
+                                    <span id="fileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span>
+                                    <span class="bg-blue-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text">Browse</span>
+                                </div>
+                            </div>
+                             <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
+                        </div>
+
                         <div class="mb-4">
-                            <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.jpg,.jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                            <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label>
+                             <select name="conversion_type" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="" disabled selected class="lang-select-conversion">Select conversion type</option>
+                                <option value="pdf_docx">PDF ↔ DOCX</option>
+                                <option value="pdf_ppt">PDF ↔ PPT/PPTX</option>
+                                <option value="jpg_pdf">JPG/JPEG → PDF</option>
+                            </select>
                         </div>
-                        <p class="text-xs text-gray-500 mb-2">Giới hạn kích thước: 100MB</p>
-                        <select name="conversion_type" id="conversionType" class="w-full p-2 mb-4 border rounded-lg text-gray-700" required>
-                            <option value="" disabled selected>Select conversion type</option>
-                            <option value="pdf_docx">PDF ↔ DOCX</option>
-                            <option value="pdf_ppt">PDF ↔ PPT</option>
-                            <option value="pdf_jpg">PDF ↔ JPG</option>
-                        </select>
-                        <div id="loadingIndicator" class="hidden text-center mb-2">
-                            <div class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600"></div>
-                            <span class="ml-2">Đang chuyển đổi...</span>
+
+                        <div class="mt-auto">
+                            <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
+                                <div class="loader"></div>
+                                <span class="lang-converting">Converting...</span>
+                            </div>
+                            <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold lang-convert-btn">Convert Now</button>
                         </div>
-                        <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">Convert Now</button>
                     </form>
                 </div>
             </div>
 
-            <!-- Rotate PDF -->
-            <div class="card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
+            <!-- Placeholder Cards (Các chức năng khác - Cập nhật cấu trúc header) -->
+            <!-- Card Compress PDF -->
+             <div class="card">
+                <div class="card-content">
+                    <div class="card-header-box bg-green-100 text-green-800">
+                        <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        </div>
+                        <h3 class="lang-compress-title" style="position: relative; left: 60px; font-size: 1.2rem;">Compress PDF</h3>
                     </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Rotate PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Change page orientation</p>
+                    <p class="card-description lang-compress-desc">Reduce file size while maintaining quality</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
                 </div>
             </div>
+            <!-- Card Merge PDF -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="card-header-box bg-purple-100 text-purple-800">
+                        <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        </div>
+                        <h3 class="lang-merge-title" style="position: relative; left: 60px; font-size: 1.2rem;">Merge PDF</h3>
+                    </div>
+                    <p class="card-description lang-merge-desc">Combine multiple PDFs into one file</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                </div>
+            </div>
+            <!-- Card Split PDF -->
+             <div class="card">
+                 <div class="card-content">
+                    <div class="card-header-box bg-yellow-100 text-yellow-800">
+                        <div class="icon-wrapper">
+                           <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
+                        </div>
+                        <h3 class="lang-split-title" style="position: relative; left: 60px; font-size: 1.2rem;">Split PDF</h3>
+                    </div>
+                   <p class="card-description lang-split-desc">Extract pages from your PDF</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                </div>
+            </div>
+            <!-- Card Rotate PDF -->
+            <div class="card">
+                 <div class="card-content">
+                    <div class="card-header-box bg-red-100 text-red-800">
+                        <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                        </div>
+                        <h3 class="lang-rotate-title" style="position: relative; left: 60px; font-size: 1.2rem;">Rotate PDF</h3>
+                    </div>
+                    <p class="card-description lang-rotate-desc">Change page orientation</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                </div>
+            </div>
+            <!-- Card Edit PDF -->
+            <div class="card">
+                 <div class="card-content">
+                    <div class="card-header-box bg-indigo-100 text-indigo-800">
+                       <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                       </div>
+                       <h3 class="lang-edit-title" style="position: relative; left: 60px; font-size: 1.2rem;">Edit PDF</h3>
+                   </div>
+                    <p class="card-description lang-edit-desc">Modify text and images in your PDF</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                </div>
+            </div>
+        </div> <!-- End grid -->
 
-            <!-- Edit PDF -->
-            <div class="card">
-                <div class="bg-white p-6 card-content">
-                    <div class="bg-blue-100 rounded-lg p-3 inline-block">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900">Edit PDF</h3>
-                    <p class="mt-2 text-sm text-gray-500">Modify text and images in your PDF</p>
-                </div>
-            </div>
-        </div>
-    </div>
+         <footer class="text-center mt-10 py-4 text-sm text-gray-500">
+            © 2023 PDF Tools. All rights reserved.
+        </footer>
+
+    </div> <!-- End main container -->
 
     <script>
-        // Tự động nhận diện đuôi file và điều chỉnh conversion_type
-        document.getElementById('fileInput').addEventListener('change', function() {
-            const fileInput = this;
-            const conversionTypeSelect = document.getElementById('conversionType');
-            const fileName = fileInput.files[0]?.name.toLowerCase();
+        // URL của endpoint translations được truyền từ Flask
+        const TRANSLATIONS_URL = "{{ translations_url | safe }}";
 
-            if (fileName) {
-                const extension = fileName.split('.').pop();
+        // Biến toàn cục để lưu trữ bản dịch hiện tại
+        let currentTranslations = {};
+        let currentLang = 'en'; // Ngôn ngữ mặc định ban đầu
 
-                // Tự động chọn loại chuyển đổi dựa trên phần mở rộng file
-                if (extension === 'pdf') {
-                    // Mặc định để PDF -> DOCX, người dùng có thể thay đổi
-                    conversionTypeSelect.value = 'pdf_docx';
-                } else if (extension === 'docx') {
-                    conversionTypeSelect.value = 'pdf_docx';
-                } else if (extension === 'ppt' || extension === 'pptx') {
-                    conversionTypeSelect.value = 'pdf_ppt';
-                } else if (extension === 'jpg' || extension === 'jpeg') {
-                    conversionTypeSelect.value = 'pdf_jpg';
-                }
+        // ---- DOM Elements ----
+        const languageSelector = document.getElementById('languageSelector');
+        const fileInput = document.getElementById('fileInput');
+        const conversionTypeSelect = document.getElementById('conversionType');
+        const fileStatus = document.getElementById('fileStatus');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const convertForm = document.getElementById('convertForm');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const convertButton = document.getElementById('convertButton');
+
+        // ---- Functions ----
+
+        // Hàm hiển thị lỗi
+        function showError(errorKeyOrMessage) {
+            let message = errorKeyOrMessage;
+            // Ưu tiên lấy bản dịch lỗi nếu tồn tại key
+            if (currentTranslations && currentTranslations[errorKeyOrMessage]) {
+                message = currentTranslations[errorKeyOrMessage];
+            } else if (errorKeyOrMessage === 'err-conversion' && currentTranslations && currentTranslations['err-conversion']){
+                 // Fallback cho lỗi chung
+                 message = currentTranslations['err-conversion'];
+            } else if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Error:')) {
+                // Nếu là message lỗi từ server (bắt đầu bằng 'Error:')
+                // Cố gắng trích xuất phần message chính
+                message = errorKeyOrMessage.substring(6).trim();
+                // Kiểm tra xem có key tương ứng không, nếu không thì dùng message đã trích xuất
+                 if (currentTranslations && currentTranslations['err-conversion']){
+                     // Có thể hiển thị lỗi chung kèm theo chi tiết
+                     message = `${currentTranslations['err-conversion']} Details: ${message}`;
+                 }
+            } else if (!currentTranslations[errorKeyOrMessage]) {
+                 // Nếu không có key và không phải lỗi server chuẩn, hiển thị lỗi chung
+                 message = currentTranslations['err-conversion'] || 'An error occurred during conversion.';
             }
-        });
 
-        // Hiển thị thông báo lỗi
-        function showError(message) {
-            const errorAlert = document.getElementById('errorAlert');
-            const errorMessage = document.getElementById('errorMessage');
             errorMessage.textContent = message;
+            const errorTitle = errorAlert.querySelector('.lang-error-title');
+            if(errorTitle && currentTranslations && currentTranslations['lang-error-title']){
+                errorTitle.textContent = currentTranslations['lang-error-title'];
+            }
             errorAlert.classList.remove('hidden');
         }
 
-        // Ẩn thông báo lỗi
+
+        // Hàm ẩn lỗi
         function hideError() {
-            document.getElementById('errorAlert').classList.add('hidden');
+            errorAlert.classList.add('hidden');
         }
 
-        // Xử lý form submit với AJAX
-        document.getElementById('convertForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Hàm cập nhật giao diện người dùng với bản dịch đã tải
+        function applyTranslations(translations) {
+            document.documentElement.lang = currentLang;
 
-            const fileInput = document.getElementById('fileInput');
-            const conversionTypeSelect = document.getElementById('conversionType');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const convertButton = document.getElementById('convertButton');
+             // Cập nhật các element dùng class lang-*
+            document.querySelectorAll('[class*="lang-"]').forEach(element => {
+                const langClass = Array.from(element.classList).find(cls => cls.startsWith('lang-'));
 
-            // Kiểm tra file
-            if (!fileInput.files || fileInput.files.length === 0) {
-                showError('Vui lòng chọn một file để chuyển đổi.');
-                return;
+                if (langClass && translations[langClass]) {
+                     // Các thẻ cần cập nhật textContent trực tiếp
+                     // **SỬA ĐỔI:** Luôn cập nhật H3 bất kể có style inline hay không
+                    const updateTextContentTags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG'];
+
+                    if (updateTextContentTags.includes(element.tagName)) {
+                        element.textContent = translations[langClass];
+                    } else if (element.placeholder) {
+                         // Cập nhật placeholder nếu có
+                         element.placeholder = translations[langClass];
+                     }
+                     // Các trường hợp đặc biệt khác có thể thêm vào đây nếu cần
+                }
+            });
+
+             // Cập nhật text cho trạng thái file (cần sau khi vòng lặp chính chạy)
+            if (fileStatus && translations['file-no-selected']) {
+                fileStatus.dataset.langNoFile = translations['file-no-selected'];
+                 // Chỉ cập nhật nếu chưa có file nào được chọn
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    fileStatus.textContent = translations['file-no-selected'];
+                }
             }
 
+             // Cập nhật text nút Browse (thêm key 'lang-select-btn-text')
+             const selectBtnText = document.querySelector('.lang-select-btn-text');
+             if (selectBtnText && translations['lang-select-btn-text']) {
+                 selectBtnText.textContent = translations['lang-select-btn-text'];
+             }
+
+             // Cập nhật label cho dropdown (thêm key 'lang-select-conversion-label')
+             const convLabel = document.querySelector('.lang-select-conversion-label');
+             if(convLabel && translations['lang-select-conversion-label']){
+                  convLabel.textContent = translations['lang-select-conversion-label'];
+             }
+
+             // Cập nhật option mặc định của dropdown
+             const defaultConvOption = conversionTypeSelect.querySelector('.lang-select-conversion');
+             if(defaultConvOption && translations['lang-select-conversion']){
+                 defaultConvOption.textContent = translations['lang-select-conversion'];
+             }
+
+             // Cập nhật title của trang
+             const pageTitle = document.querySelector('title');
+             if (pageTitle && translations['lang-title']) {
+                 pageTitle.textContent = translations['lang-title'] + " - Easy PDF Management"; // Giữ lại phần mô tả
+             }
+        }
+
+
+        // Hàm tải và áp dụng ngôn ngữ
+        async function updateLanguage(lang) {
+            currentLang = lang;
+             hideError();
+
+            try {
+                // Sử dụng URL được truyền từ Flask
+                const response = await fetch(`${TRANSLATIONS_URL}?lang=${lang}`);
+                if (!response.ok) {
+                    // Thử lấy text lỗi từ server nếu có
+                    let errorText = `HTTP error! status: ${response.status}`;
+                    try { errorText = await response.text() || errorText; } catch (e) { /* ignore */ }
+                    throw new Error(errorText);
+                }
+                currentTranslations = await response.json();
+                applyTranslations(currentTranslations);
+                localStorage.setItem('preferred-language', lang);
+                languageSelector.value = lang; // Đảm bảo dropdown hiển thị đúng ngôn ngữ
+                document.documentElement.lang = lang; // Cập nhật lang attribute của HTML
+            } catch (error) {
+                console.error('Failed to fetch translations:', error);
+                // Có thể reset về tiếng Anh hoặc hiển thị lỗi cụ thể hơn
+                currentTranslations = {}; // Reset translation object
+                applyTranslations({}); // Cố gắng reset text về mặc định (có thể không hoàn hảo)
+                // Hiển thị lỗi bằng key hoặc message từ error object
+                 showError(currentTranslations['err-fetch-translations'] || error.message || 'Could not load language data.');
+            }
+        }
+
+
+        // ---- Event Listeners ----
+
+        languageSelector.addEventListener('change', function() {
+            updateLanguage(this.value);
+        });
+
+        fileInput.addEventListener('change', function() {
+             // Logic cập nhật hiển thị tên file và gợi ý loại chuyển đổi
+             const file = this.files[0];
+            if (file) {
+                fileStatus.textContent = file.name;
+                 const extension = file.name.split('.').pop().toLowerCase();
+                 // Gợi ý loại chuyển đổi dựa trên đuôi file
+                 if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; } // Ưu tiên PDF->DOCX
+                 else if (extension === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
+                 else if (extension === 'ppt' || extension === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
+                 else if (extension === 'jpg' || extension === 'jpeg') { conversionTypeSelect.value = 'jpg_pdf'; }
+                 else { conversionTypeSelect.value = ""; } // Reset nếu không nhận dạng được
+            } else {
+                 // Reset nếu không có file nào được chọn
+                 fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected';
+                 conversionTypeSelect.value = "";
+            }
+             hideError(); // Ẩn lỗi cũ khi chọn file mới
+        });
+
+        convertForm.addEventListener('submit', function(e) {
+             e.preventDefault(); // Ngăn chặn submit form mặc định
+            hideError(); // Ẩn lỗi cũ trước khi bắt đầu
+
+            // === Validation ===
+            if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
             const file = fileInput.files[0];
+            if (file.size > 100 * 1024 * 1024) { showError('err-file-too-large'); return; } // 100MB limit
+            if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; }
 
-            // Kiểm tra kích thước file (100MB)
-            if (file.size > 100 * 1024 * 1024) {
-                showError('File quá lớn. Giới hạn là 100MB.');
-                return;
-            }
-
-            // Kiểm tra loại chuyển đổi
-            if (!conversionTypeSelect.value) {
-                showError('Vui lòng chọn loại chuyển đổi.');
-                return;
-            }
-
+            // === Xác định loại chuyển đổi thực tế gửi lên server ===
+            const selectedConversionValue = conversionTypeSelect.value; // vd: 'pdf_docx'
             const fileName = file.name.toLowerCase();
             const extension = fileName.split('.').pop();
-            let actualConversionType = '';
+            let actualConversionType = ''; // vd: 'pdf_to_docx' or 'docx_to_pdf'
 
-            // Tự động xác định hướng chuyển đổi dựa trên đuôi file
-            if (conversionTypeSelect.value === 'pdf_docx') {
-                if (extension === 'pdf') {
-                    actualConversionType = 'pdf_to_docx';
-                } else if (extension === 'docx') {
-                    actualConversionType = 'docx_to_pdf';
-                } else {
-                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ DOCX.');
-                    return;
-                }
-            } else if (conversionTypeSelect.value === 'pdf_ppt') {
-                if (extension === 'pdf') {
-                    actualConversionType = 'pdf_to_ppt';
-                } else if (extension === 'ppt' || extension === 'pptx') {
-                    actualConversionType = 'ppt_to_pdf';
-                } else {
-                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ PPT.');
-                    return;
-                }
-            } else if (conversionTypeSelect.value === 'pdf_jpg') {
-                if (extension === 'pdf') {
-                    actualConversionType = 'pdf_to_jpg';
-                } else if (extension === 'jpg' || extension === 'jpeg') {
-                    actualConversionType = 'jpg_to_pdf';
-                } else {
-                    showError('Định dạng file không phù hợp với loại chuyển đổi PDF ↔ JPG.');
-                    return;
-                }
-            }
+            if (selectedConversionValue === 'pdf_docx') {
+                if (extension === 'pdf') { actualConversionType = 'pdf_to_docx'; }
+                else if (extension === 'docx') { actualConversionType = 'docx_to_pdf'; }
+                else { showError('err-format-docx'); return; } // File không phải pdf hoặc docx
+            } else if (selectedConversionValue === 'pdf_ppt') {
+                 if (extension === 'pdf') { actualConversionType = 'pdf_to_ppt'; }
+                 else if (extension === 'ppt' || extension === 'pptx') { actualConversionType = 'ppt_to_pdf'; }
+                 else { showError('err-format-ppt'); return; } // File không phải pdf, ppt, pptx
+            } else if (selectedConversionValue === 'jpg_pdf') {
+                if (extension === 'jpg' || extension === 'jpeg') { actualConversionType = 'jpg_to_pdf'; }
+                else { showError('err-format-jpg'); return; } // File không phải jpg/jpeg
+            } else {
+                 // Trường hợp không xác định (dù đã check ở trên, thêm để an toàn)
+                 showError('err-select-conversion'); return;
+             }
 
-            // Tạo FormData
+             if (!actualConversionType) {
+                 console.error("Không thể xác định actualConversionType.");
+                 showError('err-select-conversion'); return;
+             }
+
+            // === Chuẩn bị FormData ===
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('conversion_type', actualConversionType);
+            formData.append('conversion_type', actualConversionType); // Gửi loại chuyển đổi thực tế
 
-            // Hiển thị loading và ẩn nút convert
+            // === Cập nhật UI -> Loading state ===
             loadingIndicator.classList.remove('hidden');
             convertButton.disabled = true;
+             // Hiển thị spinner và text "Converting..." (đã dịch)
+             const convertingText = currentTranslations['lang-converting'] || 'Converting...';
+             convertButton.innerHTML = `<div class="loader !w-4 !h-4 !border-2 mr-2"></div> ${convertingText}`; // Thu nhỏ spinner
 
-            // Gửi request
-            fetch('/convert', {
-                method: 'POST',
-                body: formData
-            })
+            // === Gửi request ===
+            fetch('/convert', { method: 'POST', body: formData })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Có lỗi xảy ra trong quá trình chuyển đổi.');
-                    });
+                    // Nếu server trả về lỗi (status code không phải 2xx)
+                    // Đọc text lỗi từ response body
+                     return response.text().then(text => {
+                         // Ném lỗi với text từ server, hoặc lỗi chung nếu text trống
+                         throw new Error(text || 'err-conversion');
+                     });
                 }
-                return response.blob();
+                // Nếu thành công (status 2xx)
+                const disposition = response.headers.get('Content-Disposition');
+                let downloadFilename = `converted_file`; // Tên mặc định nếu không lấy được
+                 // Trích xuất tên file từ header Content-Disposition
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) {
+                         downloadFilename = matches[1].replace(/['"]/g, '');
+                     } else {
+                         // Fallback nếu không parse được filename=
+                         // Cố gắng tạo tên file dựa trên input và output type
+                         const inputBaseName = file.name.substring(0, file.name.lastIndexOf('.')) || 'file';
+                         const outputExt = actualConversionType.split('_to_')[1];
+                         downloadFilename = `converted_${inputBaseName}.${outputExt}`;
+                     }
+                }
+                // Trả về blob và tên file để xử lý tải xuống
+                return response.blob().then(blob => ({ blob, downloadFilename }));
             })
-            .then(blob => {
-                // Tạo URL và tải về file
+            .then(({ blob, downloadFilename }) => {
+                // === Xử lý tải file xuống ===
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                const convertedExtension = actualConversionType.split('_to_')[1];
+                a.style.display = 'none';
                 a.href = url;
-                a.download = `converted_${file.name.split('.')[0]}.${convertedExtension}`;
+                a.download = downloadFilename; // Set tên file tải về
                 document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
+                a.click(); // Kích hoạt việc tải file
+                window.URL.revokeObjectURL(url); // Giải phóng bộ nhớ
+                a.remove(); // Xóa thẻ a ảo
             })
             .catch(error => {
-                showError(error.message);
+                // === Xử lý lỗi từ fetch hoặc từ response.text() ===
+                 console.error('Conversion failed:', error);
+                 // Hiển thị lỗi nhận được từ server hoặc lỗi chung
+                 showError(error.message || 'err-conversion');
             })
             .finally(() => {
-                // Ẩn loading và hiện lại nút convert
+                // === Reset UI về trạng thái ban đầu (luôn chạy sau then hoặc catch) ===
                 loadingIndicator.classList.add('hidden');
                 convertButton.disabled = false;
+                 // Trả lại text gốc cho nút (đã dịch)
+                 const originalButtonText = currentTranslations['lang-convert-btn'] || 'Convert Now';
+                 convertButton.innerHTML = originalButtonText;
             });
         });
+
+        // ---- Initial Setup on DOMContentLoaded ----
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lấy ngôn ngữ đã lưu hoặc mặc định là 'en'
+            const savedLanguage = localStorage.getItem('preferred-language');
+            const initialLang = savedLanguage || navigator.language.split('-')[0] || 'en'; // Ưu tiên browser lang nếu ko có saved lang
+            // Chỉ chấp nhận 'en' hoặc 'vi'
+            const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
+
+            languageSelector.value = finalInitialLang; // Set giá trị cho dropdown
+            updateLanguage(finalInitialLang); // Tải và áp dụng ngôn ngữ ban đầu
+        });
+
     </script>
 </body>
 </html>
