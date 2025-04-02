@@ -3,9 +3,7 @@ FROM ubuntu:22.04
 
 # Set environment variables to prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=Etc/UTC \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    TZ=Etc/UTC
 
 # Create working directory
 WORKDIR /app
@@ -16,31 +14,35 @@ RUN apt-get update && \
     # Python and pip
     python3 \
     python3-pip \
+    python3-venv \
     # LibreOffice and dependencies
     libreoffice \
     libreoffice-writer \
     libreoffice-impress \
     libreoffice-draw \
     libreoffice-java-common \
+    libreoffice-base \
+    libreoffice-core \
     libreoffice-common \
-    # Java runtime for LibreOffice
-    openjdk-17-jre-headless \
-    # PDF and image processing <--- Dòng comment đứng một mình đã bị xóa
-    poppler-utils \ # Cần cho pdf2image
-    # X11 dependencies for headless LibreOffice (Giữ lại các thư viện này)
+    libreoffice-calc \
+    unoconv \
+    # Java runtime
+    openjdk-11-jre \
+    # PDF and image processing
+    poppler-utils \
+    tesseract-ocr \
+    # X11 dependencies for headless LibreOffice
     libsm6 \
     libxext6 \
     libxrender1 \
     libgl1 \
-    # Curl cần cho HEALTHCHECK
-    curl \
     # Clean up apt cache
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     # Create necessary directories
     && mkdir -p /app/templates /app/static /app/uploads \
-    # Set proper permissions
-    && chmod 777 /app/uploads
+    # Set proper permissions (Changed from 777 in error log example to 755, generally safer)
+    && chmod 755 /app/uploads
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
@@ -54,16 +56,17 @@ COPY templates/ /app/templates/
 COPY static/ /app/static/
 COPY app.py /app/
 
-# Set environment variables for LibreOffice user profile
+# Set environment variables for LibreOffice
 ENV HOME=/tmp \
-    LIBREOFFICE_PROFILE=/tmp/libreoffice_profile
+    LIBREOFFICE_PROFILE=/tmp/libreoffice_profile \
+    PATH="/usr/lib/libreoffice/program:$PATH"
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=15s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5003/health || exit 1
 
-# Expose the default Flask port
+# Expose the Flask port
 EXPOSE 5003
 
-# Run the application using waitress
+# Run the application
 CMD ["python3", "app.py"]
