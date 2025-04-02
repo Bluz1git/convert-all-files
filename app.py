@@ -1,7 +1,3 @@
-# --- START OF FILE app.py ---
-# No changes needed in app.py based on the request.
-# Keep the existing app.py code.
-
 from flask import Flask, request, send_file, render_template, Response, jsonify, url_for
 import os
 import sys
@@ -454,7 +450,7 @@ def convert_file():
         elif conversion_type == 'docx_to_pdf':
             try:
                 # LibreOffice sẽ tạo file output với tên gốc + .pdf
-                expected_lo_output_name = f"{base_name}.pdf"
+                expected_lo_output_name = os.path.basename(input_path).replace('.pptx', '.pdf').replace('.ppt', '.pdf')
                 temp_libreoffice_output = os.path.join(UPLOAD_FOLDER, expected_lo_output_name)
 
                 # Xóa file output có thể tồn tại từ lần chạy trước (quan trọng!)
@@ -549,7 +545,7 @@ def convert_file():
 
         elif conversion_type == 'ppt_to_pdf':
             try:
-                expected_lo_output_name = f"{base_name}.pdf"
+                expected_lo_output_name = f"input_{time.time()}_{filename}".replace('.docx', '.pdf')
                 temp_libreoffice_output = os.path.join(UPLOAD_FOLDER, expected_lo_output_name)
                 if os.path.exists(temp_libreoffice_output):
                      safe_remove(temp_libreoffice_output)
