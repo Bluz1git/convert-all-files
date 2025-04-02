@@ -1,0 +1,201 @@
+# Nếu Python lỗi, thử dùng LibreOffice làm phương án cuối
+                 logger.warning("Chuyển PDF->PPTX bằng Python thất bại, thử dùng LibreOffice...")
+                 try:
+                    # Sửa đổi: Dùng tên file gốc đúng từ LibreOffice
+                    expected_lo_output_name = os.path.basename(input_path).replace('.pdf', '.pptx')
+                    temp_libreoffice_output = os.path.join(UPLOAD_FOLDER, expected_lo_output_name)
+                    if os.path.exists(temp_libreoffice_output):
+                        safe_remove(temp_libreoffice_output)
+
+                    logger.info(f"Chạy LibreOffice: {SOFFICE_PATH} --headless --convert-to pptx --outdir {UPLOAD_FOLDER} {input_path}")
+                    result = subprocess.run([
+                        SOFFICE_PATH,
+                        '--headless',
+                        '--convert-to', 'pptx',
+                        '--outdir', UPLOAD_FOLDER,
+                        input_path
+                    ], check=True, timeout=180, capture_output=True, text=True) # Tăng timeout cho PPTX
+                    logger.info(f"LibreOffice stdout: {result.stdout}")
+                    logger.warning(f"LibreOffice stderr: {result.stderr}")
+
+                    if os.path.exists(temp_libreoffice_output):
+                        os.rename(temp_libreoffice_output, output_path)
+                        conversion_success = True
+                        logger.info(f"Chuyển đổi PDF -> PPTX bằng LibreOffice thành công (fallback). Output: {output_path}")
+                    else:
+                        error_message = "LibreOffice (fallback) chạy xong nhưng không tạo file PPTX output."
+                        logger.error(error_message)
+                        logger.error(f"Thư mục output của LO: {UPLOAD_FOLDER}, Tên file LO dự kiến: {expected_lo_output_name}")
+                        logger.error(f"Nội dung thư mục upload sau khi chạy LO: {os.listdir(UPLOAD_FOLDER)}")
+
+                 except subprocess.CalledProcessError as e:
+                     error_message = f"Lỗi LibreOffice (fallback PDF->PPTX): {e}. Output: {e.stderr}"
+                     logger.error(error_message, exc_info=True)
+                 except subprocess.TimeoutExpired:
+                      error_message = "Lỗi LibreOffice (fallback PDF->PPTX): Quá thời gian chuyển đổi (180s)."
+                      logger.error(error_message)
+                 except Exception as e:
+                     error_message = f"Lỗi không xác định khi chạy LibreOffice (fallback PDF->PPTX): {e}"
+                     logger.error(error_message, exc_info=True)
+
+                 # Nếu cả 2 cách đều lỗi
+                 if not conversion_success:
+                     error_message = "Cả phương pháp Python và LibreOffice đều thất bại khi chuyển đổi PDF -> PPTX."
+
+
+        elif conversion_type == 'ppt_to_pdf':
+            try:
+                # Sửa đổi: Dùng tên file đúng từ LibreOffice
+                expected_lo_output_name = os.path.basename(input_path)
+                if expected_lo_output_name.lower().endswith('.pptx'):
+                    expected_lo_output_name = expected_lo_output_name.replace('.pptx', '.pdf')
+                elif expected_lo_output_name.lower().endswith('.ppt'):
+                    expected_lo_output_name = expected_lo_output_name.replace('.ppt', '.pdf')
+                
+                temp_libreoffice_output = os.path.join(UPLOAD_FOLDER, expected_lo_output_name)
+                if os.path.exists(temp_libreoffice_output):
+                     safe_remove(temp_libreoffice_output)
+
+                logger.info(f"Chạy LibreOffice: {SOFFICE_PATH} --headless --convert-to pdf --outdir {UPLOAD_FOLDER} {input_path}")
+                result = subprocess.run([
+                    SOFFICE_PATH,
+                    '--headless',
+                    '--convert-to', 'pdf',
+                    '--outdir', UPLOAD_FOLDER,
+                    input_path
+                ], check=True, timeout=120, capture_output=True, text=True)
+                logger.info(f"LibreOffice stdout: {result.stdout}")
+                logger.warning(f"LibreOffice stderr: {result.stderr}")
+
+                if os.path.exists(temp_libreoffice_output):
+                    os.rename(temp_libreoffice_output, output_path)
+                    conversion_success = True
+                    logger.info(f"Chuyển đổi PPT/PPTX -> PDF bằng LibreOffice thành công. Output: {output_path}")
+                else:
+                    error_message = "LibreOffice chạy xong nhưng không tạo file PDF output (từ PPT)."
+                    logger.error(error_message)
+                    logger.error(f"Thư mục output của LO: {UPLOAD_FOLDER}, Tên file LO dự kiến: {expected_lo_output_name}")
+                    logger.error(f"Nội dung thư mục upload sau khi chạy LO: {os.listdir(UPLOAD_FOLDER)}")
+
+            except subprocess.CalledProcessError as e:
+                error_message = f"Lỗi LibreOffice (PPT->PDF): {e}. Output: {e.stderr}"
+                logger.error(error_message, exc_info=True)
+            except subprocess.TimeoutExpired:
+                 error_message = "Lỗi LibreOffice (PPT->PDF): Quá thời gian chuyển đổi (120s)."
+                 logger.error(error_message)
+            except Exception as e:
+                error_message = f"Lỗi không xác định khi chạy LibreOffice (PPT->PDF): {e}"
+                logger.error(error_message, exc_info=True)
+
+
+        elif conversion_type == 'jpg_to_pdf':
+             if convert_jpg_to_pdf(input_path, output_path):
+                 conversion_success = True
+                 logger.info("Chuyển đổi JPG -> PDF thành công.")
+             else:
+                 error_message = "Chuyển đổi JPG sang PDF thất bại bằng Pillow."
+                 # Lỗi cụ thể đã được log trong hàm convert_jpg_to_pdf
+
+
+        # --- Xử lý kết quả ---
+        if conversion_success and os.path.exists(output_path):
+            # Trả về file đã chuyển đổi
+            try:
+                # Ghi log kích thước file output
+                output_size = os.path.getsize(output_path)
+                logger.info(f"Chuẩn bị gửi file output: {output_path}, Kích thước: {output_size} bytes")
+
+                # QUAN TRỌNG: Xóa file input TRƯỚC khi gửi file output, nhưng CHỈ KHI chuyển đổi thành công
+                safe_remove(input_path)
+
+                return send_file(
+                    output_path,
+                    as_attachment=True,
+                    download_name=output_filename # Đặt tên file khi tải về
+                    # mimetype được send_file tự động xác định hoặc bạn có thể chỉ định nếu cần
+                )
+            except Exception as send_err:
+                 logger.error(f"Lỗi khi gửi file {output_path}: {send_err}", exc_info=True)
+                 # Dọn dẹp file input nếu lỗi khi gửi
+                 safe_remove(input_path)
+                 # Dù lỗi gửi file thì cũng nên báo lỗi server
+                 return f"Lỗi khi chuẩn bị file để tải về: {send_err}", 500
+        else:
+            # Nếu chuyển đổi thất bại, báo lỗi 500
+            logger.error(f"Chuyển đổi thất bại cuối cùng. Lý do: {error_message}")
+            # Dọn dẹp file input nếu chuyển đổi lỗi
+            safe_remove(input_path)
+            # Cũng nên dọn dẹp output_path nếu nó vô tình được tạo ra nhưng không hợp lệ
+            if output_path and os.path.exists(output_path):
+                 safe_remove(output_path)
+            # Xóa cả file tạm của LO nếu có
+            if temp_libreoffice_output and os.path.exists(temp_libreoffice_output):
+                 safe_remove(temp_libreoffice_output)
+
+            return f"Chuyển đổi thất bại: {error_message}", 500
+
+    except Exception as e:
+        # Bắt các lỗi không mong muốn khác (ví dụ: lỗi đọc form, lưu file ban đầu)
+        logger.error(f"Lỗi không mong muốn trong route /convert: {e}", exc_info=True)
+        # Dọn dẹp file input/output nếu có thể trong trường hợp lỗi sớm
+        if input_path and os.path.exists(input_path):
+             safe_remove(input_path)
+        if output_path and os.path.exists(output_path):
+             safe_remove(output_path)
+        if temp_libreoffice_output and os.path.exists(temp_libreoffice_output):
+             safe_remove(temp_libreoffice_output)
+        return f"Đã xảy ra lỗi máy chủ không mong muốn: {str(e)}", 500
+
+    # Khối finally ở đây không cần thiết nữa vì việc dọn dẹp đã xử lý trong try/except và @after_this_request
+
+@app.after_request
+def after_request_func(response):
+    """Dọn dẹp file output sau khi request gửi file hoàn tất"""
+    # Kiểm tra xem request có phải là gửi file không (dựa vào header hoặc context khác)
+    # Cách đơn giản là kiểm tra xem có đường dẫn file output nào được lưu trữ tạm không
+    # Tuy nhiên, cách này không an toàn. Dùng teardown_appcontext đáng tin cậy hơn.
+    # Thay vào đó, chúng ta sẽ dựa vào teardown_appcontext để dọn dẹp tổng quát.
+    return response
+
+
+@app.teardown_appcontext
+def cleanup(exception=None):
+    """Dọn dẹp các file cũ trong thư mục upload khi context kết thúc"""
+    if not os.path.exists(UPLOAD_FOLDER):
+        return
+
+    logger.info("Chạy dọn dẹp teardown_appcontext...")
+    try:
+        now = time.time()
+        # Thời gian giữ file (vd: 1 giờ = 3600 giây)
+        # Nên giữ lâu hơn một chút để đảm bảo file vừa tạo không bị xóa ngay
+        max_age = 7200 # 2 giờ
+
+        for filename in os.listdir(UPLOAD_FOLDER):
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            try:
+                # Chỉ xóa file (không xóa thư mục con nếu có)
+                if os.path.isfile(path):
+                     file_age = now - os.path.getmtime(path)
+                     # Xóa file nếu nó cũ hơn max_age VÀ không phải file đang được xử lý (khó xác định chắc chắn)
+                     # Cách an toàn là chỉ xóa file cũ
+                     if file_age > max_age:
+                         logger.info(f"Teardown: Xóa file cũ ({file_age:.0f}s > {max_age}s): {path}")
+                         safe_remove(path)
+                     # else:
+                     #     logger.info(f"Teardown: Giữ lại file gần đây ({file_age:.0f}s <= {max_age}s): {path}")
+
+            except FileNotFoundError:
+                 continue # File đã bị xóa bởi tiến trình khác
+            except Exception as e:
+                logger.error(f"Lỗi khi kiểm tra/dọn dẹp file {path}: {e}")
+    except Exception as e:
+        logger.error(f"Lỗi nghiêm trọng trong quá trình dọn dẹp teardown_appcontext: {e}")
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5003))
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    logger.info(f"Khởi động server trên cổng {port} - Chế độ Debug: {debug_mode}")
+    # Chạy với reloader nếu debug=True để tự động cập nhật khi code thay đổi
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
