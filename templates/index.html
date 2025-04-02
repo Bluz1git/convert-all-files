@@ -3,170 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Tools - Easy PDF Management</title>
+    <title>PDF Tools - Easy PDF Management</title> <!-- Title sẽ được cập nhật bởi JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #f0f2f5;
-            font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .main-container {
-            flex: 1;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-        .card {
-            border-radius: 20px;
-            background-color: #ffffff;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .card:hover {
-             transform: translateY(-5px);
-             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
-        }
-        .card-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem; /* p-6 */
-        }
-        .card-header-box {
-            position: relative;
-            padding: 1rem 1rem 1rem 3.5rem; /* Giữ padding trái cho icon */
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-        }
-         .card-header-box .icon-wrapper {
-             position: absolute;
-             left: 1rem;
-             top: 50%;
-             transform: translateY(-50%);
-         }
-         .card-header-box h3 {
-            font-weight: 600;
-            line-height: 1.4;
-            color: inherit;
-            width: 100%;
-            /* Style mặc định về font-size và position (sẽ bị inline style ghi đè nếu có) */
-            /* Font size và position sẽ được set bằng inline style */
-        }
-        .card-description {
-             font-size: 0.875rem; /* text-sm */
-             color: #6b7280; /* text-gray-500 */
-             margin-bottom: 1rem; /* mb-4 */
-        }
-
+        /* CSS nội tuyến của bạn (giữ nguyên) */
+        body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .card { border-radius: 20px; background-color: #ffffff; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); }
+        .card-content { flex-grow: 1; display: flex; flex-direction: column; padding: 1.5rem; }
+        .card-header-box { position: relative; padding: 1rem 1rem 1rem 3.5rem; border-radius: 12px; margin-bottom: 0.75rem; min-height: 60px; display: flex; align-items: center; }
+        .card-header-box .icon-wrapper { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); }
+        .card-header-box h3 { font-weight: 600; line-height: 1.4; color: inherit; width: 100%; }
+        .card-description { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
         .form-card { height: auto; }
-        .main-title {
-            font-family: 'Roboto', 'Noto Sans', sans-serif;
-            font-weight: 900;
-            letter-spacing: -0.025em;
-        }
-        /* Spinner styles */
-        .loader {
-            border: 4px solid #f3f3f3; /* Light grey */
-            border-top: 4px solid #3498db; /* Blue */
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        /* Smaller loader variant */
-        .loader.loader-sm {
-            width: 16px; /* Smaller size */
-            height: 16px;
-            border-width: 2px; /* Thinner border */
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .main-title { font-family: 'Roboto', 'Noto Sans', sans-serif; font-weight: 900; letter-spacing: -0.025em; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+        .loader.loader-sm { width: 16px; height: 16px; border-width: 2px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
         @media (max-width: 640px) { .main-container { padding: 0.5rem; } }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <nav class="bg-white shadow-sm rounded-xl mb-6">
-           <!-- Nav content -->
+        <!-- Nav, Header, Alert (giữ nguyên) -->
+         <nav class="bg-white shadow-sm rounded-xl mb-6">
             <div class="max-w-7xl mx-auto px-4 py-2">
                 <div class="flex justify-between h-16 items-center">
-                    <div class="flex-shrink-0">
-                        <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1>
-                    </div>
+                    <div class="flex-shrink-0"> <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1> </div>
                     <div class="flex items-center space-x-4">
-                        <!-- Theme toggle removed for simplicity -->
                         <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm">
-                            <option value="en">English</option>
-                            <option value="vi">Tiếng Việt</option>
+                            <option value="en">English</option> <option value="vi">Tiếng Việt</option>
                         </select>
                     </div>
                 </div>
             </div>
         </nav>
-
         <div class="text-center mb-8">
             <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF Tools</h2>
             <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful PDF tools for everyone</p>
         </div>
-
-        <!-- Alert box cho thông báo lỗi -->
         <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-             <strong class="font-bold lang-error-title">Error!</strong>
-            <span id="errorMessage" class="block sm:inline">Error occurred.</span>
-            <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <title>Close</title>
-                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                </svg>
-            </span>
+             <strong class="font-bold lang-error-title">Error!</strong> <span id="errorMessage" class="block sm:inline">Error occurred.</span>
+             <span class="absolute top-0 bottom-0 right-0 px-4 py-3"> <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> <title>Close</title> <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/> </svg> </span>
         </div>
 
+        <!-- ========== GRID SECTION (ĐÃ SẮP XẾP VÀ CHỈNH SỬA) ========== -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Convert Card -->
+
+            <!-- 1. Convert PDF/Office Card (ĐÃ CHỈNH SỬA) -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-blue-100 text-blue-800">
                         <div class="icon-wrapper">
-                             <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
+                             <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
                         </div>
-                         <h3 class="lang-convert-title"
-                             style="position: relative; left: 50px; font-size: 1.1rem;"> <!-- Adjusted positioning slightly -->
-                             Convert Files <!-- Text updated via JS -->
-                         </h3>
+                         <h3 class="lang-convert-title" style="position: relative; left: 50px; font-size: 1.1rem;"> Convert PDF/Office </h3>
                     </div>
-                     <p class="card-description lang-convert-desc">Transform PDFs, Office documents, and images</p> <!-- Text updated via JS -->
+                    <p class="card-description lang-convert-desc">Transform PDF to Word/PPT and vice versa</p>
 
                     <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
                           <div class="mb-4 flex-grow">
                             <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label>
                             <div class="relative">
-                                <!-- Update accept attribute -->
-                                <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx,.jpg,.jpeg"
+                                <!-- BỎ multiple, sửa accept -->
+                                <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx"
                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
                                 <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400">
                                     <span id="fileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span>
@@ -175,25 +79,20 @@
                             </div>
                              <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
                         </div>
-
                         <div class="mb-4">
                             <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label>
+                             <!-- XÓA option jpg_pdf -->
                              <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" required>
                                 <option value="" disabled selected class="lang-select-conversion">Select conversion type</option>
                                 <option value="pdf_docx">PDF ↔ DOCX</option>
                                 <option value="pdf_ppt">PDF ↔ PPT/PPTX</option>
-                                <!-- New option -->
-                                <option value="jpg_pdf">PDF ↔ JPG/JPEG</option>
+                                <!-- Đã xóa dòng jpg_pdf -->
                             </select>
-                            <!-- Hidden input to send the *actual* conversion type -->
                             <input type="hidden" name="conversion_type" id="actualConversionType">
                         </div>
-
                         <div class="mt-auto">
-                            <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
-                                <!-- Use smaller loader -->
-                                <div class="loader loader-sm"></div>
-                                <span class="lang-converting ml-2">Converting...</span>
+                              <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
+                                <div class="loader loader-sm"></div> <span class="lang-converting ml-2">Converting...</span>
                             </div>
                             <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold lang-convert-btn">Convert Now</button>
                         </div>
@@ -201,12 +100,63 @@
                 </div>
             </div>
 
-            <!-- Placeholder Cards -->
-            <div class="card"> <div class="card-content"> <div class="card-header-box bg-green-100 text-green-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg> </div> <h3 class="lang-compress-title" style="position: relative; left: 50px; font-size: 1.1rem;">Compress PDF</h3> </div> <p class="card-description lang-compress-desc">Reduce file size while maintaining quality</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+            <!-- 2. PDF <-> Image Card (THAY THẾ Edit PDF, ĐÃ CHUYỂN LÊN ĐÂY) -->
+            <div class="card form-card">
+                <div class="card-content">
+                    <div class="card-header-box bg-orange-100 text-orange-800">
+                        <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /> </svg>
+                        </div>
+                        <h3 class="lang-image-title" style="position: relative; left: 50px; font-size: 1.1rem;"> PDF ↔ Image </h3>
+                   </div>
+                    <p class="card-description lang-image-desc">Convert PDF to images or images to PDF</p>
+                    <!-- Form mới -->
+                    <form id="imageConvertForm" action="/convert_image" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
+                         <div class="mb-4 flex-grow">
+                             <label for="imageFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-image-input-label">Select PDF or Image(s)</label>
+                             <div class="relative">
+                                 <input type="file" name="image_file" id="imageFileInput" accept=".pdf,.jpg,.jpeg"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required multiple>
+                                 <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-orange-400">
+                                     <span id="imageFileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span>
+                                     <span class="bg-orange-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text">Browse</span>
+                                 </div>
+                             </div>
+                              <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB (total)</p>
+                         </div>
+                         <div class="mt-auto">
+                               <div id="imageLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
+                                 <div class="loader loader-sm"></div> <span class="lang-image-converting ml-2">Converting...</span>
+                             </div>
+                             <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn">Convert Now</button>
+                         </div>
+                    </form>
+                 </div>
+            </div>
+
+            <!-- 3. Merge PDF Card (Giữ nguyên) -->
             <div class="card"> <div class="card-content"> <div class="card-header-box bg-purple-100 text-purple-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> </div> <h3 class="lang-merge-title" style="position: relative; left: 50px; font-size: 1.1rem;">Merge PDF</h3> </div> <p class="card-description lang-merge-desc">Combine multiple PDFs into one file</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
-            <div class="card"> <div class="card-content"> <div class="card-header-box bg-yellow-100 text-yellow-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg> </div> <h3 class="lang-split-title" style="position: relative; left: 50px; font-size: 1.1rem;">Split PDF</h3> </div> <p class="card-description lang-split-desc">Extract pages from your PDF</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+
+            <!-- 4. Split PDF Card (Giữ nguyên) -->
+             <div class="card"> <div class="card-content"> <div class="card-header-box bg-yellow-100 text-yellow-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg> </div> <h3 class="lang-split-title" style="position: relative; left: 50px; font-size: 1.1rem;">Split PDF</h3> </div> <p class="card-description lang-split-desc">Extract pages from your PDF</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+
+            <!-- 5. Rotate PDF Card (Giữ nguyên) -->
             <div class="card"> <div class="card-content"> <div class="card-header-box bg-red-100 text-red-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg> </div> <h3 class="lang-rotate-title" style="position: relative; left: 50px; font-size: 1.1rem;">Rotate PDF</h3> </div> <p class="card-description lang-rotate-desc">Change page orientation</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
-            <div class="card"> <div class="card-content"> <div class="card-header-box bg-indigo-100 text-indigo-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg> </div> <h3 class="lang-edit-title" style="position: relative; left: 50px; font-size: 1.1rem;">Edit PDF</h3> </div> <p class="card-description lang-edit-desc">Modify text and images in your PDF</p> <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p> </div> </div>
+
+            <!-- 6. Compress PDF Card (ĐÃ CHUYỂN XUỐNG ĐÂY) -->
+             <div class="card">
+                <div class="card-content">
+                    <div class="card-header-box bg-green-100 text-green-800">
+                        <div class="icon-wrapper">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        </div>
+                        <h3 class="lang-compress-title" style="position: relative; left: 50px; font-size: 1.1rem;">Compress PDF</h3>
+                    </div>
+                    <p class="card-description lang-compress-desc">Reduce file size while maintaining quality</p>
+                    <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
+                </div>
+            </div>
+
         </div> <!-- End grid -->
 
          <footer class="text-center mt-10 py-4 text-sm text-gray-500">
@@ -216,6 +166,7 @@
 
     </div> <!-- End main container -->
 
+    <!-- ========== JAVASCRIPT SECTION (ĐÃ CẬP NHẬT) ========== -->
     <script>
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         let currentTranslations = {};
@@ -223,45 +174,54 @@
 
         // ---- DOM Elements ----
         const languageSelector = document.getElementById('languageSelector');
-        const fileInput = document.getElementById('fileInput');
-        const conversionTypeSelect = document.getElementById('conversionType'); // The dropdown select
-        const actualConversionTypeInput = document.getElementById('actualConversionType'); // Hidden input
-        const fileStatus = document.getElementById('fileStatus');
         const errorAlert = document.getElementById('errorAlert');
         const errorMessage = document.getElementById('errorMessage');
+
+        // Elements for Card 1: Convert PDF/Office
+        const fileInput = document.getElementById('fileInput');
+        const conversionTypeSelect = document.getElementById('conversionType');
+        const actualConversionTypeInput = document.getElementById('actualConversionType');
+        const fileStatus = document.getElementById('fileStatus');
         const convertForm = document.getElementById('convertForm');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const convertButton = document.getElementById('convertButton');
 
-        // ---- Functions ----
-        function showError(errorKeyOrMessage) {
-            let message = errorKeyOrMessage;
-            if (currentTranslations && currentTranslations[errorKeyOrMessage]) {
-                message = currentTranslations[errorKeyOrMessage];
-            } else if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.toLowerCase().includes('failed to fetch')) {
-                 message = currentTranslations['err-fetch-translations'] || 'Could not load language data.';
-            } else if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Chuyển đổi thất bại:')) {
-                // Extract message after "Chuyển đổi thất bại:" from server
-                message = errorKeyOrMessage.substring(21).trim();
-                // Optionally prepend the generic error message
-                 message = `${currentTranslations['err-conversion'] || 'Conversion failed:'} ${message}`;
-            } else if (!currentTranslations[errorKeyOrMessage]) {
-                // Fallback to generic conversion error or the message itself if not a key
-                message = currentTranslations['err-conversion'] || errorKeyOrMessage || 'An error occurred.';
-            }
+        // Elements for Card 2: PDF <-> Image
+        const imageFileInput = document.getElementById('imageFileInput');
+        const imageFileStatus = document.getElementById('imageFileStatus');
+        const imageConvertForm = document.getElementById('imageConvertForm');
+        const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
+        const imageConvertButton = document.getElementById('imageConvertButton');
 
-            errorMessage.textContent = message;
-            const errorTitle = errorAlert.querySelector('.lang-error-title');
+        // ---- Functions ----
+        function showError(errorKeyOrMessage, alertElement = errorAlert, messageElement = errorMessage) {
+             let message = errorKeyOrMessage;
+             // Ưu tiên key dịch lỗi
+             if (currentTranslations && currentTranslations[errorKeyOrMessage]) {
+                 message = currentTranslations[errorKeyOrMessage];
+             }
+             // Xử lý lỗi từ server (bắt đầu bằng "Conversion failed:")
+             else if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Conversion failed:')) {
+                 const detail = errorKeyOrMessage.substring(18).trim();
+                 const genericError = currentTranslations['err-conversion'] || 'Conversion failed:';
+                 message = `${genericError} ${detail}`; // Hiển thị lỗi chung + chi tiết
+             }
+             // Nếu không phải key và không phải lỗi server chuẩn, dùng lỗi chung hoặc chính message đó
+             else if (!currentTranslations[errorKeyOrMessage]) {
+                 message = currentTranslations['err-conversion'] || errorKeyOrMessage || 'An error occurred.';
+             }
+
+            messageElement.textContent = message;
+            const errorTitle = alertElement.querySelector('.lang-error-title');
             if(errorTitle && currentTranslations && currentTranslations['lang-error-title']){
                 errorTitle.textContent = currentTranslations['lang-error-title'];
             }
-            errorAlert.classList.remove('hidden');
-            // Scroll to the error message if it's off-screen
-            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            alertElement.classList.remove('hidden');
+            alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function hideError() {
-            errorAlert.classList.add('hidden');
+        function hideError(alertElement = errorAlert) {
+            alertElement.classList.add('hidden');
         }
 
         function applyTranslations(translations) {
@@ -269,214 +229,168 @@
             document.querySelectorAll('[class*="lang-"]').forEach(element => {
                 const langClass = Array.from(element.classList).find(cls => cls.startsWith('lang-'));
                 if (langClass && translations[langClass]) {
-                    const updateTextContentTags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE']; // Added TITLE
+                    const updateTextContentTags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE'];
                     if (updateTextContentTags.includes(element.tagName)) {
-                        if (element.tagName === 'TITLE') {
-                             element.textContent = translations[langClass] + " - Easy File Conversion"; // Update page title
-                        } else {
-                             element.textContent = translations[langClass];
-                        }
-                    } else if (element.placeholder) {
-                         element.placeholder = translations[langClass];
-                    }
+                        if (element.tagName === 'TITLE') { element.textContent = translations['lang-title'] + " - Easy File Conversion"; } // Cập nhật tiêu đề trang
+                        else { element.textContent = translations[langClass]; }
+                    } else if (element.placeholder) { element.placeholder = translations[langClass]; }
                 }
             });
-            if (fileStatus && translations['file-no-selected']) {
-                fileStatus.dataset.langNoFile = translations['file-no-selected'];
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    fileStatus.textContent = translations['file-no-selected'];
-                }
+            const noFileSelectedText = translations['file-no-selected'] || 'No file selected';
+            if(fileStatus) { // Cập nhật placeholder cho card 1
+                fileStatus.dataset.langNoFile = noFileSelectedText;
+                if (!fileInput.files || fileInput.files.length === 0) { fileStatus.textContent = noFileSelectedText;}
             }
-            // Update static texts (already handled by the loop above using classes)
+             if(imageFileStatus) { // Cập nhật placeholder cho card 2
+                imageFileStatus.dataset.langNoFile = noFileSelectedText;
+                 if (!imageFileInput.files || imageFileInput.files.length === 0) { imageFileStatus.textContent = noFileSelectedText;}
+             }
+             // Cập nhật label cho card 2 (có thể có "(s)")
+            const imageInputLabel = document.querySelector('.lang-image-input-label');
+             if(imageInputLabel && translations['lang-image-input-label']){
+                  imageInputLabel.textContent = translations['lang-image-input-label'];
+                  if (currentLang === 'en' && !imageInputLabel.textContent.toLowerCase().includes('(s)')) {
+                       imageInputLabel.textContent += ' ';
+                  }
+             }
         }
 
         async function updateLanguage(lang) {
-            currentLang = lang;
-            hideError();
+            currentLang = lang; hideError();
             try {
                 const response = await fetch(`${TRANSLATIONS_URL}?lang=${lang}`);
-                if (!response.ok) {
-                    let errorText = `HTTP error! status: ${response.status}`;
-                    try { errorText = await response.text() || errorText; } catch (e) { /* ignore */ }
-                    throw new Error(errorText);
-                }
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                 currentTranslations = await response.json();
                 applyTranslations(currentTranslations);
-                localStorage.setItem('preferred-language', lang);
-                languageSelector.value = lang;
-                document.documentElement.lang = lang;
-            } catch (error) {
-                console.error('Failed to fetch translations:', error);
-                currentTranslations = {};
-                applyTranslations({}); // Reset UI text
-                showError(error.message); // Show fetch error
-            }
+                localStorage.setItem('preferred-language', lang); languageSelector.value = lang; document.documentElement.lang = lang;
+            } catch (error) { console.error('Failed to fetch translations:', error); currentTranslations = {}; applyTranslations({}); showError('err-fetch-translations'); }
         }
 
-        // ---- Event Listeners ----
-        languageSelector.addEventListener('change', function() {
-            updateLanguage(this.value);
-        });
+        // ---- Generic Fetch Function ----
+        function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey) {
+             const formData = new FormData(formElement);
 
+             // --- UI Loading State ---
+             loadingElement.classList.remove('hidden');
+             buttonElement.disabled = true;
+             const convertingTextKey = buttonElement.classList.contains('lang-image-convert-btn') ? 'lang-image-converting' : 'lang-converting';
+             const convertingText = currentTranslations[convertingTextKey] || 'Converting...';
+             buttonElement.innerHTML = `<div class="loader loader-sm !border-t-white !border-l-white !border-b-white !border-r-transparent"></div><span class="ml-2">${convertingText}</span>`;
+
+             // --- Fetch Request ---
+             fetch(endpoint, { method: 'POST', body: formData })
+                 .then(response => {
+                     if (!response.ok) { return response.text().then(text => { throw new Error(text || 'err-conversion'); }); }
+                     const disposition = response.headers.get('Content-Disposition');
+                     let downloadFilename = `converted_file`;
+                     if (disposition && disposition.includes('attachment')) {
+                         const filenameMatch = disposition.match(/filename\*?=['"]?([^'";]+)['"]?/);
+                         if (filenameMatch && filenameMatch[1]) { downloadFilename = decodeURIComponent(filenameMatch[1]); }
+                         else { const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/; const matches = filenameRegex.exec(disposition);
+                                if (matches != null && matches[1]) { downloadFilename = matches[1].replace(/['"]/g, ''); }
+                                else { /* Fallback filename creation needed? Depends on backend consistency */
+                                     // Try to get base name from the first input file in the form
+                                     const inputFileElement = formElement.querySelector('input[type=file]');
+                                     const inputBaseName = inputFileElement?.files[0]?.name.substring(0, inputFileElement.files[0].name.lastIndexOf('.')) || 'file';
+                                     // Determine extension based on endpoint or button key maybe? Crude.
+                                     const outputExt = (endpoint === '/convert_image' && conversionDirection === 'pdf_to_image') ? 'zip' : (endpoint === '/convert_image' ? 'pdf' : 'unknown');
+                                     downloadFilename = `converted_${inputBaseName}.${outputExt}`;
+                                }
+                         }
+                     }
+                     return response.blob().then(blob => ({ blob, downloadFilename }));
+                 })
+                 .then(({ blob, downloadFilename }) => {
+                     const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = downloadFilename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove();
+                     // Optional: Reset form after success
+                     // formElement.reset();
+                     // const statusElement = formElement.querySelector('span[id$="FileStatus"]');
+                     // if (statusElement) statusElement.textContent = statusElement.dataset.langNoFile || 'No file selected';
+                 })
+                 .catch(error => {
+                     console.error(`${endpoint} request failed:`, error);
+                     showError(error.message || 'err-conversion'); // Show error in the main alert
+                 })
+                 .finally(() => {
+                     loadingElement.classList.add('hidden');
+                     buttonElement.disabled = false;
+                     const originalButtonText = currentTranslations[buttonTextKey] || 'Convert Now';
+                     buttonElement.innerHTML = originalButtonText;
+                 });
+         }
+
+
+        // ---- Event Listeners ----
+        languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
+
+        // --- Listeners for Card 1: Convert PDF/Office ---
         fileInput.addEventListener('change', function() {
-             const file = this.files[0];
-             actualConversionTypeInput.value = ''; // Reset actual type on file change
+             actualConversionTypeInput.value = ''; const file = this.files[0];
              if (file) {
-                 fileStatus.textContent = file.name;
-                 const extension = file.name.split('.').pop().toLowerCase();
-                 // Suggest conversion based on extension
-                 if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; } // Default suggestion for PDF
+                 fileStatus.textContent = file.name; const extension = file.name.split('.').pop().toLowerCase();
+                 if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; }
                  else if (extension === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
                  else if (extension === 'ppt' || extension === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
-                 else if (extension === 'jpg' || extension === 'jpeg') { conversionTypeSelect.value = 'jpg_pdf'; }
-                 else { conversionTypeSelect.value = ""; } // Reset if unknown
-             } else {
-                 fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected';
-                 conversionTypeSelect.value = "";
-             }
+                 else { conversionTypeSelect.value = ""; }
+             } else { fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected'; conversionTypeSelect.value = ""; }
              hideError();
         });
+        conversionTypeSelect.addEventListener('change', function() { actualConversionTypeInput.value = ''; hideError(); });
+        convertForm.addEventListener('submit', function(e) {
+             e.preventDefault(); hideError();
+             if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
+             const file = fileInput.files[0];
+             const maxSize = 100 * 1024 * 1024;
+             if (file.size > maxSize) { showError('err-file-too-large'); return; }
+             if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; }
 
-        conversionTypeSelect.addEventListener('change', function() {
-             actualConversionTypeInput.value = ''; // Reset actual type if user manually changes dropdown
+             const selectedConversionValue = conversionTypeSelect.value; const fileName = file.name.toLowerCase(); const extension = fileName.split('.').pop();
+             let finalActualConversionType = '';
+             if (selectedConversionValue === 'pdf_docx') {
+                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_docx'; else if (extension === 'docx') finalActualConversionType = 'docx_to_pdf'; else { showError('err-format-docx'); return; }
+             } else if (selectedConversionValue === 'pdf_ppt') {
+                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_ppt'; else if (extension === 'ppt' || extension === 'pptx') finalActualConversionType = 'ppt_to_pdf'; else { showError('err-format-ppt'); return; }
+             } else { showError('err-select-conversion'); return; }
+             if (!finalActualConversionType) { showError('err-select-conversion'); return; }
+             actualConversionTypeInput.value = finalActualConversionType; // Set the hidden input
+
+             handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn');
+        });
+
+        // --- Listeners for Card 2: PDF <-> Image ---
+        imageFileInput.addEventListener('change', function() {
+             const files = this.files;
+             if (!files || files.length === 0) { imageFileStatus.textContent = imageFileStatus.dataset.langNoFile || 'No file selected'; }
+             else if (files.length === 1) { imageFileStatus.textContent = files[0].name; }
+             else { imageFileStatus.textContent = `${files.length} files selected`; }
              hideError();
          });
+        imageConvertForm.addEventListener('submit', function(e) {
+             e.preventDefault(); hideError();
+             const files = imageFileInput.files;
+             if (!files || files.length === 0) { showError('err-select-file'); return; }
+             let totalSize = 0; for (let i = 0; i < files.length; i++) { totalSize += files[i].size; }
+             const maxSize = 100 * 1024 * 1024;
+             if (totalSize > maxSize) { showError('err-file-too-large'); return; }
 
+             // Client-side validation (backend validates again)
+             const firstFileExt = files[0].name.split('.').pop().toLowerCase();
+             if (firstFileExt === 'pdf') { if (files.length > 1) { showError('err-image-single-pdf'); return; } }
+             else if (firstFileExt === 'jpg' || firstFileExt === 'jpeg') {
+                 if (files.length > 1) {
+                     for (let i = 0; i < files.length; i++) { const ext = files[i].name.split('.').pop().toLowerCase(); if (ext !== 'jpg' && ext !== 'jpeg') { showError('err-image-all-images'); return; } }
+                 }
+             } else { showError('err-image-format'); return; }
 
-        convertForm.addEventListener('submit', function(e) {
-             e.preventDefault();
-             hideError();
-
-            // === Validation ===
-            if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
-            const file = fileInput.files[0];
-            // Max size check (already handled by Flask config, but good for immediate feedback)
-             const maxSize = 100 * 1024 * 1024; // 100 MB
-            if (file.size > maxSize) {
-                 showError('err-file-too-large');
-                 return;
-             }
-            if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; }
-
-            // === Determine ACTUAL conversion type based on file extension and dropdown selection ===
-            const selectedConversionValue = conversionTypeSelect.value; // e.g., 'pdf_docx', 'jpg_pdf'
-            const fileName = file.name.toLowerCase();
-            const extension = fileName.split('.').pop();
-            let finalActualConversionType = ''; // This is what we send to the backend
-
-            if (selectedConversionValue === 'pdf_docx') {
-                if (extension === 'pdf') { finalActualConversionType = 'pdf_to_docx'; }
-                else if (extension === 'docx') { finalActualConversionType = 'docx_to_pdf'; }
-                else { showError('err-format-docx'); return; }
-            } else if (selectedConversionValue === 'pdf_ppt') {
-                 if (extension === 'pdf') { finalActualConversionType = 'pdf_to_ppt'; }
-                 else if (extension === 'ppt' || extension === 'pptx') { finalActualConversionType = 'ppt_to_pdf'; }
-                 else { showError('err-format-ppt'); return; }
-            } else if (selectedConversionValue === 'jpg_pdf') {
-                if (extension === 'pdf') { finalActualConversionType = 'pdf_to_jpg'; } // PDF input -> JPG output
-                else if (extension === 'jpg' || extension === 'jpeg') { finalActualConversionType = 'jpg_to_pdf'; } // JPG input -> PDF output
-                else { showError('err-format-jpg'); return; }
-            } else {
-                 showError('err-select-conversion'); // Should not happen if dropdown has value
-                 return;
-            }
-
-             if (!finalActualConversionType) {
-                 console.error("Could not determine actual conversion type.");
-                 showError('err-select-conversion'); // Fallback error
-                 return;
-            }
-
-             // Set the hidden input value
-             actualConversionTypeInput.value = finalActualConversionType;
-
-            // === Prepare FormData (now includes the actual conversion type) ===
-            const formData = new FormData(convertForm); // Use the form directly
-            // FormData will now include 'file' and 'conversion_type' (from the hidden input)
-
-            // === UI Loading State ===
-            loadingIndicator.classList.remove('hidden');
-            convertButton.disabled = true;
-            const convertingText = currentTranslations['lang-converting'] || 'Converting...';
-            // Use the smaller loader in the button
-            convertButton.innerHTML = `<div class="loader loader-sm !border-t-white !border-l-white !border-b-white !border-r-transparent"></div><span class="ml-2">${convertingText}</span>`; // Adjusted spinner colors for visibility on blue button
-
-
-            // === Fetch Request ===
-            fetch('/convert', { method: 'POST', body: formData })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        // Try to extract a meaningful message, otherwise use generic error
-                        throw new Error(text || 'err-conversion');
-                    });
-                }
-                const disposition = response.headers.get('Content-Disposition');
-                let downloadFilename = `converted_file`;
-                if (disposition && disposition.includes('attachment')) {
-                    const filenameMatch = disposition.match(/filename\*?=['"]?([^'";]+)['"]?/);
-                    if (filenameMatch && filenameMatch[1]) {
-                        downloadFilename = decodeURIComponent(filenameMatch[1]); // Handle URI encoding potentially
-                    } else {
-                        // Simpler regex fallback if the above fails
-                         const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                         const matches = filenameRegex.exec(disposition);
-                         if (matches != null && matches[1]) {
-                              downloadFilename = matches[1].replace(/['"]/g, '');
-                         } else {
-                             // Final fallback: construct name based on what we know
-                             const inputBaseName = file.name.substring(0, file.name.lastIndexOf('.')) || 'file';
-                             const outputExt = finalActualConversionType.split('_to_')[1];
-                             // Special case for pdf_to_jpg -> zip
-                             const finalExt = (outputExt === 'jpg') ? 'zip' : outputExt;
-                             downloadFilename = `converted_${inputBaseName}.${finalExt}`;
-                         }
-                    }
-                }
-                return response.blob().then(blob => ({ blob, downloadFilename }));
-            })
-            .then(({ blob, downloadFilename }) => {
-                // Trigger download
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = downloadFilename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-                 // Optionally reset the form after successful download
-                 // convertForm.reset();
-                 // fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected';
-                 // conversionTypeSelect.value = "";
-                 // actualConversionTypeInput.value = '';
-            })
-            .catch(error => {
-                 console.error('Conversion request failed:', error);
-                 showError(error.message || 'err-conversion'); // Show error message from server or generic
-            })
-            .finally(() => {
-                // Reset UI from loading state
-                loadingIndicator.classList.add('hidden');
-                convertButton.disabled = false;
-                const originalButtonText = currentTranslations['lang-convert-btn'] || 'Convert Now';
-                convertButton.innerHTML = originalButtonText;
-            });
-        });
+             handleFetch(imageConvertForm, imageLoadingIndicator, imageConvertButton, '/convert_image', 'lang-image-convert-btn');
+         });
 
         // ---- Initial Setup ----
         document.addEventListener('DOMContentLoaded', function() {
-            const savedLanguage = localStorage.getItem('preferred-language');
-            // Default to English if browser language is not 'vi'
-            const browserLang = navigator.language.split('-')[0];
-            const initialLang = savedLanguage || (browserLang === 'vi' ? 'vi' : 'en');
-            const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
-
+            const savedLanguage = localStorage.getItem('preferred-language'); const browserLang = navigator.language.split('-')[0]; const initialLang = savedLanguage || (browserLang === 'vi' ? 'vi' : 'en'); const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
             languageSelector.value = finalInitialLang;
             updateLanguage(finalInitialLang);
         });
-
     </script>
 </body>
 </html>
