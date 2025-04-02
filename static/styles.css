@@ -1,97 +1,65 @@
+--- START OF FILE `styles.css` ---
+
+```css
 /* === Body Styles === */
 body {
     background-color: #f0f2f5;
-    /* Gợi ý: Cân nhắc một font stack hiện đại hơn */
-    /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; */
-    /* Font-family được đặt trong thẻ style của HTML, không cần ở đây */
+    /* Font-family được đặt trong thẻ style của HTML */
     min-height: 100vh;
-
-    /* Bỏ flex nếu không cần căn giữa toàn trang */
-    /* display: flex; */
-    /* align-items: center; */
-    /* justify-content: center; */
 }
 
 /* === Card Styles === */
 .card {
     border-radius: 20px;
     overflow: hidden; /* Quan trọng để bo góc hoạt động đúng với nội dung bên trong */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Giảm nhẹ shadow gốc */
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Thêm box-shadow vào transition */
-    background-color: #ffffff; /* Đảm bảo card có nền trắng */
-    border: none; /* Bỏ border mặc định nếu có */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #ffffff;
+    border: none;
     /* Height và display flex được đặt trong thẻ style của HTML */
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); /* Tăng nhẹ shadow khi hover */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
-
-/* === Card Header (Gradient) - Không dùng trong cấu trúc mới === */
-/* .card-header { ... } */
-
-/* === Card Body - Không cần nếu padding đã có trong card-content === */
-/* .card-body { ... } */
-
-/* === Form Styles - Các class này không được sử dụng trong HTML hiện tại === */
-/* .form-label { ... } */
-/* .form-control { ... } */
-/* .form-control:focus { ... } */
-
-/* === Button Styles - Các class này không được sử dụng trong HTML hiện tại === */
-/* .btn-primary { ... } */
-/* .btn-primary:hover, */
-/* .btn-primary:focus { ... } */
-
-/* === Tab Styles - Không dùng trong HTML hiện tại === */
-/* .nav-tabs { ... } */
-
 
 /* === Custom CSS cho Card Header và Title === */
 /* Các style này đã được chuyển vào thẻ <style> trong HTML để ưu tiên */
-
 /* Khung màu bao icon và title */
 .card-header-box {
-    position: relative; /* Cho phép định vị tuyệt đối icon */
-    padding: 1rem 1rem 1rem 3.5rem; /* p-4, nhưng tăng padding trái để chứa icon */
+    position: relative;
+    padding: 1rem 1rem 1rem 3.5rem; /* p-4, tăng padding trái */
     border-radius: 12px; /* rounded-xl */
-    margin-bottom: 0.75rem; /* mb-3: Khoảng cách dưới box */
-    min-height: 60px; /* Chiều cao tối thiểu để icon và text không bị quá sát */
-    display: flex; /* Để căn giữa text theo chiều dọc */
-    align-items: center; /* Căn giữa text theo chiều dọc */
+    margin-bottom: 0.75rem; /* mb-3 */
+    min-height: 45px; /* Chiều cao tối thiểu */
+    display: flex;
+    align-items: center;
 }
  .card-header-box .icon-wrapper {
-     position: absolute; /* Định vị tuyệt đối icon */
-     left: 1rem; /* Cách lề trái của box (bằng padding) */
-     top: 50%; /* Căn giữa theo chiều dọc */
-     transform: translateY(-50%); /* Căn giữa chính xác theo chiều dọc */
+     position: absolute;
+     left: 1rem;
+     top: 50%;
+     transform: translateY(-50%);
+     z-index: 1;
  }
  .card-header-box h3 {
-    /* Các style cơ bản cho H3 */
     font-weight: 600; /* font-semibold */
     line-height: 1.4;
     color: inherit; /* Kế thừa màu từ box */
-    width: 100%; /* Giữ width để dễ định vị */
-
-    /* BỎ text-align: center; ở đây */
-    /* text-align: center; */
-
-    /* Style về font-size và position sẽ được đặt bằng inline style trong HTML */
-    /* font-size: 1.125rem; */ /* text-lg - Bị inline style ghi đè */
-    /* position: relative; */ /* Bị inline style ghi đè */
-    /* left: 0; */ /* Bị inline style ghi đè */
+    width: 100%;
+    font-size: 1.1rem; /* Kích thước H3 */
+    /* position: relative; được đặt inline */
+    /* left: được đặt inline */
 }
-/* Định dạng cho phần mô tả (ngoài box) */
+/* Định dạng cho phần mô tả */
 .card-description {
      font-size: 0.875rem; /* text-sm */
      color: #6b7280; /* text-gray-500 */
      margin-bottom: 1rem; /* mb-4 */
 }
 
-/* === Custom Position Adjustments (Ví dụ - không cần thiết nếu dùng inline style) === */
-/*
-.card-header-box h3.manual-adjust-right { ... }
-.card-header-box h3.manual-adjust-left { ... }
-.card-header-box h3.manual-size-large { ... }
-*/
+/* CSS cho scrollbar được đặt inline trong HTML bằng thẻ <style> */
+```
+
+--- END OF FILE `styles.css` ---

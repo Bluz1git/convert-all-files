@@ -9,36 +9,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         /* CSS Overrides cho Tiếng Việt (vi) */
-html[lang="vi"] .card-header-box h3 {
-    /* Có thể cần điều chỉnh top chung cho tiếng Việt nếu muốn */
-    /* top: -1px; */ /* Ví dụ */
-}
+        html[lang="vi"] .card-header-box h3 {
+            /* Có thể cần điều chỉnh top chung cho tiếng Việt nếu muốn */
+            /* top: -1px; */ /* Ví dụ */
+        }
 
-/* Điều chỉnh LEFT cụ thể cho từng tiêu đề khi là Tiếng Việt */
-/* Thay đổi các giá trị 'left' dưới đây cho phù hợp với giao diện tiếng Việt */
+        /* Điều chỉnh LEFT cụ thể cho từng tiêu đề khi là Tiếng Việt */
+        /* Thay đổi các giá trị 'left' dưới đây cho phù hợp với giao diện tiếng Việt */
 
-html[lang="vi"] .card-header-box .lang-convert-title {
-    left: 25px !important; /* << THAY GIÁ TRỊ NÀY */
-}
-html[lang="vi"] .card-header-box .lang-image-title {
-    left: 60px !important; /* << THAY GIÁ TRỊ NÀY */
-}
-html[lang="vi"] .card-header-box .lang-merge-title {
-    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
-}
-html[lang="vi"] .card-header-box .lang-split-title {
-    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
-}
-html[lang="vi"] .card-header-box .lang-rotate-title {
-    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
-}
-html[lang="vi"] .card-header-box .lang-compress-title {
-    left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
-    /* Bạn vẫn có thể giữ lại top override nếu cần cho chỉ tiếng Việt */
-    /* top: -3px !important; */ /* Ghi đè top inline nếu cần */
-}
+        html[lang="vi"] .card-header-box .lang-convert-title {
+            left: 25px !important; /* << THAY GIÁ TRỊ NÀY */
+        }
+        html[lang="vi"] .card-header-box .lang-image-title {
+            left: 60px !important; /* << THAY GIÁ TRỊ NÀY */
+        }
+        html[lang="vi"] .card-header-box .lang-merge-title {
+            left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+        }
+        html[lang="vi"] .card-header-box .lang-split-title {
+            left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+        }
+        html[lang="vi"] .card-header-box .lang-rotate-title {
+            left: 75px !important; /* << THAY GIÁ TRỊ NÀY */
+        }
+        html[lang="vi"] .card-header-box .lang-compress-title {
+            left: 54px !important; /* << ĐIỀU CHỈNH CHO TỪ NÉN PDF */
+            /* Bạn vẫn có thể giữ lại top override nếu cần cho chỉ tiếng Việt */
+             top: 0px !important; /* Reset top điều chỉnh nếu không cần */
+        }
 
-/* --- KẾT THÚC KHỐI CSS MỚI --- */
+        /* --- KẾT THÚC KHỐI CSS MỚI --- */
+
         /* CSS nội tuyến của bạn */
         body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
@@ -50,8 +51,7 @@ html[lang="vi"] .card-header-box .lang-compress-title {
             padding: 1rem 1rem 1rem 3.5rem; /* Giữ padding trái */
             border-radius: 12px;
             margin-bottom: 0.75rem;
-            /* Tăng min-height để chứa text 2 dòng tốt hơn */
-            min-height: 45px; /* <<<< ĐÃ TĂNG */
+            min-height: 45px; /* Chiều cao tối thiểu */
             display: flex;
             align-items: center;
         }
@@ -67,31 +67,34 @@ html[lang="vi"] .card-header-box .lang-compress-title {
             line-height: 1.4;
             color: inherit;
             width: 100%; /* Cần thiết cho position relative + left hoạt động đúng */
-            /* Chuyển font-size vào đây */
-            font-size: 1.1rem; /* <<<< ĐÃ CHUYỂN VÀO ĐÂY */
-            /* Bỏ text-align: center nếu dùng left để căn chỉnh thủ công */
-            /* text-align: center; */
+            font-size: 1.1rem; /* Kích thước font H3 */
             /* position: relative; phải được đặt inline */
         }
         .card-description { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
-        .form-card { height: auto; }
+        .form-card { height: auto; } /* Cho phép thẻ form co giãn */
         .main-title { font-family: 'Roboto', 'Noto Sans', sans-serif; font-weight: 900; letter-spacing: -0.025em; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
         .loader.loader-sm { width: 16px; height: 16px; border-width: 2px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
         @media (max-width: 640px) { .main-container { padding: 0.5rem; } }
+
+         /* CSS for custom scrollbar */
+         .custom-scrollbar::-webkit-scrollbar { height: 8px; }
+         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
+         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px;}
+         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #bdbdbd; }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <!-- Nav, Header, Alert (giữ nguyên) -->
+        <!-- Nav, Header, Alert -->
          <nav class="bg-white shadow-sm rounded-xl mb-6">
             <div class="max-w-7xl mx-auto px-4 py-2">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex-shrink-0"> <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1> </div>
                     <div class="flex items-center space-x-4">
-                        <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm">
+                        <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <option value="en">English</option> <option value="vi">Tiếng Việt</option>
                         </select>
                     </div>
@@ -99,25 +102,24 @@ html[lang="vi"] .card-header-box .lang-compress-title {
             </div>
         </nav>
         <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF Tools</h2>
-            <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful PDF tools for everyone</p>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF & Office Tools</h2>
+            <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful tools for your documents</p>
         </div>
         <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
              <strong class="font-bold lang-error-title">Error!</strong> <span id="errorMessage" class="block sm:inline">Error occurred.</span>
              <span class="absolute top-0 bottom-0 right-0 px-4 py-3"> <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> <title>Close</title> <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/> </svg> </span>
         </div>
 
-        <!-- ========== GRID SECTION (ĐÃ SẮP XẾP VÀ CHỈNH SỬA) ========== -->
+        <!-- ========== GRID SECTION ========== -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-            <!-- 1. Convert PDF/Office Card (Đã chỉnh style h3) -->
+            <!-- 1. Convert PDF/Office Card -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-blue-100 text-blue-800">
                         <div class="icon-wrapper">
                              <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
                         </div>
-                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
                          <h3 class="lang-convert-title" style="position: relative; left: 32px;"> Convert PDF/Office </h3>
                     </div>
                     <p class="card-description lang-convert-desc">Transform PDF to Word/PPT and vice versa</p>
@@ -127,24 +129,24 @@ html[lang="vi"] .card-header-box .lang-compress-title {
                             <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label>
                             <div class="relative">
                                 <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx"
-                                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
-                                <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400">
+                                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
+                                <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400 transition-colors">
                                     <span id="fileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span>
-                                    <span class="bg-blue-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text">Browse</span>
+                                    <span class="bg-blue-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span>
                                 </div>
                             </div>
                              <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
                         </div>
                         <div class="mb-4">
                             <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label>
-                             <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" required>
+                             <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500 cursor-pointer" required>
                                 <option value="" disabled selected class="lang-select-conversion">Select conversion type</option>
                                 <option value="pdf_docx">PDF ↔ DOCX</option>
                                 <option value="pdf_ppt">PDF ↔ PPT/PPTX</option>
                             </select>
                             <input type="hidden" name="conversion_type" id="actualConversionType">
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-4"> <!-- Added padding-top -->
                               <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
                                 <div class="loader loader-sm"></div> <span class="lang-converting ml-2">Converting...</span>
                             </div>
@@ -154,96 +156,123 @@ html[lang="vi"] .card-header-box .lang-compress-title {
                 </div>
             </div>
 
-            <!-- 2. PDF <-> Image Card (Đã chỉnh style h3) -->
+             <!-- 2. PDF <-> Image Card (Drag & Drop UI) -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-orange-100 text-orange-800">
                         <div class="icon-wrapper">
                             <svg class="h-6 w-6 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /> </svg>
                         </div>
-                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
                         <h3 class="lang-image-title" style="position: relative; left: 55px;"> PDF ↔ Image </h3>
                    </div>
                     <p class="card-description lang-image-desc">Convert PDF to images or images to PDF</p>
+
+                    <!-- START: Modified Form for PDF <-> Image -->
                     <form id="imageConvertForm" action="/convert_image" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
-                         <div class="mb-4 flex-grow">
-                             <label for="imageFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-image-input-label">Select PDF or Image(s)</label>
-                             <div class="relative">
-                                 <input type="file" name="image_file" id="imageFileInput" accept=".pdf,.jpg,.jpeg"
-                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required multiple>
-                                 <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-orange-400">
-                                     <span id="imageFileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span>
-                                     <span class="bg-orange-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text">Browse</span>
-                                 </div>
-                             </div>
-                              <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB (total)</p>
-                         </div>
-                         <div class="mt-auto">
-                               <div id="imageLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
-                                 <div class="loader loader-sm"></div> <span class="lang-image-converting ml-2">Converting...</span>
-                             </div>
-                             <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn">Convert Now</button>
-                         </div>
+                        <div class="mb-4 flex-grow flex flex-col"> <!-- Ensure container grows -->
+                            <label class="block text-sm font-medium text-gray-700 mb-1 lang-image-input-label">Select PDF or Image(s)</label>
+
+                            <!-- Visually Hidden Actual Input -->
+                            <input type="file" name="image_file_input_ignore" id="imageFileInput" accept=".pdf,.jpg,.jpeg"
+                                   class="absolute -left-[9999px] top-auto w-px h-px opacity-0" multiple> <!-- Removed 'required' -->
+
+                            <!-- Drop Zone & File List Area -->
+                            <div id="imageDropZone" class="mt-1 flex flex-col justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-orange-400 bg-gray-50 transition-colors duration-150 flex-grow min-h-[150px]"> <!-- Added min-height -->
+                                <!-- File Pills Container (Scrollable) -->
+                                <div id="imageFilePillsContainer" class="flex flex-nowrap overflow-x-auto pb-2 mb-2 space-x-2 custom-scrollbar" style="min-height: 38px;"> <!-- Adjusted min-height for pills -->
+                                    <!-- File pills will be added here by JS -->
+                                </div>
+
+                                <!-- Placeholder/Instructions (Centered within remaining space) -->
+                                <div id="imageDropZoneInstructions" class="flex flex-col items-center justify-center flex-grow text-center space-y-1">
+                                    <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600 justify-center">
+                                        <label for="imageFileInput" class="relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-orange-500">
+                                            <span class="lang-upload-a-file">Upload files</span>
+                                            <!-- Pointing label to the hidden input -->
+                                        </label>
+                                        <p class="pl-1 lang-drag-drop">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 lang-image-types">PDF, JPG, JPEG up to 100MB total</p>
+                                </div>
+                            </div>
+                             <!-- Hidden input to store validation status or type -->
+                             <input type="hidden" id="imageConversionMode" value="">
+                             <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB (total)</p> <!-- Keep size limit visible -->
+                        </div>
+
+
+                        <!-- Keep Submit Button and Loading Indicator -->
+                        <div class="mt-auto pt-4"> <!-- Added padding-top -->
+                              <div id="imageLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
+                                <div class="loader loader-sm"></div> <span class="lang-image-converting ml-2">Converting...</span>
+                            </div>
+                            <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Convert Now</button>
+                        </div>
                     </form>
+                    <!-- END: Modified Form -->
                  </div>
             </div>
 
-            <!-- 3. Merge PDF Card (Đã chỉnh style h3) -->
+
+            <!-- 3. Merge PDF Card -->
             <div class="card">
                  <div class="card-content">
                      <div class="card-header-box bg-purple-100 text-purple-800">
                          <div class="icon-wrapper">
                              <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                          </div>
-                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
                          <h3 class="lang-merge-title" style="position: relative; left: 70px;">Merge PDF</h3>
                      </div>
                      <p class="card-description lang-merge-desc">Combine multiple PDFs into one file</p>
+                     <div class="flex-grow"></div> <!-- Spacer -->
                      <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
                  </div>
             </div>
 
-            <!-- 4. Split PDF Card (Đã chỉnh style h3) -->
+            <!-- 4. Split PDF Card -->
              <div class="card">
                  <div class="card-content">
                      <div class="card-header-box bg-yellow-100 text-yellow-800">
                          <div class="icon-wrapper">
                              <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19M4.879 4.879L9.757 9.757M14.121 4.879L19 9.757M4.879 14.121L9.757 19M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
                          </div>
-                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
                          <h3 class="lang-split-title" style="position: relative; left: 70px;">Split PDF</h3>
                      </div>
                      <p class="card-description lang-split-desc">Extract pages from your PDF</p>
+                     <div class="flex-grow"></div> <!-- Spacer -->
                      <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
                  </div>
             </div>
 
-            <!-- 5. Rotate PDF Card (Đã chỉnh style h3) -->
+            <!-- 5. Rotate PDF Card -->
             <div class="card">
                  <div class="card-content">
                      <div class="card-header-box bg-red-100 text-red-800">
                          <div class="icon-wrapper">
                              <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
                          </div>
-                         <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc -->
                          <h3 class="lang-rotate-title" style="position: relative; left: 70px;">Rotate PDF</h3>
                      </div>
                      <p class="card-description lang-rotate-desc">Change page orientation</p>
+                     <div class="flex-grow"></div> <!-- Spacer -->
                      <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
                  </div>
             </div>
 
-            <!-- 6. Compress PDF Card (Đã chỉnh style h3 + thêm top) -->
+            <!-- 6. Compress PDF Card -->
              <div class="card">
                 <div class="card-content">
                     <div class="card-header-box bg-green-100 text-green-800">
                         <div class="icon-wrapper">
                             <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                         </div>
-                        <!-- Chỉnh left để căn ngang, thêm top (nếu cần) để căn dọc (VÍ DỤ: top: -2px) -->
-                        <h3 class="lang-compress-title" style="position: relative; left: 54px; top: -2px;">Compress PDF</h3>
+                        <h3 class="lang-compress-title" style="position: relative; left: 54px; top: 0px;">Compress PDF</h3>
                     </div>
                     <p class="card-description lang-compress-desc">Reduce file size while maintaining quality</p>
+                    <div class="flex-grow"></div> <!-- Spacer -->
                     <p class="mt-auto text-center text-xs text-gray-400 pt-4">(Coming Soon)</p>
                 </div>
             </div>
@@ -251,13 +280,13 @@ html[lang="vi"] .card-header-box .lang-compress-title {
         </div> <!-- End grid -->
 
          <footer class="text-center mt-10 py-4 text-sm text-gray-500">
-            © 2025 PDF Tools. Website is building - I hope you will enjoy my website.
-            <p class="text-xs mt-1">Note: PDF to Image conversion requires Poppler library installed on the server.</p>
+            © 2024 PDF Tools. Website is building - I hope you will enjoy my website.
+            <p class="text-xs mt-1">Note: PDF to Image/PPTX conversion requires Poppler library. DOCX/PPTX conversions require LibreOffice.</p>
         </footer>
 
     </div> <!-- End main container -->
 
-    <!-- ========== JAVASCRIPT SECTION (Không thay đổi so với phiên bản trước) ========== -->
+    <!-- ========== JAVASCRIPT SECTION ========== -->
     <script>
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         let currentTranslations = {};
@@ -277,12 +306,17 @@ html[lang="vi"] .card-header-box .lang-compress-title {
         const loadingIndicator = document.getElementById('loadingIndicator');
         const convertButton = document.getElementById('convertButton');
 
-        // Elements for Card 2: PDF <-> Image
-        const imageFileInput = document.getElementById('imageFileInput');
-        const imageFileStatus = document.getElementById('imageFileStatus');
+        // Elements for Card 2: PDF <-> Image (NEW / UPDATED)
+        const imageFileInput = document.getElementById('imageFileInput'); // Hidden input
         const imageConvertForm = document.getElementById('imageConvertForm');
         const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
         const imageConvertButton = document.getElementById('imageConvertButton');
+        const imageDropZone = document.getElementById('imageDropZone');
+        const imageFilePillsContainer = document.getElementById('imageFilePillsContainer');
+        const imageDropZoneInstructions = document.getElementById('imageDropZoneInstructions');
+        const imageConversionModeInput = document.getElementById('imageConversionMode'); // Hidden input for mode
+
+        let selectedImageFiles = []; // Store File objects for image card
 
         // ---- Functions ----
         function showError(errorKeyOrMessage, alertElement = errorAlert, messageElement = errorMessage) {
@@ -293,9 +327,15 @@ html[lang="vi"] .card-header-box .lang-compress-title {
              }
              // Xử lý lỗi từ server (bắt đầu bằng "Conversion failed:")
              else if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Conversion failed:')) {
-                 const detail = errorKeyOrMessage.substring(18).trim();
-                 const genericError = currentTranslations['err-conversion'] || 'Conversion failed:';
-                 message = `${genericError} ${detail}`; // Hiển thị lỗi chung + chi tiết
+                 const detailKeyOrMsg = errorKeyOrMessage.substring(18).trim();
+                 // Check if the detail itself is a translation key
+                 if (currentTranslations && currentTranslations[detailKeyOrMsg]){
+                     message = currentTranslations[detailKeyOrMsg];
+                 } else {
+                    // Otherwise, show generic error + the detail message
+                    const genericError = currentTranslations['err-conversion'] || 'Conversion failed:';
+                    message = `${genericError} ${detailKeyOrMsg}`;
+                 }
              }
              // Nếu không phải key và không phải lỗi server chuẩn, dùng lỗi chung hoặc chính message đó
              else if (!currentTranslations[errorKeyOrMessage]) {
@@ -308,7 +348,8 @@ html[lang="vi"] .card-header-box .lang-compress-title {
                 errorTitle.textContent = currentTranslations['lang-error-title'];
             }
             alertElement.classList.remove('hidden');
-            alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Scroll into view only if it's not already visible? Maybe not needed.
+            // alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function hideError(alertElement = errorAlert) {
@@ -317,35 +358,41 @@ html[lang="vi"] .card-header-box .lang-compress-title {
 
         function applyTranslations(translations) {
             document.documentElement.lang = currentLang;
+            document.title = (translations['lang-title'] || "PDF Tools") + " - Easy File Conversion"; // Update page title
+
             document.querySelectorAll('[class*="lang-"]').forEach(element => {
                 const langClass = Array.from(element.classList).find(cls => cls.startsWith('lang-'));
                 if (langClass && translations[langClass]) {
-                    const updateTextContentTags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE'];
+                    const text = translations[langClass];
+                    const updateTextContentTags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE']; // Title tag handled above
+
                     if (updateTextContentTags.includes(element.tagName)) {
-                        if (element.tagName === 'TITLE') { element.textContent = translations['lang-title'] + " - Easy File Conversion"; } // Cập nhật tiêu đề trang
-                        else { element.textContent = translations[langClass]; }
-                    } else if (element.placeholder) { element.placeholder = translations[langClass]; }
+                         element.textContent = text;
+                    } else if (element.placeholder) {
+                         element.placeholder = text;
+                    } else if (element.dataset.langNoFile !== undefined) { // Handle specific data attribute update
+                        element.dataset.langNoFile = text;
+                        // Update visible text only if it's currently showing the placeholder
+                        if (element.textContent === element.dataset.previousNoFileText) {
+                            element.textContent = text;
+                        }
+                    }
                 }
             });
+
+            // Special handling for the file input status in Card 1
             const noFileSelectedText = translations['file-no-selected'] || 'No file selected';
-            if(fileStatus) { // Cập nhật placeholder cho card 1
-                fileStatus.dataset.langNoFile = noFileSelectedText;
-                if (!fileInput.files || fileInput.files.length === 0) { fileStatus.textContent = noFileSelectedText;}
+            if(fileStatus) {
+                const previousText = fileStatus.dataset.langNoFile || 'No file selected';
+                fileStatus.dataset.langNoFile = noFileSelectedText; // Update the data attribute for future checks
+                fileStatus.dataset.previousNoFileText = previousText; // Store previous for comparison
+                // Only update if it's currently showing the old "no file" text
+                if (!fileInput.files || fileInput.files.length === 0) {
+                   fileStatus.textContent = noFileSelectedText;
+                }
             }
-             if(imageFileStatus) { // Cập nhật placeholder cho card 2
-                imageFileStatus.dataset.langNoFile = noFileSelectedText;
-                 if (!imageFileInput.files || imageFileInput.files.length === 0) { imageFileStatus.textContent = noFileSelectedText;}
-             }
-             // Cập nhật label cho card 2 (có thể có "(s)")
-            const imageInputLabel = document.querySelector('.lang-image-input-label');
-             if(imageInputLabel && translations['lang-image-input-label']){
-                  imageInputLabel.textContent = translations['lang-image-input-label'];
-                  // Bỏ logic thêm (s) nếu không cần thiết nữa
-                  // if (currentLang === 'en' && !imageInputLabel.textContent.toLowerCase().includes('(s)')) {
-                  //      imageInputLabel.textContent += ' ';
-                  // }
-             }
         }
+
 
         async function updateLanguage(lang) {
             currentLang = lang; hideError();
@@ -353,152 +400,533 @@ html[lang="vi"] .card-header-box .lang-compress-title {
                 const response = await fetch(`${TRANSLATIONS_URL}?lang=${lang}`);
                 if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                 currentTranslations = await response.json();
-                applyTranslations(currentTranslations);
-                localStorage.setItem('preferred-language', lang); languageSelector.value = lang; document.documentElement.lang = lang;
-            } catch (error) { console.error('Failed to fetch translations:', error); currentTranslations = {}; applyTranslations({}); showError('err-fetch-translations'); }
+
+                // Ensure fallback text for dynamic UI elements if translation is missing
+                 currentTranslations['lang-upload-a-file'] = currentTranslations['lang-upload-a-file'] || (lang === 'vi' ? 'Tải tệp lên' : 'Upload files');
+                 currentTranslations['lang-drag-drop'] = currentTranslations['lang-drag-drop'] || (lang === 'vi' ? 'hoặc kéo và thả' : 'or drag and drop');
+                 currentTranslations['lang-image-types'] = currentTranslations['lang-image-types'] || (lang === 'vi' ? 'PDF, JPG, JPEG tối đa 100MB tổng' : 'PDF, JPG, JPEG up to 100MB total');
+                 currentTranslations['file-no-selected'] = currentTranslations['file-no-selected'] || (lang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected');
+                 currentTranslations['err-conversion'] = currentTranslations['err-conversion'] || (lang === 'vi' ? 'Đã xảy ra lỗi trong quá trình chuyển đổi.' : 'An error occurred during conversion.');
+
+
+                applyTranslations(currentTranslations); // Apply all translations
+                localStorage.setItem('preferred-language', lang);
+                languageSelector.value = lang;
+                document.documentElement.lang = lang;
+
+                // Re-render file pills if any exist, to update tooltips or other potential text
+                 updateImageFileDisplay(); // Update image card display based on new language potentially affecting validation messages
+
+            } catch (error) {
+                console.error('Failed to fetch translations:', error);
+                // Apply empty translations or defaults if fetch fails?
+                currentTranslations = {}; // Reset translations
+                // applyTranslations({}); // Apply defaults if desired
+                showError('err-fetch-translations'); // Show specific fetch error
+            }
         }
 
-        // ---- Generic Fetch Function ----
-        function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey) {
-             const formData = new FormData(formElement);
-             const conversionDirectionElement = formElement.querySelector('input[name="conversion_type"]'); // For PDF/Office
-             const conversionDirection = conversionDirectionElement ? conversionDirectionElement.value : null;
+
+       // --- Helper Functions for Image Card ---
+
+       function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes' // Handle 0 or non-numeric input
+
+            const k = 1024
+            const dm = decimals < 0 ? 0 : decimals
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+            const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+            // Use Intl.NumberFormat for locale-aware formatting if needed, otherwise basic toFixed
+            // return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+        }
+
+       function validateImageFiles(filesToAdd = []) {
+           // Don't hide error here, let caller decide when to hide
+           // hideError();
+            let currentFiles = [...selectedImageFiles];
+            let combinedFiles = [...currentFiles, ...filesToAdd];
+            let mode = ''; // 'pdf_to_image' or 'image_to_pdf' or 'invalid'
+            let errorKey = null;
+
+            if (combinedFiles.length === 0) {
+                mode = '';
+            } else {
+                const firstFileExt = combinedFiles[0].name.split('.').pop().toLowerCase();
+
+                if (firstFileExt === 'pdf') {
+                    if (combinedFiles.length > 1) {
+                        errorKey = 'err-image-single-pdf';
+                        mode = 'invalid';
+                    } else {
+                        mode = 'pdf_to_image';
+                    }
+                } else if (['jpg', 'jpeg'].includes(firstFileExt)) {
+                    mode = 'image_to_pdf';
+                    for (let i = 0; i < combinedFiles.length; i++) {
+                        const ext = combinedFiles[i].name.split('.').pop().toLowerCase();
+                        if (!['jpg', 'jpeg'].includes(ext)) {
+                            errorKey = 'err-image-all-images';
+                            mode = 'invalid';
+                            break; // Stop checking on first invalid image
+                        }
+                    }
+                } else {
+                    errorKey = 'err-image-format';
+                    mode = 'invalid';
+                }
+            }
+
+            // Check total size ONLY if mode is not already invalid due to type mismatch
+            if (mode !== 'invalid') {
+                let totalSize = combinedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+                const maxSize = 100 * 1024 * 1024; // 100 MB limit
+                if (totalSize > maxSize) {
+                    errorKey = 'err-file-too-large'; // Prioritize size error if validation also fails
+                    mode = 'invalid';
+                }
+            }
+
+
+            imageConversionModeInput.value = mode; // Store the determined mode
+
+            if (errorKey) {
+                 showError(errorKey); // Show the error if validation failed
+                return { valid: false, mode: 'invalid', files: currentFiles }; // Return only previously valid files
+            }
+
+            // If validation passes for the *combined* set, return the combined set
+            // Hide error only if validation passes *and* there are files
+             if (combinedFiles.length > 0) hideError();
+            return { valid: true, mode: mode, files: combinedFiles };
+        }
+
+
+        function addImageFiles(newFiles) {
+            const filesToAdd = Array.from(newFiles).filter(file => {
+                // Basic filter for allowed extensions before full validation
+                 if (!file.name) return false; // Skip if no filename (unlikely but possible)
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['pdf', 'jpg', 'jpeg'].includes(ext);
+            });
+
+            // Filter out duplicates based on name and size before validation
+            const uniqueFilesToAdd = filesToAdd.filter(newFile =>
+                !selectedImageFiles.some(existingFile =>
+                    existingFile.name === newFile.name && existingFile.size === newFile.size
+                )
+            );
+
+             if (uniqueFilesToAdd.length === 0 && filesToAdd.length > 0) {
+                 // console.log("Skipped adding duplicate files.");
+                 // Optionally show a small notification? For now, just return silently.
+                 return;
+             }
+             if (uniqueFilesToAdd.length === 0 && filesToAdd.length === 0){
+                  // Only show error if the original attempt had files but none were valid/unique
+                  if (newFiles.length > 0) {
+                       // Check if it was because all were invalid types or all were duplicates
+                       const invalidTypes = Array.from(newFiles).some(f => !['pdf', 'jpg', 'jpeg'].includes(f.name?.split('.').pop()?.toLowerCase()));
+                       if (invalidTypes) {
+                           showError('err-image-format');
+                       } // Else: all were duplicates, no error needed
+                  }
+                  return; // No valid, unique files to add
+             }
+
+
+            // Validate the combined list
+            const validationResult = validateImageFiles(uniqueFilesToAdd);
+
+            if (validationResult.valid) {
+                selectedImageFiles = validationResult.files; // Update the main list
+                updateImageFileDisplay(); // Update UI
+                // Hide error might be called inside validateImageFiles on success, ensure it is
+                 if (selectedImageFiles.length > 0) hideError();
+            } else {
+                 // Validation failed, keep the old list and show error (already done in validateImageFiles)
+                 console.warn("Validation failed. Files not added.");
+                 updateImageFileDisplay(); // Still update display to reflect the (unchanged) list and potentially disable button
+            }
+        }
+
+        function removeImageFile(index) {
+            selectedImageFiles.splice(index, 1); // Remove the file from the array
+            // Re-validate after removal
+            const validationResult = validateImageFiles([]); // Validate the remaining list
+            // The mode is updated inside validateImageFiles
+            // Error message is shown/hidden inside validateImageFiles
+            updateImageFileDisplay(); // Update display to remove the pill and adjust button state
+        }
+
+        function updateImageFileDisplay() {
+            imageFilePillsContainer.innerHTML = ''; // Clear existing pills
+            const isValidState = imageConversionModeInput.value !== '' && imageConversionModeInput.value !== 'invalid';
+
+            if (selectedImageFiles.length > 0) {
+                imageDropZoneInstructions.classList.add('hidden'); // Hide instructions
+                selectedImageFiles.forEach((file, index) => {
+                    const pill = document.createElement('div');
+                    pill.className = 'flex-shrink-0 flex items-center justify-between bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full space-x-2 whitespace-nowrap';
+                    const fileName = file.name || 'unknown';
+                    const fileSize = formatBytes(file.size || 0);
+                    const title = `${fileName} (${fileSize})`;
+                    pill.innerHTML = `
+                        <span class="truncate max-w-[150px] sm:max-w-[200px]" title="${title}">${fileName}</span>
+                        <button type="button" class="ml-1 text-orange-600 hover:text-orange-800 focus:outline-none ring-offset-1 focus:ring-2 focus:ring-orange-500 rounded-sm" onclick="removeImageFile(${index})" title="Remove file">
+                            <svg class="w-3 h-3 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    `;
+                    imageFilePillsContainer.appendChild(pill);
+                });
+                // Scroll to the end of the pills list smoothly only if adding files caused overflow
+                // Check if scrollWidth > clientWidth
+                if (imageFilePillsContainer.scrollWidth > imageFilePillsContainer.clientWidth) {
+                    imageFilePillsContainer.scrollLeft = imageFilePillsContainer.scrollWidth;
+                }
+
+                imageConvertButton.disabled = !isValidState; // Enable/disable based on validation
+
+            } else {
+                imageDropZoneInstructions.classList.remove('hidden'); // Show instructions
+                imageConvertButton.disabled = true; // Disable button if no files
+                imageConversionModeInput.value = ''; // Reset mode
+                hideError(); // Hide any previous validation errors when list is empty
+            }
+
+            // If state is invalid BUT there are files, keep button disabled but don't hide error
+            if (!isValidState && selectedImageFiles.length > 0) {
+                 imageConvertButton.disabled = true;
+            }
+        }
+
+
+        // ===== MODIFIED handleFetch =====
+        function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey, formData = null) {
+            // If formData is not provided, create it from the formElement
+            let isManualFormData = false;
+            if (!formData) {
+                if (!formElement) {
+                    console.error("handleFetch requires either a formElement or formData.");
+                    // Restore button state (basic)
+                    loadingElement.classList.add('hidden');
+                    buttonElement.disabled = false;
+                    buttonElement.innerHTML = currentTranslations[buttonTextKey] || 'Convert Now';
+                    return; // Exit if no data source
+                }
+                formData = new FormData(formElement);
+            } else {
+                 isManualFormData = true; // Flag that we received formData directly (likely image card)
+            }
+
+
+            // Determine conversion direction for /convert endpoint (only if not manual FormData)
+            let conversionDirection = null;
+            if (!isManualFormData && formElement) {
+                 const conversionDirectionElement = formElement.querySelector('input[name="conversion_type"]');
+                 conversionDirection = conversionDirectionElement ? conversionDirectionElement.value : null;
+            }
 
              // --- UI Loading State ---
              loadingElement.classList.remove('hidden');
              buttonElement.disabled = true;
-             const convertingTextKey = buttonElement.classList.contains('lang-image-convert-btn') ? 'lang-image-converting' : 'lang-converting';
+             const convertingTextKey = buttonElement.id === 'imageConvertButton' ? 'lang-image-converting' : 'lang-converting';
              const convertingText = currentTranslations[convertingTextKey] || 'Converting...';
-             buttonElement.innerHTML = `<div class="loader loader-sm !border-t-white !border-l-white !border-b-white !border-r-transparent"></div><span class="ml-2">${convertingText}</span>`;
+             buttonElement.innerHTML = `<div class="loader loader-sm inline-block !border-t-white !border-l-white !border-b-white !border-r-transparent mr-2 align-middle"></div><span class="inline-block align-middle">${convertingText}</span>`;
+
 
              // --- Fetch Request ---
              fetch(endpoint, { method: 'POST', body: formData })
                  .then(response => {
-                     if (!response.ok) { return response.text().then(text => { throw new Error(text || 'err-conversion'); }); }
+                      if (!response.ok) {
+                           // Try to get the error message text from the response body
+                           return response.text().then(text => {
+                                // Prepend "Conversion failed:" for consistent error handling downstream
+                                throw new Error(`Conversion failed: ${text || 'err-conversion'}`);
+                           });
+                       }
+                       return response; // Pass the successful response along
+                 })
+                 .then(response => { // Separate step for blob/disposition processing
                      const disposition = response.headers.get('Content-Disposition');
-                     let downloadFilename = `converted_file`;
+                     let downloadFilename = `converted_file`; // Default filename
+
                      if (disposition && disposition.includes('attachment')) {
-                         const filenameMatch = disposition.match(/filename\*?=['"]?([^'";]+)['"]?/);
-                         if (filenameMatch && filenameMatch[1]) { downloadFilename = decodeURIComponent(filenameMatch[1]); }
-                         else { const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/; const matches = filenameRegex.exec(disposition);
-                                if (matches != null && matches[1]) { downloadFilename = matches[1].replace(/['"]/g, ''); }
-                                else { /* Fallback filename creation */
+                         // Try to parse filename* first (handles Unicode)
+                         const filenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                         if (filenameMatch && filenameMatch[1]) {
+                             try {
+                                 downloadFilename = decodeURIComponent(filenameMatch[1]);
+                             } catch (e) {
+                                 console.warn("Could not decode filename*:", filenameMatch[1]);
+                                 // Fallback to filename= if decoding fails or filename* not present
+                                 const filenameRegex = /filename="?([^"]+)"?/i;
+                                 const matches = filenameRegex.exec(disposition);
+                                 if (matches != null && matches[1]) {
+                                     downloadFilename = matches[1];
+                                 }
+                             }
+                         } else {
+                             // Fallback to simple filename=
+                             const filenameRegex = /filename="?([^"]+)"?/i;
+                             const matches = filenameRegex.exec(disposition);
+                             if (matches != null && matches[1]) {
+                                 downloadFilename = matches[1];
+                             } else {
+                                 // --- Final fallback: Generate filename ---
+                                 let inputBaseName = 'file';
+                                 if (endpoint === '/convert_image' && selectedImageFiles.length > 0) {
+                                     inputBaseName = selectedImageFiles[0].name.substring(0, selectedImageFiles[0].name.lastIndexOf('.')) || 'file';
+                                 } else if (formElement) {
                                      const inputFileElement = formElement.querySelector('input[type=file]');
-                                     let inputBaseName = 'file';
                                      if (inputFileElement && inputFileElement.files && inputFileElement.files.length > 0) {
                                         inputBaseName = inputFileElement.files[0].name.substring(0, inputFileElement.files[0].name.lastIndexOf('.')) || 'file';
                                      }
-                                     let outputExt = 'unknown';
-                                     // Determine extension based on endpoint or conversion type
-                                     if (endpoint === '/convert') {
-                                         if (conversionDirection === 'pdf_to_docx') outputExt = 'docx';
-                                         else if (conversionDirection === 'docx_to_pdf') outputExt = 'pdf';
-                                         else if (conversionDirection === 'pdf_to_ppt') outputExt = 'pptx';
-                                         else if (conversionDirection === 'ppt_to_pdf') outputExt = 'pdf';
-                                     } else if (endpoint === '/convert_image') {
-                                         // Backend determines if it's pdf_to_image (zip) or image_to_pdf (pdf)
-                                         // We can infer from the first file type, but backend header is better
-                                         // Crude guess based on first input file for fallback
-                                         const firstFileExt = inputFileElement?.files[0]?.name.split('.').pop().toLowerCase();
-                                         outputExt = (firstFileExt === 'pdf') ? 'zip' : 'pdf';
-                                     }
-                                     downloadFilename = `converted_${inputBaseName}.${outputExt}`;
-                                }
+                                 }
+
+                                 let outputExt = 'unknown';
+                                 if (endpoint === '/convert') {
+                                     if (conversionDirection === 'pdf_to_docx') outputExt = 'docx';
+                                     else if (conversionDirection === 'docx_to_pdf') outputExt = 'pdf';
+                                     else if (conversionDirection === 'pdf_to_ppt') outputExt = 'pptx';
+                                     else if (conversionDirection === 'ppt_to_pdf') outputExt = 'pdf';
+                                 } else if (endpoint === '/convert_image') {
+                                      const mode = imageConversionModeInput.value;
+                                      outputExt = (mode === 'pdf_to_image') ? 'zip' : 'pdf';
+                                 }
+                                 downloadFilename = `converted_${inputBaseName}.${outputExt}`;
+                                 logger.warn("Could not parse filename from Content-Disposition, generated:", downloadFilename)
+                             }
                          }
                      }
                      return response.blob().then(blob => ({ blob, downloadFilename }));
                  })
                  .then(({ blob, downloadFilename }) => {
-                     const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = downloadFilename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove();
-                     // Optional: Reset form after success
-                     // formElement.reset();
-                     // const statusElement = formElement.querySelector('span[id$="FileStatus"]');
-                     // if (statusElement) statusElement.textContent = statusElement.dataset.langNoFile || 'No file selected';
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.style.display = 'none';
+                      a.href = url;
+                      a.download = downloadFilename;
+                      document.body.appendChild(a);
+                      a.click();
+                      window.URL.revokeObjectURL(url);
+                      a.remove();
+
+                     // Clear/Reset form based on which one was submitted
+                     if (endpoint === '/convert_image') {
+                         selectedImageFiles = []; // Clear the JS array
+                         updateImageFileDisplay(); // Update UI (clears pills, disables button)
+                     } else if (formElement) {
+                          // Reset the PDF/Office form
+                          formElement.reset();
+                          // Explicitly update the UI elements of that form
+                          if (fileStatus) {
+                              fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected';
+                          }
+                          if(conversionTypeSelect) conversionTypeSelect.value = "";
+                          if(actualConversionTypeInput) actualConversionTypeInput.value = "";
+                           hideError(); // Hide errors on success for this card too
+                     }
                  })
                  .catch(error => {
-                     console.error(`${endpoint} request failed:`, error);
-                     showError(error.message || 'err-conversion'); // Show error in the main alert
+                    console.error(`${endpoint} request failed:`, error);
+                    // Error message is processed and shown by showError
+                    showError(error.message || 'err-conversion');
                  })
                  .finally(() => {
                      loadingElement.classList.add('hidden');
-                     buttonElement.disabled = false;
                      const originalButtonText = currentTranslations[buttonTextKey] || 'Convert Now';
                      buttonElement.innerHTML = originalButtonText;
-                 });
-         }
 
+                     // Final button state check
+                     if (endpoint === '/convert_image') {
+                         // State is handled by updateImageFileDisplay (called in .then() or if error occurs)
+                         // Ensure button is disabled if list is empty or invalid after the operation
+                          updateImageFileDisplay();
+                     } else {
+                          // Re-enable the Convert button for PDF/Office card (assuming reset might clear selection)
+                          buttonElement.disabled = false; // Or check fileInput state if necessary
+                     }
+                 });
+        }
 
         // ---- Event Listeners ----
         languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
 
         // --- Listeners for Card 1: Convert PDF/Office ---
         fileInput.addEventListener('change', function() {
-             actualConversionTypeInput.value = ''; const file = this.files[0];
+             actualConversionTypeInput.value = ''; // Reset dependent hidden input
+             const file = this.files[0];
+             const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
              if (file) {
-                 fileStatus.textContent = file.name; const extension = file.name.split('.').pop().toLowerCase();
+                 fileStatus.textContent = file.name;
+                 const extension = file.name.split('.').pop().toLowerCase();
+                 // Pre-select conversion type based on extension
                  if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; }
                  else if (extension === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
                  else if (extension === 'ppt' || extension === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
-                 else { conversionTypeSelect.value = ""; }
-             } else { fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected'; conversionTypeSelect.value = ""; }
-             hideError();
+                 else {
+                      conversionTypeSelect.value = ""; // No valid default
+                      showError('err-format-docx'); // Or a more generic "invalid type for this tool"
+                      fileStatus.textContent = noFileText; // Reset text if invalid
+                      this.value = null; // Clear the invalid file selection
+                 }
+                 if (conversionTypeSelect.value) hideError(); // Hide error if a valid type was detected
+             } else {
+                 fileStatus.textContent = noFileText;
+                 conversionTypeSelect.value = "";
+                  hideError();
+             }
         });
-        conversionTypeSelect.addEventListener('change', function() { actualConversionTypeInput.value = ''; hideError(); });
+
+        conversionTypeSelect.addEventListener('change', function() {
+             actualConversionTypeInput.value = ''; // Reset hidden input when manual selection changes
+             hideError();
+             // Optional: Validate if the selected file matches the new conversion type?
+        });
+
         convertForm.addEventListener('submit', function(e) {
              e.preventDefault(); hideError();
              if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
              const file = fileInput.files[0];
-             const maxSize = 100 * 1024 * 1024;
+             const maxSize = 100 * 1024 * 1024; // 100 MB
              if (file.size > maxSize) { showError('err-file-too-large'); return; }
              if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; }
 
-             const selectedConversionValue = conversionTypeSelect.value; const fileName = file.name.toLowerCase(); const extension = fileName.split('.').pop();
+             const selectedConversionValue = conversionTypeSelect.value;
+             const fileName = file.name.toLowerCase();
+             const extension = fileName.split('.').pop();
              let finalActualConversionType = '';
+
+             // Determine the specific conversion direction (e.g., pdf_to_docx)
              if (selectedConversionValue === 'pdf_docx') {
-                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_docx'; else if (extension === 'docx') finalActualConversionType = 'docx_to_pdf'; else { showError('err-format-docx'); return; }
+                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_docx';
+                 else if (extension === 'docx') finalActualConversionType = 'docx_to_pdf';
+                 else { showError('err-format-docx'); return; } // File type doesn't match selection
              } else if (selectedConversionValue === 'pdf_ppt') {
-                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_ppt'; else if (extension === 'ppt' || extension === 'pptx') finalActualConversionType = 'ppt_to_pdf'; else { showError('err-format-ppt'); return; }
-             } else { showError('err-select-conversion'); return; }
-             if (!finalActualConversionType) { showError('err-select-conversion'); return; }
+                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_ppt';
+                 else if (extension === 'ppt' || extension === 'pptx') finalActualConversionType = 'ppt_to_pdf';
+                 else { showError('err-format-ppt'); return; } // File type doesn't match selection
+             } else {
+                 showError('err-select-conversion'); // Should not happen if select is required
+                 return;
+             }
+
+             if (!finalActualConversionType) { // Should have been caught above, but double-check
+                 showError('err-select-conversion');
+                 return;
+             }
              actualConversionTypeInput.value = finalActualConversionType; // Set the hidden input
 
+             // Call fetch helper
              handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn');
         });
 
         // --- Listeners for Card 2: PDF <-> Image ---
-        imageFileInput.addEventListener('change', function() {
-             const files = this.files;
-             if (!files || files.length === 0) { imageFileStatus.textContent = imageFileStatus.dataset.langNoFile || 'No file selected'; }
-             else if (files.length === 1) { imageFileStatus.textContent = files[0].name; }
-             else { imageFileStatus.textContent = `${files.length} files selected`; }
-             hideError();
+
+        // Trigger hidden input when drop zone background or instructions label is clicked
+        imageDropZone.addEventListener('click', (e) => {
+             // Prevent triggering if click was on a remove button or the pills container itself
+             if (e.target.closest('button') || e.target === imageFilePillsContainer || imageFilePillsContainer.contains(e.target)) {
+                 return;
+             }
+              // Trigger if click is on the dropzone background or the label within instructions
+             if (e.target === imageDropZone || e.target.closest('label[for="imageFileInput"]') || imageDropZoneInstructions.contains(e.target)) {
+                imageFileInput.click();
+             }
          });
+
+        // Handle file selection via browse button (hidden input)
+        imageFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                addImageFiles(e.target.files);
+            }
+            // Reset the input value to allow selecting the same file again after removing it
+            e.target.value = null;
+        });
+
+        // Drag and Drop Listeners
+        imageDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Necessary to allow drop
+            imageDropZone.classList.add('border-orange-500', 'bg-orange-50');
+        });
+        imageDropZone.addEventListener('dragleave', (e) => {
+            // Add a check to prevent flickering when dragging over child elements
+            if (!imageDropZone.contains(e.relatedTarget)) {
+                imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+            }
+        });
+        imageDropZone.addEventListener('drop', (e) => {
+            e.preventDefault(); // Prevent browser default handling (opening file)
+            imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                addImageFiles(files);
+            }
+        });
+
+        // Image Form Submit Listener
         imageConvertForm.addEventListener('submit', function(e) {
-             e.preventDefault(); hideError();
-             const files = imageFileInput.files;
-             if (!files || files.length === 0) { showError('err-select-file'); return; }
-             let totalSize = 0; for (let i = 0; i < files.length; i++) { totalSize += files[i].size; }
-             const maxSize = 100 * 1024 * 1024;
-             if (totalSize > maxSize) { showError('err-file-too-large'); return; }
+             e.preventDefault(); // Prevent default form submission
+             // Error is hidden by validateImageFiles if successful
 
-             // Client-side validation (backend validates again)
-             const firstFileExt = files[0].name.split('.').pop().toLowerCase();
-             if (firstFileExt === 'pdf') { if (files.length > 1) { showError('err-image-single-pdf'); return; } }
-             else if (firstFileExt === 'jpg' || firstFileExt === 'jpeg') {
-                 if (files.length > 1) {
-                     for (let i = 0; i < files.length; i++) { const ext = files[i].name.split('.').pop().toLowerCase(); if (ext !== 'jpg' && ext !== 'jpeg') { showError('err-image-all-images'); return; } }
-                 }
-             } else { showError('err-image-format'); return; }
+             if (selectedImageFiles.length === 0) {
+                 showError('err-select-file');
+                 return;
+             }
 
-             handleFetch(imageConvertForm, imageLoadingIndicator, imageConvertButton, '/convert_image', 'lang-image-convert-btn');
-         });
+             // Re-validate before submitting, just in case state is somehow inconsistent
+             const validationResult = validateImageFiles([]); // Validate current list
+             if (!validationResult.valid) {
+                  console.error("Submit blocked: Invalid file selection state.");
+                  // Error message should already be shown by validateImageFiles
+                  return;
+             }
+
+             // --- Create FormData Manually ---
+             const formData = new FormData();
+             selectedImageFiles.forEach(file => {
+                 // Use the key the backend expects ('image_file')
+                 formData.append('image_file', file, file.name); // Add filename explicitly
+             });
+
+             // --- Call handleFetch with FormData ---
+             handleFetch(
+                 null, // Pass null for formElement as we are sending formData
+                 imageLoadingIndicator,
+                 imageConvertButton,
+                 '/convert_image',
+                 'lang-image-convert-btn',
+                 formData // Pass the manually created FormData
+             );
+        });
+
 
         // ---- Initial Setup ----
         document.addEventListener('DOMContentLoaded', function() {
-            const savedLanguage = localStorage.getItem('preferred-language'); const browserLang = navigator.language.split('-')[0]; const initialLang = savedLanguage || (browserLang === 'vi' ? 'vi' : 'en'); const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
+            const savedLanguage = localStorage.getItem('preferred-language');
+            const browserLang = navigator.language.split('-')[0];
+            const initialLang = savedLanguage || (browserLang === 'vi' ? 'vi' : 'en');
+            // Ensure initialLang is one of the supported languages
+            const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
             languageSelector.value = finalInitialLang;
-            updateLanguage(finalInitialLang);
+
+            // Update language and THEN initialize UI elements that depend on translations/state
+            updateLanguage(finalInitialLang).then(() => {
+                 // Initialize button state and display for image card after language load
+                 updateImageFileDisplay();
+                 // Initialize Card 1 file status text
+                 const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
+                 if (!fileInput.files || fileInput.files.length === 0) {
+                    fileStatus.textContent = noFileText;
+                 }
+            });
         });
     </script>
 </body>
 </html>
+```
+
+--- END OF FILE `index.html` ---
