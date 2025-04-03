@@ -17,54 +17,51 @@ RUN apt-get update && \
         # Python and pip
         python3 \
         python3-pip \
-        # python3-venv # Removed: Not strictly necessary inside the final container image
-        # LibreOffice and dependencies (Keep this comprehensive list)
+        # LibreOffice and dependencies
         libreoffice \
         libreoffice-writer \
         libreoffice-impress \
         libreoffice-draw \
         libreoffice-java-common \
-        # libreoffice-base # Removed: Likely not needed for conversion
         libreoffice-core \
         libreoffice-common \
         libreoffice-calc \
-        # unoconv # Removed: soffice is used directly, reduces minor dependency clutter
-        # Java runtime (Keep: often helps LibreOffice)
+        # Java runtime
         openjdk-11-jre-headless \
-        # --- FONT INSTALLATION --- (Keep all these)
+        # --- FONT INSTALLATION ---
         ttf-mscorefonts-installer \
         fonts-liberation \
         fonts-dejavu \
         # Utility to manage font cache
         fontconfig \
-        # -------------------------
-        # PDF and image processing
+        # --- PDF and image processing ---
         poppler-utils \
-        # tesseract-ocr # Removed: Keep comment if OCR might be needed later, but remove package for now
-        # X11 dependencies for headless LibreOffice (Keep all these)
+        # --- X11 dependencies for headless LibreOffice ---
         libsm6 \
         libxext6 \
         libxrender1 \
         libgl1 \
-        # Needed for some font rendering/management (Keep)
+        # --- Needed for font rendering/management ---
         libfreetype6 \
-        # Curl (Keep: Used in HEALTHCHECK)
+        # --- Needed for python-magic (ADDED) ---
+        libmagic1 \
+        # --- Curl (Used in HEALTHCHECK) ---
         curl \
     # Clean up apt cache
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    # --- UPDATE FONT CACHE --- (Very Important! Keep)
+    # --- UPDATE FONT CACHE ---
     && fc-cache -f -v \
-    # -------------------------
-    # Create necessary directories
+    # --- Create necessary directories ---
     && mkdir -p /app/templates /app/static /app/uploads \
-    # Set proper permissions (Keep 755)
+    # Set proper permissions
     && chmod 755 /app/uploads
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
 # Install Python dependencies
+# Consider adding --require-hashes if you generate a hash file for extra security
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir -r requirements.txt
 
@@ -73,23 +70,26 @@ COPY templates/ /app/templates/
 COPY static/ /app/static/
 COPY app.py /app/
 
-# Set environment variables for potential LibreOffice use (good practice - Keep)
+# Set environment variables for potential LibreOffice use
 ENV HOME=/tmp
-# Optional: Isolate user profile for LibreOffice (Keep commented unless needed)
+# Optional: Isolate user profile for LibreOffice
 # ENV LIBREOFFICE_PROFILE=/tmp/libreoffice_profile
-# Note: PATH update (Keep: doesn't hurt, good backup)
+# Note: PATH update
 ENV PATH="/usr/lib/libreoffice/program:$PATH"
 
-# Health check (Keep - Looks good)
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5003/health || exit 1
-
-# Expose the Flask port (Keep)
+# Expose the Flask port
 EXPOSE 5003
 
-# Run the application (Keep)
-# Using Gunicorn for production is recommended over Flask's built-in server
-# Add gunicorn to requirements.txt if you use this
-# CMD ["gunicorn", "--bind", "0.0.0.0:5003", "--workers", "2", "--threads", "4", "--timeout", "120", "app:app"]
-# For now, keep the simple python3 command:
-CMD ["python3", "app.py"]
+# Run the application using Waitress
+# Ensure waitress is in requirements.txt (it is)
+# Using 0.0.0.0 to bind to all interfaces inside the container
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=5003", "--threads=8", "app:app"]
+
+# Health check (Adjusted to use the correct port and assume waitress startup time)
+# Removed curl dependency from healthcheck to simplify, relying on waitress/app exit code
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+#   CMD exit 0 # Simplified - rely on container orchestration health checks if possible
+
+# If you need a curl based healthcheck, ensure curl is installed (it is) and adjust host/port:
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+   CMD curl -f http://localhost:5003/ || exit 1 # Check index route
