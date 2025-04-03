@@ -1,6 +1,3 @@
---- START OF FILE `styles.css` ---
-
-```css
 /* === Body Styles === */
 body {
     background-color: #f0f2f5;
@@ -60,6 +57,3 @@ body {
 }
 
 /* CSS cho scrollbar được đặt inline trong HTML bằng thẻ <style> */
-```
-
---- END OF FILE `styles.css` ---

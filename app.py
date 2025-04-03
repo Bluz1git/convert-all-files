@@ -415,14 +415,15 @@ def get_translations():
             'err-libreoffice': 'Conversion failed (Processing engine error).', 'err-conversion-timeout': 'Conversion timed out.',
             'err-poppler-missing': 'PDF processing library (Poppler) missing or failed.', 'err-pdf-corrupt': 'Could not process PDF (corrupt file?).',
             'err-unknown': 'An unexpected error occurred. Please try again later.',
-            # --- ADDED / MODIFIED Error Keys ---
             'err-csrf-invalid': 'Security validation failed (CSRF). Please refresh and try again.',
             'err-rate-limit-exceeded': 'Too many requests. Please wait a moment and try again.',
             'err-invalid-mime-type': 'Invalid file type detected. The file content does not match the expected format.',
             'err-invalid-mime-type-image': 'Invalid image type detected. Only JPEG files are allowed for Image-to-PDF.',
-             'err-pdf-protected': 'Cannot process password-protected PDF.',
-             'err-poppler-check-failed': 'Failed to get PDF info (Poppler check).',
-             'err-conversion-img': 'Failed to convert/extract images from PDF.'
+            'err-pdf-protected': 'Cannot process password-protected PDF.',
+            'err-poppler-check-failed': 'Failed to get PDF info (Poppler check).',
+            'err-conversion-img': 'Failed to convert/extract images from PDF.',
+            # --- ADDED ---
+            'lang-clear-all': 'Clear All'
         },
         'vi': {
             # --- Existing Translations ---
@@ -448,14 +449,15 @@ def get_translations():
             'err-libreoffice': 'Chuyển đổi thất bại (Lỗi bộ xử lý).', 'err-conversion-timeout': 'Quá trình chuyển đổi quá thời gian.',
             'err-poppler-missing': 'Thiếu hoặc lỗi thư viện xử lý PDF (Poppler).', 'err-pdf-corrupt': 'Không thể xử lý PDF (tệp lỗi?).',
             'err-unknown': 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.',
-             # --- ADDED / MODIFIED Error Keys ---
             'err-csrf-invalid': 'Xác thực bảo mật thất bại (CSRF). Vui lòng tải lại trang và thử lại.',
             'err-rate-limit-exceeded': 'Quá nhiều yêu cầu. Vui lòng đợi một lát và thử lại.',
             'err-invalid-mime-type': 'Phát hiện loại tệp không hợp lệ. Nội dung tệp không khớp định dạng mong đợi.',
             'err-invalid-mime-type-image': 'Phát hiện loại ảnh không hợp lệ. Chỉ cho phép tệp JPEG để chuyển đổi Ảnh sang PDF.',
-             'err-pdf-protected': 'Không thể xử lý PDF được bảo vệ bằng mật khẩu.',
-             'err-poppler-check-failed': 'Không thể lấy thông tin PDF (lỗi kiểm tra Poppler).',
-             'err-conversion-img': 'Không thể chuyển đổi/trích xuất ảnh từ PDF.'
+            'err-pdf-protected': 'Không thể xử lý PDF được bảo vệ bằng mật khẩu.',
+            'err-poppler-check-failed': 'Không thể lấy thông tin PDF (lỗi kiểm tra Poppler).',
+            'err-conversion-img': 'Không thể chuyển đổi/trích xuất ảnh từ PDF.',
+            # --- ADDED ---
+            'lang-clear-all': 'Xóa tất cả'
         }
     }
     lang = request.args.get('lang', 'en')
@@ -1025,5 +1027,3 @@ if __name__ == '__main__':
             logger.critical("Waitress not found! Cannot start production server.")
             logger.warning("FALLING BACK TO FLASK DEVELOPMENT SERVER (NOT RECOMMENDED FOR PRODUCTION).")
             app.run(host=host, port=port, debug=False, threaded=True) # Run without debug/reloader
-
-# --- END OF FILE app.py ---
