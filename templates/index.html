@@ -146,6 +146,9 @@
                             </select>
                             <input type="hidden" name="conversion_type" id="actualConversionType">
                         </div>
+                        <!-- ***** START CSRF TOKEN ***** -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- ***** END CSRF TOKEN ***** -->
                         <div class="mt-auto pt-4"> <!-- Added padding-top -->
                               <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600">
                                 <div class="loader loader-sm"></div> <span class="lang-converting ml-2">Converting...</span>
@@ -203,6 +206,9 @@
                              <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB (total)</p> <!-- Keep size limit visible -->
                         </div>
 
+                        <!-- ***** START CSRF TOKEN ***** -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- ***** END CSRF TOKEN ***** -->
 
                         <!-- Keep Submit Button and Loading Indicator -->
                         <div class="mt-auto pt-4"> <!-- Added padding-top -->
@@ -288,6 +294,7 @@
 
     <!-- ========== JAVASCRIPT SECTION ========== -->
     <script>
+        // Dòng này quan trọng, cần để Flask render URL đúng
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         let currentTranslations = {};
         let currentLang = 'en';
@@ -697,7 +704,7 @@
                                       outputExt = (mode === 'pdf_to_image') ? 'zip' : 'pdf';
                                  }
                                  downloadFilename = `converted_${inputBaseName}.${outputExt}`;
-                                 logger.warn("Could not parse filename from Content-Disposition, generated:", downloadFilename)
+                                 // console.warn("Could not parse filename from Content-Disposition, generated:", downloadFilename)
                              }
                          }
                      }
@@ -756,152 +763,179 @@
         languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
 
         // --- Listeners for Card 1: Convert PDF/Office ---
-        fileInput.addEventListener('change', function() {
-             actualConversionTypeInput.value = ''; // Reset dependent hidden input
-             const file = this.files[0];
-             const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
-             if (file) {
-                 fileStatus.textContent = file.name;
-                 const extension = file.name.split('.').pop().toLowerCase();
-                 // Pre-select conversion type based on extension
-                 if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; }
-                 else if (extension === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
-                 else if (extension === 'ppt' || extension === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
-                 else {
-                      conversionTypeSelect.value = ""; // No valid default
-                      showError('err-format-docx'); // Or a more generic "invalid type for this tool"
-                      fileStatus.textContent = noFileText; // Reset text if invalid
-                      this.value = null; // Clear the invalid file selection
-                 }
-                 if (conversionTypeSelect.value) hideError(); // Hide error if a valid type was detected
-             } else {
-                 fileStatus.textContent = noFileText;
-                 conversionTypeSelect.value = "";
-                  hideError();
-             }
-        });
+        if (fileInput) { // Add null checks for safety
+            fileInput.addEventListener('change', function() {
+                if (actualConversionTypeInput) actualConversionTypeInput.value = ''; // Reset dependent hidden input
+                const file = this.files[0];
+                const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
+                if (file) {
+                    fileStatus.textContent = file.name;
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    // Pre-select conversion type based on extension
+                    if (conversionTypeSelect) {
+                        if (extension === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; }
+                        else if (extension === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
+                        else if (extension === 'ppt' || extension === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
+                        else {
+                            conversionTypeSelect.value = ""; // No valid default
+                            showError('err-format-docx'); // Or a more generic "invalid type for this tool"
+                            fileStatus.textContent = noFileText; // Reset text if invalid
+                            this.value = null; // Clear the invalid file selection
+                        }
+                        if (conversionTypeSelect.value) hideError(); // Hide error if a valid type was detected
+                    }
+                } else {
+                    if (fileStatus) fileStatus.textContent = noFileText;
+                    if (conversionTypeSelect) conversionTypeSelect.value = "";
+                    hideError();
+                }
+            });
+        }
 
-        conversionTypeSelect.addEventListener('change', function() {
-             actualConversionTypeInput.value = ''; // Reset hidden input when manual selection changes
-             hideError();
-             // Optional: Validate if the selected file matches the new conversion type?
-        });
+        if(conversionTypeSelect) {
+            conversionTypeSelect.addEventListener('change', function() {
+                if (actualConversionTypeInput) actualConversionTypeInput.value = ''; // Reset hidden input when manual selection changes
+                hideError();
+                // Optional: Validate if the selected file matches the new conversion type?
+            });
+        }
 
-        convertForm.addEventListener('submit', function(e) {
-             e.preventDefault(); hideError();
-             if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
-             const file = fileInput.files[0];
-             const maxSize = 100 * 1024 * 1024; // 100 MB
-             if (file.size > maxSize) { showError('err-file-too-large'); return; }
-             if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; }
+        if (convertForm) {
+            convertForm.addEventListener('submit', function(e) {
+                e.preventDefault(); hideError();
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
+                const file = fileInput.files[0];
+                const maxSize = 100 * 1024 * 1024; // 100 MB
+                if (file.size > maxSize) { showError('err-file-too-large'); return; }
+                if (!conversionTypeSelect || !conversionTypeSelect.value) { showError('err-select-conversion'); return; }
 
-             const selectedConversionValue = conversionTypeSelect.value;
-             const fileName = file.name.toLowerCase();
-             const extension = fileName.split('.').pop();
-             let finalActualConversionType = '';
+                const selectedConversionValue = conversionTypeSelect.value;
+                const fileName = file.name.toLowerCase();
+                const extension = fileName.split('.').pop();
+                let finalActualConversionType = '';
 
-             // Determine the specific conversion direction (e.g., pdf_to_docx)
-             if (selectedConversionValue === 'pdf_docx') {
-                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_docx';
-                 else if (extension === 'docx') finalActualConversionType = 'docx_to_pdf';
-                 else { showError('err-format-docx'); return; } // File type doesn't match selection
-             } else if (selectedConversionValue === 'pdf_ppt') {
-                 if (extension === 'pdf') finalActualConversionType = 'pdf_to_ppt';
-                 else if (extension === 'ppt' || extension === 'pptx') finalActualConversionType = 'ppt_to_pdf';
-                 else { showError('err-format-ppt'); return; } // File type doesn't match selection
-             } else {
-                 showError('err-select-conversion'); // Should not happen if select is required
-                 return;
-             }
+                // Determine the specific conversion direction (e.g., pdf_to_docx)
+                if (selectedConversionValue === 'pdf_docx') {
+                    if (extension === 'pdf') finalActualConversionType = 'pdf_to_docx';
+                    else if (extension === 'docx') finalActualConversionType = 'docx_to_pdf';
+                    else { showError('err-format-docx'); return; } // File type doesn't match selection
+                } else if (selectedConversionValue === 'pdf_ppt') {
+                    if (extension === 'pdf') finalActualConversionType = 'pdf_to_ppt';
+                    else if (extension === 'ppt' || extension === 'pptx') finalActualConversionType = 'ppt_to_pdf';
+                    else { showError('err-format-ppt'); return; } // File type doesn't match selection
+                } else {
+                    showError('err-select-conversion'); // Should not happen if select is required
+                    return;
+                }
 
-             if (!finalActualConversionType) { // Should have been caught above, but double-check
-                 showError('err-select-conversion');
-                 return;
-             }
-             actualConversionTypeInput.value = finalActualConversionType; // Set the hidden input
+                if (!finalActualConversionType) { // Should have been caught above, but double-check
+                    showError('err-select-conversion');
+                    return;
+                }
+                if (actualConversionTypeInput) actualConversionTypeInput.value = finalActualConversionType; // Set the hidden input
 
-             // Call fetch helper
-             handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn');
-        });
+                // Call fetch helper
+                handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn');
+            });
+        }
+
 
         // --- Listeners for Card 2: PDF <-> Image ---
 
-        // Trigger hidden input when drop zone background or instructions label is clicked
-        imageDropZone.addEventListener('click', (e) => {
-             // Prevent triggering if click was on a remove button or the pills container itself
-             if (e.target.closest('button') || e.target === imageFilePillsContainer || imageFilePillsContainer.contains(e.target)) {
-                 return;
-             }
-              // Trigger if click is on the dropzone background or the label within instructions
-             if (e.target === imageDropZone || e.target.closest('label[for="imageFileInput"]') || imageDropZoneInstructions.contains(e.target)) {
-                imageFileInput.click();
-             }
-         });
+        if (imageDropZone) { // Add null checks
+            // Trigger hidden input when drop zone background or instructions label is clicked
+            imageDropZone.addEventListener('click', (e) => {
+                // Prevent triggering if click was on a remove button or the pills container itself
+                if (e.target.closest('button') || e.target === imageFilePillsContainer || (imageFilePillsContainer && imageFilePillsContainer.contains(e.target))) {
+                    return;
+                }
+                // Trigger if click is on the dropzone background or the label within instructions
+                if (imageFileInput && (e.target === imageDropZone || e.target.closest('label[for="imageFileInput"]') || (imageDropZoneInstructions && imageDropZoneInstructions.contains(e.target)))) {
+                    imageFileInput.click();
+                }
+            });
 
-        // Handle file selection via browse button (hidden input)
-        imageFileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                addImageFiles(e.target.files);
+            // Handle file selection via browse button (hidden input)
+            if (imageFileInput) {
+                imageFileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        addImageFiles(e.target.files);
+                    }
+                    // Reset the input value to allow selecting the same file again after removing it
+                    e.target.value = null;
+                });
             }
-            // Reset the input value to allow selecting the same file again after removing it
-            e.target.value = null;
-        });
 
-        // Drag and Drop Listeners
-        imageDropZone.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Necessary to allow drop
-            imageDropZone.classList.add('border-orange-500', 'bg-orange-50');
-        });
-        imageDropZone.addEventListener('dragleave', (e) => {
-            // Add a check to prevent flickering when dragging over child elements
-            if (!imageDropZone.contains(e.relatedTarget)) {
+            // Drag and Drop Listeners
+            imageDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Necessary to allow drop
+                imageDropZone.classList.add('border-orange-500', 'bg-orange-50');
+            });
+            imageDropZone.addEventListener('dragleave', (e) => {
+                // Add a check to prevent flickering when dragging over child elements
+                if (!imageDropZone.contains(e.relatedTarget)) {
+                    imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+                }
+            });
+            imageDropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); // Prevent browser default handling (opening file)
                 imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
-            }
-        });
-        imageDropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); // Prevent browser default handling (opening file)
-            imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                addImageFiles(files);
-            }
-        });
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    addImageFiles(files);
+                }
+            });
+        } // end if (imageDropZone)
 
-        // Image Form Submit Listener
-        imageConvertForm.addEventListener('submit', function(e) {
-             e.preventDefault(); // Prevent default form submission
-             // Error is hidden by validateImageFiles if successful
+        if (imageConvertForm) { // Add null check
+            // Image Form Submit Listener
+            imageConvertForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent default form submission
+                // Error is hidden by validateImageFiles if successful
 
-             if (selectedImageFiles.length === 0) {
-                 showError('err-select-file');
-                 return;
-             }
+                if (selectedImageFiles.length === 0) {
+                    showError('err-select-file');
+                    return;
+                }
 
-             // Re-validate before submitting, just in case state is somehow inconsistent
-             const validationResult = validateImageFiles([]); // Validate current list
-             if (!validationResult.valid) {
-                  console.error("Submit blocked: Invalid file selection state.");
-                  // Error message should already be shown by validateImageFiles
-                  return;
-             }
+                // Re-validate before submitting, just in case state is somehow inconsistent
+                const validationResult = validateImageFiles([]); // Validate current list
+                if (!validationResult.valid) {
+                    console.error("Submit blocked: Invalid file selection state.");
+                    // Error message should already be shown by validateImageFiles
+                    return;
+                }
 
-             // --- Create FormData Manually ---
-             const formData = new FormData();
-             selectedImageFiles.forEach(file => {
-                 // Use the key the backend expects ('image_file')
-                 formData.append('image_file', file, file.name); // Add filename explicitly
-             });
+                // --- Create FormData Manually ---
+                const formData = new FormData();
+                selectedImageFiles.forEach(file => {
+                    // Use the key the backend expects ('image_file')
+                    formData.append('image_file', file, file.name); // Add filename explicitly
+                });
 
-             // --- Call handleFetch with FormData ---
-             handleFetch(
-                 null, // Pass null for formElement as we are sending formData
-                 imageLoadingIndicator,
-                 imageConvertButton,
-                 '/convert_image',
-                 'lang-image-convert-btn',
-                 formData // Pass the manually created FormData
-             );
-        });
+                 // Add CSRF token to manual FormData if it exists in the form
+                 const csrfInput = imageConvertForm.querySelector('input[name="csrf_token"]');
+                 if (csrfInput) {
+                     formData.append('csrf_token', csrfInput.value);
+                 } else {
+                     console.warn('CSRF token input not found in imageConvertForm!');
+                     // Decide how to handle this - perhaps prevent submission or show an error?
+                     showError('err-csrf-invalid'); // Show CSRF error if token isn't found in DOM
+                     return; // Block submission
+                 }
+
+
+                // --- Call handleFetch with FormData ---
+                handleFetch(
+                    null, // Pass null for formElement as we are sending formData
+                    imageLoadingIndicator,
+                    imageConvertButton,
+                    '/convert_image',
+                    'lang-image-convert-btn',
+                    formData // Pass the manually created FormData
+                );
+            });
+        } // end if (imageConvertForm)
 
 
         // ---- Initial Setup ----
@@ -917,16 +951,15 @@
             updateLanguage(finalInitialLang).then(() => {
                  // Initialize button state and display for image card after language load
                  updateImageFileDisplay();
-                 // Initialize Card 1 file status text
-                 const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
-                 if (!fileInput.files || fileInput.files.length === 0) {
-                    fileStatus.textContent = noFileText;
+                 // Initialize Card 1 file status text only if the element exists
+                 if(fileStatus && fileInput) {
+                     const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
+                     if (!fileInput.files || fileInput.files.length === 0) {
+                         fileStatus.textContent = noFileText;
+                     }
                  }
             });
         });
     </script>
 </body>
 </html>
-```
-
---- END OF FILE `index.html` ---
