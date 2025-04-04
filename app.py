@@ -1,8 +1,8 @@
 from flask import Flask, request, send_file, render_template, jsonify, url_for, make_response
 from flask_talisman import Talisman # Security Headers
-from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Protection (ADDED)
-from flask_limiter import Limiter # Rate Limiting (ADDED)
-from flask_limiter.util import get_remote_address # Rate Limiting Helper (ADDED)
+from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Protection
+from flask_limiter import Limiter # Rate Limiting
+from flask_limiter.util import get_remote_address # Rate Limiting Helper
 import os
 import sys
 import time
@@ -13,7 +13,7 @@ from werkzeug.exceptions import RequestEntityTooLarge # Better handling for larg
 from pdf2docx import Converter
 import tempfile
 import PyPDF2
-import shutil
+import shutil # Cần cho safe_remove
 from pdf2image import convert_from_path, pdfinfo_from_path
 from pdf2image.exceptions import PDFInfoNotInstalledError, PDFPageCountError, PDFSyntaxError
 from pptx import Presentation
@@ -21,20 +21,15 @@ from pptx.util import Inches, Pt
 from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 import zipfile
-import magic # MIME Type Detection (ADDED)
+import magic # MIME Type Detection
 
 # === Basic Flask App Setup ===
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # === Configuration ===
-# Max size before Werkzeug raises RequestEntityTooLarge
 app.config['MAX_CONTENT_LENGTH'] = 105 * 1024 * 1024  # ~105MB limit server-side
-# SECRET_KEY is crucial for sessions, CSRF, etc. Use a strong, random key in production.
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
-# Configure CSRF protection key (can reuse SECRET_KEY or set a specific one)
 app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']
-# Optional: CSRF time limit
-# app.config['WTF_CSRF_TIME_LIMIT'] = 3600 # 1 hour
 
 # === Logging ===
 logging.basicConfig(
@@ -45,32 +40,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # === Security ===
-# 1. CSRF Protection (Initialize AFTER setting the key)
 csrf = CSRFProtect(app)
-
-# 2. Rate Limiting (Identify users by IP address)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour", "15 per minute"], # Generous default limits
-    storage_uri="memory://",  # Use memory storage (suitable for single process/simple setups)
-    # Consider "redis://localhost:6379" or other persistent storage for multi-process deployments
-    strategy="fixed-window" # More predictable than moving-window
+    default_limits=["200 per day", "50 per hour", "15 per minute"],
+    storage_uri="memory://",
+    strategy="fixed-window"
 )
-
-# 3. Security Headers with Talisman
 csp = {
     'default-src': ['\'self\'', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
-    'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com'], # unsafe-inline often needed for Tailwind UI components / dynamic styles
-    'script-src': ['\'self\'', '\'unsafe-inline\'', 'https://cdn.tailwindcss.com'], # unsafe-inline is less ideal, try removing if possible, requires JS refactoring
+    'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com'],
+    'script-src': ['\'self\'', '\'unsafe-inline\'', 'https://cdn.tailwindcss.com'],
     'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
     'img-src': ['\'self\'', 'data:'],
-    'form-action': '\'self\'' # Limit where forms can submit to (ADDED CSP directive)
+    'form-action': '\'self\''
 }
 talisman = Talisman(
     app,
     content_security_policy=csp,
-    force_https=False, # Assume Railway/proxy handles TLS termination
+    force_https=False,
     session_cookie_secure=True,
     session_cookie_http_only=True,
     frame_options='DENY',
@@ -79,13 +68,11 @@ talisman = Talisman(
 
 # === Constants ===
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-# Allowed extensions (for initial check only, MIME check is primary)
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 ALLOWED_IMAGE_EXTENSIONS = {'pdf', 'jpg', 'jpeg'}
-# Allowed MIME Types (ADDED - primary validation)
 ALLOWED_MIME_TYPES = {
     'pdf': ['application/pdf'],
-    'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'], # Allow older .doc too
+    'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'],
     'ppt': ['application/vnd.ms-powerpoint'],
     'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
     'jpg': ['image/jpeg'],
@@ -98,50 +85,63 @@ MIME_BUFFER_SIZE = 4096 # Read first 4KB for MIME detection
 def make_error_response(error_key, status_code=400):
     """Creates a Flask response with an error message prefixed for JS handling."""
     logger.warning(f"Returning error: {error_key} (Status: {status_code})")
-    # Use the translations map directly for the message if possible
-    # This requires the translations to be loaded/available here,
-    # or fetching them dynamically, which adds complexity.
-    # For now, stick to the key prefix method for JS.
     response_text = f"Conversion failed: {error_key}"
     response = make_response(response_text, status_code)
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
 
-def find_libreoffice():
-    # (No changes needed in this function)
-    """Tries to find the LibreOffice executable."""
-    possible_paths = [
-        'soffice', '/usr/bin/soffice', '/usr/local/bin/soffice',
-        '/opt/libreoffice/program/soffice', '/usr/lib/libreoffice/program/soffice',
-        'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-        'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
-        '/Applications/LibreOffice.app/Contents/MacOS/soffice'
-    ]
-    for path in possible_paths:
-        try:
-            resolved_path = shutil.which(path)
-            if resolved_path:
-                result = subprocess.run([resolved_path, '--version'], capture_output=True, text=True, check=False, timeout=5)
-                if result.returncode == 0 and 'LibreOffice' in result.stdout: logger.info(f"Found LO via shutil.which: {resolved_path}"); return resolved_path
-            elif os.path.isfile(path):
-                 result = subprocess.run([path, '--version'], capture_output=True, text=True, check=False, timeout=5)
-                 if result.returncode == 0 and 'LibreOffice' in result.stdout: logger.info(f"Found LO via direct path: {path}"); return path
-        except FileNotFoundError: logger.debug(f"LO not found at {path}")
-        except subprocess.TimeoutExpired: logger.warning(f"Checking LO at {path} timed out.")
-        except Exception as e: logger.warning(f"Error checking LO at {path}: {e}")
-    logger.error("LibreOffice not found/verified.")
-    return None
+# !!! START OF MAJOR CHANGE: Hardcoding LibreOffice Path !!!
+# (Hàm find_libreoffice() đã bị xóa bỏ)
 
-SOFFICE_PATH = find_libreoffice()
-if SOFFICE_PATH: logger.info(f"Using LO path: {SOFFICE_PATH}")
-else: logger.warning("LO not found. Conversions requiring it might fail.")
+# Gán cứng đường dẫn LibreOffice đã xác minh bên trong container
+_VERIFIED_SOFFICE_PATH = '/usr/lib/libreoffice/program/soffice'
+
+# Khởi tạo SOFFICE_PATH là None ban đầu
+SOFFICE_PATH = None
+
+# Kiểm tra sự tồn tại và xác minh version của đường dẫn gán cứng
+if os.path.isfile(_VERIFIED_SOFFICE_PATH):
+    try:
+        # Sử dụng cờ --headless khi kiểm tra version
+        result = subprocess.run(
+            [_VERIFIED_SOFFICE_PATH, '--headless', '--version'],
+            capture_output=True,  # Thu kết quả stdout/stderr
+            text=True,            # Giải mã output thành text
+            check=False,          # Không raise exception nếu return code khác 0
+            timeout=15            # Đặt timeout (giây) - tăng nhẹ
+        )
+        # Kiểm tra return code và nội dung output
+        if result.returncode == 0 and 'LibreOffice' in result.stdout:
+            logger.info(f"Using verified hardcoded LO path: {_VERIFIED_SOFFICE_PATH}")
+            SOFFICE_PATH = _VERIFIED_SOFFICE_PATH # Gán đường dẫn vào biến chính nếu xác minh thành công
+        else:
+            # Ghi log lỗi nếu kiểm tra version thất bại
+            logger.error(f"Hardcoded LO path {_VERIFIED_SOFFICE_PATH} exists, but version check failed! Code: {result.returncode}, Output: {result.stdout.strip()}")
+    except subprocess.TimeoutExpired:
+        logger.error(f"Timeout expired while verifying hardcoded LO path: {_VERIFIED_SOFFICE_PATH}")
+    except Exception as e:
+        # Ghi log lỗi nếu có lỗi khác xảy ra khi chạy subprocess
+        logger.error(f"Error verifying hardcoded LO path {_VERIFIED_SOFFICE_PATH}: {e}")
+else:
+    # Ghi log lỗi nếu đường dẫn gán cứng không tồn tại hoặc không phải là file
+     logger.error(f"Hardcoded LO path {_VERIFIED_SOFFICE_PATH} does not exist or is not a file.")
+
+# Log cuối cùng về trạng thái của SOFFICE_PATH sau khi kiểm tra
+if SOFFICE_PATH:
+    logger.info(f"Successfully set LO path for use: {SOFFICE_PATH}")
+else:
+    # Sử dụng logger.critical vì đây là lỗi nghiêm trọng ảnh hưởng chức năng chính
+    logger.critical("LibreOffice could NOT be set/verified. Conversions requiring it WILL FAIL.")
+
+# !!! END OF MAJOR CHANGE !!!
+
 
 def _allowed_file_extension(filename, allowed_set):
     """Checks only the file extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 
 def safe_remove(item_path, retries=3, delay=0.5):
-    # (No changes needed in this function)
+    # (No changes needed in this function's logic)
     if not item_path or not os.path.exists(item_path): return True
     is_dir = os.path.isdir(item_path); item_type = "directory" if is_dir else "file"
     for i in range(retries):
@@ -170,17 +170,16 @@ def get_actual_mime_type(file_storage):
         return None
 
 # --- Other Helper Functions (get_pdf_page_size, setup_slide_size, etc.) ---
-# (No significant changes needed in these core conversion logic helpers)
+# (Các hàm helper khác giữ nguyên như code gốc bạn đã cung cấp)
 def get_pdf_page_size(pdf_path):
     try:
         with open(pdf_path, 'rb') as f:
             reader = PyPDF2.PdfReader(f);
             if reader.is_encrypted:
-                # Try decrypting with empty password, log warning
                 try:
                     if reader.decrypt('') != PyPDF2.PasswordType.OWNER_PASSWORD:
                          logger.warning(f"Could not decrypt PDF {pdf_path} with empty password.")
-                         raise ValueError("err-pdf-protected") # Or a more specific error
+                         raise ValueError("err-pdf-protected")
                 except Exception:
                      logger.warning(f"Error during decryption attempt for {pdf_path}.")
                      raise ValueError("err-pdf-protected")
@@ -188,12 +187,11 @@ def get_pdf_page_size(pdf_path):
             page = reader.pages[0]; box = page.mediabox or page.cropbox
             if box: width = float(box.width); height = float(box.height); return width, height
     except PyPDF2.errors.PdfReadError as pdf_err: raise ValueError("err-pdf-corrupt") from pdf_err
-    except ValueError as ve: raise ve # Propagate specific errors like err-pdf-protected
+    except ValueError as ve: raise ve
     except Exception as e: logger.error(f"Error reading PDF size {pdf_path}: {e}"); return None, None
     return None, None
 
 def setup_slide_size(prs, pdf_path):
-    # (No changes needed)
     pdf_width_pt, pdf_height_pt = get_pdf_page_size(pdf_path)
     if pdf_width_pt is None: prs.slide_width, prs.slide_height = Inches(10), Inches(7.5); return prs
     try:
@@ -207,24 +205,21 @@ def setup_slide_size(prs, pdf_path):
     except Exception: prs.slide_width, prs.slide_height = Inches(10), Inches(7.5); return prs
 
 def sort_key_for_pptx_images(filename):
-    # (No changes needed)
     try: return int(os.path.splitext(filename)[0].split('-')[-1].split('_')[-1])
     except: return 0
 
 def _convert_pdf_to_pptx_images(input_path, output_path):
-    # (No changes needed in core logic, but added more specific error raising)
     temp_dir = None
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdfimg_")
-        page_count_info = pdfinfo_from_path(input_path, poppler_path=None) # Explicitly use default poppler path
+        page_count_info = pdfinfo_from_path(input_path, poppler_path=None)
         page_count = page_count_info.get('Pages')
-        if page_count is None: raise PDFInfoNotInstalledError("Poppler may be missing or invalid.") # Specific error
-        if page_count_info.get('Encrypted', 'no') == 'yes': # Check if encrypted before proceeding
-             raise ValueError("err-pdf-protected")
+        if page_count is None: raise PDFInfoNotInstalledError("Poppler may be missing or invalid.")
+        if page_count_info.get('Encrypted', 'no') == 'yes': raise ValueError("err-pdf-protected")
 
         if page_count == 0: Presentation().save(output_path); return True
         images = convert_from_path(input_path, dpi=300, fmt='jpeg', output_folder=temp_dir, thread_count=4, poppler_path=None)
-        if not images: raise RuntimeError("err-conversion-img") # More specific error
+        if not images: raise RuntimeError("err-conversion-img")
         prs = Presentation(); prs = setup_slide_size(prs, input_path); blank_layout = prs.slide_layouts[6]
         gen_imgs = sorted([f for f in os.listdir(temp_dir) if f.lower().endswith(('.jpg', '.jpeg'))], key=sort_key_for_pptx_images)
         if not gen_imgs: raise RuntimeError("err-conversion-img")
@@ -241,15 +236,15 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
                 s = min(r_w, r_h); pic_w, pic_h = int(img_width_emu * s), int(img_height_emu * s)
                 pic_l, pic_t = int((slide_w - pic_w) / 2), int((slide_h - pic_h) / 2)
                 if pic_w > 0 and pic_h > 0: slide.shapes.add_picture(img_path, pic_l, pic_t, width=pic_w, height=pic_h)
-            except UnidentifiedImageError: # Catch Pillow errors
+            except UnidentifiedImageError:
                  logger.warning(f"Skipping invalid image file during PPTX creation: {img_fn}")
-                 continue # Skip this image
+                 continue
             except Exception as page_err: logger.warning(f"Error adding image {img_fn} to PPTX: {page_err}")
         prs.save(output_path); return True
     except (PDFInfoNotInstalledError) as e: logger.error(f"PDF->PPTX Poppler Error: {e}"); raise ValueError("err-poppler-missing") from e
     except (PDFPageCountError, PDFSyntaxError) as e: logger.error(f"PDF->PPTX PDF Error: {e}"); raise ValueError("err-pdf-corrupt") from e
-    except ValueError as ve: logger.error(f"PDF->PPTX Value Error: {ve}"); raise ve # e.g., err-pdf-protected
-    except RuntimeError as rte: logger.error(f"PDF->PPTX Runtime Error: {rte}"); raise rte # e.g., err-conversion-img
+    except ValueError as ve: logger.error(f"PDF->PPTX Value Error: {ve}"); raise ve
+    except RuntimeError as rte: logger.error(f"PDF->PPTX Runtime Error: {rte}"); raise rte
     except Exception as e: logger.error(f"Unexpected PDF->PPTX Error: {e}", exc_info=True); raise RuntimeError("err-unknown") from e
     finally: safe_remove(temp_dir)
 
@@ -258,25 +253,22 @@ def convert_pdf_to_pptx_python(input_path, output_path):
     return _convert_pdf_to_pptx_images(input_path, output_path)
 
 def convert_images_to_pdf(image_files, output_path):
-    # (No significant changes needed in core logic, but added MIME check before loop)
+    # (Giữ nguyên code gốc của hàm này)
     image_objects = []
     try:
-        # Validate MIME types first
-        allowed_mimes = ALLOWED_MIME_TYPES['jpeg'] # Only JPEG allowed currently
+        allowed_mimes = ALLOWED_MIME_TYPES['jpeg']
         for file_storage in image_files:
              mime_type = get_actual_mime_type(file_storage)
              if not mime_type or mime_type not in allowed_mimes:
                  logger.warning(f"Invalid MIME type detected for {secure_filename(file_storage.filename)}: {mime_type}. Allowed: {allowed_mimes}")
-                 raise ValueError("err-invalid-mime-type-image") # Raise specific error
+                 raise ValueError("err-invalid-mime-type-image")
 
-        # Sort files after validation
         sorted_files = sorted(image_files, key=lambda f: secure_filename(f.filename))
 
-        # Process validated and sorted files
         for file_storage in sorted_files:
-            filename = secure_filename(file_storage.filename) # Already done in sorting, but safe
+            filename = secure_filename(file_storage.filename)
             try:
-                file_storage.stream.seek(0) # Ensure stream is at the beginning
+                file_storage.stream.seek(0)
                 img_io = BytesIO(file_storage.stream.read())
                 with Image.open(img_io) as img:
                     img.load(); converted_img = None
@@ -290,16 +282,16 @@ def convert_images_to_pdf(image_files, output_path):
                     image_objects.append(converted_img)
             except UnidentifiedImageError:
                  logger.error(f"File {filename} is not a valid image format recognized by Pillow.")
-                 raise ValueError("err-invalid-image-file") # Keep this specific error
+                 raise ValueError("err-invalid-image-file")
             except Exception as img_err:
                  logger.error(f"Error processing image {filename}: {img_err}")
                  raise RuntimeError("err-conversion") from img_err
 
-        if not image_objects: raise ValueError("err-select-file") # Should not happen if validation passed
+        if not image_objects: raise ValueError("err-select-file")
 
         image_objects[0].save(output_path, "PDF", resolution=100.0, save_all=True, append_images=image_objects[1:])
         return True
-    except ValueError as ve: raise ve # Propagate specific errors
+    except ValueError as ve: raise ve
     except Exception as e:
         logger.error(f"Unexpected error converting images to PDF: {e}", exc_info=True)
         raise RuntimeError("err-unknown") from e
@@ -309,11 +301,10 @@ def convert_images_to_pdf(image_files, output_path):
              except: pass
 
 def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
-    # (No significant changes needed in core logic, but added more specific error raising)
+    # (Giữ nguyên code gốc của hàm này)
     temp_dir = None; fmt = img_format.lower(); ext = 'jpg' if fmt in ['jpeg', 'jpg'] else fmt
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdf2imgzip_")
-        # Check Poppler and PDF validity before conversion
         try:
              page_count_info = pdfinfo_from_path(input_path, poppler_path=None)
              page_count = page_count_info.get('Pages')
@@ -322,8 +313,8 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
              logger.info(f"PDF Info: {page_count} pages found.")
         except (PDFInfoNotInstalledError, FileNotFoundError) as e: raise ValueError("err-poppler-missing") from e
         except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
-        except ValueError as ve: raise ve # Propagate err-pdf-protected
-        except Exception as info_err: logger.error(f"pdfinfo error: {info_err}"); raise ValueError("err-poppler-check-failed") from info_err # New specific error
+        except ValueError as ve: raise ve
+        except Exception as info_err: logger.error(f"pdfinfo error: {info_err}"); raise ValueError("err-poppler-check-failed") from info_err
 
         if page_count == 0:
             logger.warning("PDF reported 0 pages. Creating empty ZIP.")
@@ -333,28 +324,28 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
         safe_base = secure_filename(f"page_{os.path.splitext(os.path.basename(input_path))[0]}")
         images = convert_from_path(input_path, dpi=200, fmt=fmt, output_folder=temp_dir, output_file=safe_base, thread_count=4, poppler_path=None)
         if not images:
-             if page_count > 0: raise RuntimeError("err-conversion-img") # Failed despite having pages
-             else: return True # Should have been caught by 0 page check
+             if page_count > 0: raise RuntimeError("err-conversion-img")
+             else: return True
 
         def sort_key(f):
              try: return int(os.path.splitext(f)[0].split('-')[-1])
              except: return 0
         gen_files = sorted([f for f in os.listdir(temp_dir) if f.lower().startswith(safe_base.lower()) and f.lower().endswith(f'.{ext}')], key=sort_key)
-        if not gen_files: raise RuntimeError("err-conversion-img") # No images generated
+        if not gen_files: raise RuntimeError("err-conversion-img")
 
         with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
              for i, filename in enumerate(gen_files): zf.write(os.path.join(temp_dir, filename), f"page_{i+1}.{ext}")
         return True
-    # Keep specific exceptions first
     except (PDFInfoNotInstalledError) as e: raise ValueError("err-poppler-missing") from e
     except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
-    except ValueError as ve: raise ve # e.g., err-pdf-protected, err-poppler-check-failed
-    except RuntimeError as rte: raise rte # e.g., err-conversion-img
+    except ValueError as ve: raise ve
+    except RuntimeError as rte: raise rte
     except Exception as e: logger.error(f"Unexpected PDF->ZIP Error: {e}", exc_info=True); raise RuntimeError("err-unknown") from e
     finally: safe_remove(temp_dir)
 
 
 # === Global Error Handlers ===
+# (Giữ nguyên các error handlers: CSRFError, RequestEntityTooLarge, 429, Exception)
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     logger.warning(f"CSRF validation failed: {e.description}")
@@ -363,8 +354,7 @@ def handle_csrf_error(e):
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     logger.warning(f"File upload rejected (too large): {e.description}")
-    # Note: e.description might contain size info, decide if you want to return it
-    return make_error_response("err-file-too-large", 413) # Use 413 status code
+    return make_error_response("err-file-too-large", 413)
 
 @app.errorhandler(429) # Rate limit exceeded
 def ratelimit_handler(e):
@@ -373,26 +363,22 @@ def ratelimit_handler(e):
 
 @app.errorhandler(Exception) # Generic fallback for unhandled exceptions
 def handle_generic_exception(e):
-     # Avoid catching HTTPExceptions like 404, 405 etc. unless intended
      from werkzeug.exceptions import HTTPException
      if isinstance(e, HTTPException):
-          # Default Werkzeug handler will deal with standard HTTP errors
           return e
-     # Log the full unhandled exception
      logger.error(f"Unhandled Exception: {e}", exc_info=True)
-     # Return a generic error response
      return make_error_response("err-unknown", 500)
 
 
 # === Routes ===
 
-# === Translations Route (Hardcoded Version - ADD NEW ERROR KEYS) ===
+# === Translations Route ===
+# (Giữ nguyên route /api/translations)
 @app.route('/api/translations')
 def get_translations():
     """Provides translation strings to the frontend (Hardcoded Version)."""
     translations = {
         'en': {
-            # --- Existing Translations ---
             'lang-title': 'PDF & Office Tools', 'lang-subtitle': 'Simple, powerful tools for your documents',
             'lang-error-title': 'Error!', 'lang-convert-title': 'Convert PDF/Office',
             'lang-convert-desc': 'Transform PDF to Word/PPT and vice versa', 'lang-compress-title': 'Compress PDF',
@@ -422,11 +408,9 @@ def get_translations():
             'err-pdf-protected': 'Cannot process password-protected PDF.',
             'err-poppler-check-failed': 'Failed to get PDF info (Poppler check).',
             'err-conversion-img': 'Failed to convert/extract images from PDF.',
-            # --- ADDED ---
             'lang-clear-all': 'Clear All'
         },
         'vi': {
-            # --- Existing Translations ---
             'lang-title': 'Công Cụ PDF & Office', 'lang-subtitle': 'Công cụ đơn giản, mạnh mẽ cho tài liệu của bạn',
             'lang-error-title': 'Lỗi!', 'lang-convert-title': 'Chuyển đổi PDF/Office',
             'lang-convert-desc': 'Chuyển đổi PDF sang Word/PPT và ngược lại', 'lang-compress-title': 'Nén PDF',
@@ -456,7 +440,6 @@ def get_translations():
             'err-pdf-protected': 'Không thể xử lý PDF được bảo vệ bằng mật khẩu.',
             'err-poppler-check-failed': 'Không thể lấy thông tin PDF (lỗi kiểm tra Poppler).',
             'err-conversion-img': 'Không thể chuyển đổi/trích xuất ảnh từ PDF.',
-            # --- ADDED ---
             'lang-clear-all': 'Xóa tất cả'
         }
     }
@@ -467,23 +450,23 @@ def get_translations():
 @app.route('/')
 def index():
     """Renders the main page."""
+    # (Giữ nguyên route /)
     try:
-        # Pass translations_url for JS to fetch translations
-        translations_url = url_for('get_translations', _external=False) # Use relative URL
-        # Render template, CSRF token is automatically available if using Flask-WTF forms
-        # If not using WTForms, ensure csrf_token() is called in the template's hidden field
+        translations_url = url_for('get_translations', _external=False)
         return render_template('index.html', translations_url=translations_url)
     except Exception as e:
         logger.error(f"Error rendering index page: {e}", exc_info=True)
-        # Use make_error_response for consistency, though this error is less likely user-facing
-        return make_error_response("err-unknown", 500) # Or return a simple error page
+        return make_error_response("err-unknown", 500)
 
 
 # === PDF / Office Conversion Route ===
 @app.route('/convert', methods=['POST'])
-@limiter.limit("10 per minute") # Apply rate limit specifically to this endpoint
+@limiter.limit("10 per minute")
 def convert_file():
     """Handles PDF <-> DOCX and PDF <-> PPT conversions with security checks."""
+    # (Giữ nguyên route /convert - Logic bên trong sẽ sử dụng SOFFICE_PATH đã được gán cứng)
+    # Quan trọng: Logic kiểm tra `if not SOFFICE_PATH:` bên trong route này vẫn cần thiết
+    # để xử lý trường hợp LO không được xác minh thành công khi khởi động.
     output_path = temp_libreoffice_output = input_path_for_process = None
     saved_input_paths = []; actual_conversion_type = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
@@ -496,18 +479,16 @@ def convert_file():
         filename = secure_filename(file.filename)
         file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
 
-        # --- Initial Validation (Extension & Conversion Type) ---
         allowed_office_ext = {'pdf', 'docx', 'ppt', 'pptx'}
         if not _allowed_file_extension(filename, allowed_office_ext):
              logger.warning(f"Rejected file by extension: {filename}")
-             return make_error_response("err-format-docx", 400) # Generic format error works
+             return make_error_response("err-format-docx", 400)
 
         actual_conversion_type = request.form.get('conversion_type')
         valid_conversion_types = ['pdf_to_docx', 'docx_to_pdf', 'pdf_to_ppt', 'ppt_to_pdf']
         if not actual_conversion_type or actual_conversion_type not in valid_conversion_types:
              return make_error_response("err-select-conversion", 400)
 
-        # Check if extension matches conversion type requirement (still useful preliminary check)
         error_key_cv = None
         required_ext = []
         if actual_conversion_type == 'pdf_to_docx': required_ext = ['pdf']
@@ -522,7 +503,6 @@ def convert_file():
 
         logger.info(f"Request /convert: file='{filename}', type='{actual_conversion_type}'")
 
-        # --- MIME Type Validation (Primary Check) ---
         detected_mime = get_actual_mime_type(file)
         expected_mimes = []
         if actual_conversion_type in ['pdf_to_docx', 'pdf_to_ppt']:
@@ -537,8 +517,6 @@ def convert_file():
              return make_error_response("err-invalid-mime-type", 400)
         logger.info(f"MIME type validated for {filename}: {detected_mime}")
 
-        # --- Save File (After validation passes) ---
-        # Size check is implicitly handled by MAX_CONTENT_LENGTH and RequestEntityTooLarge handler
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         input_filename_ts = f"input_{timestamp}_{filename}"
@@ -549,42 +527,42 @@ def convert_file():
             logger.info(f"Input saved: {input_path_for_process}")
         except Exception as save_err:
             logger.error(f"File save failed for {filename}: {save_err}")
-            return make_error_response("err-unknown", 500) # Saving failure is a server issue
+            return make_error_response("err-unknown", 500)
 
-        # --- Prepare Output Path ---
         base_name = filename.rsplit('.', 1)[0]
         out_ext_map = {'pdf_to_docx': 'docx', 'docx_to_pdf': 'pdf', 'pdf_to_ppt': 'pptx', 'ppt_to_pdf': 'pdf'}
         out_ext = out_ext_map.get(actual_conversion_type)
         output_filename = f"converted_{timestamp}_{secure_filename(base_name)}.{out_ext}"
         output_path = os.path.join(UPLOAD_FOLDER, output_filename)
 
-        # --- Perform Conversion ---
         try:
             if actual_conversion_type == 'pdf_to_docx':
                 cv = None
                 try:
                     cv = Converter(input_path_for_process)
-                    cv.convert(output_path) # Use default start/end
+                    cv.convert(output_path)
                     conversion_success = True
                 except Exception as pdf2docx_err:
                     logger.error(f"pdf2docx conversion failed: {pdf2docx_err}")
-                    error_key = "err-conversion" # Keep generic or map specific pdf2docx errors if needed
+                    error_key = "err-conversion"
                 finally:
-                    if cv: cv.close() # Ensure closure
+                    if cv: cv.close()
 
             elif actual_conversion_type in ['docx_to_pdf', 'ppt_to_pdf']:
-                if not SOFFICE_PATH: raise RuntimeError("err-libreoffice") # Raise specific error if LO missing
+                # KIỂM TRA QUAN TRỌNG: Đảm bảo SOFFICE_PATH đã được thiết lập
+                if not SOFFICE_PATH:
+                    logger.error("LibreOffice path (SOFFICE_PATH) is not set or verified. Cannot perform conversion.")
+                    raise RuntimeError("err-libreoffice") # Raise specific error
+
                 output_dir = os.path.dirname(output_path)
-                # Correctly get input extension for replacement
                 input_file_ext_actual = os.path.splitext(input_path_for_process)[1].lower()
                 expected_lo_output_name = os.path.basename(input_path_for_process).replace(input_file_ext_actual, '.pdf')
                 temp_libreoffice_output = os.path.join(output_dir, expected_lo_output_name)
-                safe_remove(temp_libreoffice_output) # Clean up potential leftovers
+                safe_remove(temp_libreoffice_output)
 
                 cmd = [SOFFICE_PATH, '--headless', '--convert-to', 'pdf', '--outdir', output_dir, input_path_for_process]
                 logger.info(f"Running LibreOffice command: {' '.join(cmd)}")
                 try:
-                    # Use text=True for better output decoding, capture_output=True
                     result = subprocess.run(cmd, check=True, timeout=LIBREOFFICE_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
                     logger.info(f"LibreOffice stdout:\n{result.stdout}")
                     logger.info(f"LibreOffice stderr:\n{result.stderr}")
@@ -601,43 +579,41 @@ def convert_file():
                     logger.error(f"LibreOffice conversion failed. Return code: {lo_err.returncode}")
                     logger.error(f"LibreOffice stderr:\n{lo_err.stderr}")
                     error_key = "err-libreoffice"
-                except FileNotFoundError: # If SOFFICE_PATH becomes invalid between check and run
-                    logger.error(f"LibreOffice executable not found at runtime: {SOFFICE_PATH}")
+                except FileNotFoundError:
+                    logger.error(f"LibreOffice executable not found at runtime (should not happen with hardcoded path): {SOFFICE_PATH}")
                     error_key = "err-libreoffice"
-                except Exception as lo_run_err: # Catch broader errors during run
+                except Exception as lo_run_err:
                     logger.error(f"Unexpected error running LibreOffice: {lo_run_err}", exc_info=True)
                     error_key = "err-libreoffice"
 
             elif actual_conversion_type == 'pdf_to_ppt':
-                 # Try Python method first
                 python_method_success = False; python_method_error_key = None
                 try:
                     if convert_pdf_to_pptx_python(input_path_for_process, output_path):
                          python_method_success = True
                          conversion_success = True
-                         error_key = None # Clear default error
+                         error_key = None
                          logger.info("PDF->PPTX conversion successful using Python method.")
                 except ValueError as ve:
-                    # Catch specific errors like corrupt/protected PDF or Poppler missing
                     python_method_error_key = str(ve) if str(ve).startswith("err-") else "err-conversion"
                     logger.warning(f"Python PDF->PPTX method failed: {python_method_error_key}")
                 except RuntimeError as rte:
                      python_method_error_key = str(rte) if str(rte).startswith("err-") else "err-conversion"
                      logger.warning(f"Python PDF->PPTX runtime error: {python_method_error_key}")
                 except Exception as py_ppt_err:
-                     python_method_error_key = "err-conversion" # Generic for unexpected
+                     python_method_error_key = "err-conversion"
                      logger.error(f"Unexpected error in Python PDF->PPTX method: {py_ppt_err}", exc_info=True)
 
-                # Fallback to LibreOffice if Python method failed AND LO is available AND error wasn't fatal (like corrupt PDF)
+                # KIỂM TRA QUAN TRỌNG: Đảm bảo SOFFICE_PATH tồn tại trước khi thử fallback
                 can_fallback = not python_method_success and SOFFICE_PATH and python_method_error_key not in ["err-pdf-corrupt", "err-pdf-protected", "err-poppler-missing"]
                 if can_fallback:
                     logger.info(f"Python PDF->PPTX failed ({python_method_error_key}), attempting LibreOffice fallback...")
-                    error_key = "err-conversion" # Reset error key for fallback attempt
+                    error_key = "err-conversion"
                     output_dir = os.path.dirname(output_path)
                     input_file_ext_actual = os.path.splitext(input_path_for_process)[1].lower()
                     expected_lo_output_name = os.path.basename(input_path_for_process).replace(input_file_ext_actual, '.pptx')
                     temp_libreoffice_output = os.path.join(output_dir, expected_lo_output_name)
-                    safe_remove(temp_libreoffice_output) # Cleanup
+                    safe_remove(temp_libreoffice_output)
 
                     cmd = [SOFFICE_PATH, '--headless', '--convert-to', 'pptx', '--outdir', output_dir, input_path_for_process]
                     logger.info(f"Running LibreOffice command: {' '.join(cmd)}")
@@ -648,11 +624,11 @@ def convert_file():
                         if os.path.exists(temp_libreoffice_output) and os.path.getsize(temp_libreoffice_output) > 0:
                             os.rename(temp_libreoffice_output, output_path)
                             conversion_success = True
-                            error_key = None # Clear error on success
+                            error_key = None
                             logger.info("LibreOffice fallback for PDF->PPTX successful.")
                         else:
                             logger.error("LibreOffice fallback ran but output file is missing or empty.")
-                            error_key = "err-libreoffice" # Set LO error
+                            error_key = "err-libreoffice"
                     except subprocess.TimeoutExpired:
                         logger.error("LibreOffice fallback conversion timed out.")
                         error_key = "err-conversion-timeout"
@@ -661,20 +637,18 @@ def convert_file():
                         logger.error(f"LibreOffice stderr:\n{lo_err.stderr}")
                         error_key = "err-libreoffice"
                     except FileNotFoundError:
-                        logger.error(f"LibreOffice executable not found at runtime: {SOFFICE_PATH}")
+                        logger.error(f"LibreOffice executable not found at runtime (should not happen): {SOFFICE_PATH}")
                         error_key = "err-libreoffice"
                     except Exception as lo_run_err:
                         logger.error(f"Unexpected error running LibreOffice fallback: {lo_run_err}", exc_info=True)
                         error_key = "err-libreoffice"
                 elif not python_method_success:
-                     # If no fallback was attempted, use the error from the Python method
                      error_key = python_method_error_key or "err-conversion"
                      logger.warning(f"Skipping LibreOffice fallback. Final error from Python method: {error_key}")
 
-        # Catch exceptions from the conversion block itself (e.g., RuntimeErrors raised directly)
         except RuntimeError as rt_err:
             error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-unknown"
-            logger.error(f"Caught RuntimeError during conversion: {error_key}", exc_info=False) # No need for full trace if it's our error
+            logger.error(f"Caught RuntimeError during conversion: {error_key}", exc_info=False)
         except ValueError as val_err:
              error_key = str(val_err) if str(val_err).startswith("err-") else "err-unknown"
              logger.error(f"Caught ValueError during conversion: {error_key}", exc_info=False)
@@ -682,13 +656,11 @@ def convert_file():
             error_key = "err-unknown"
             logger.error(f"Unexpected error during conversion process: {conv_err}", exc_info=True)
 
-        # --- Handle Result ---
         if conversion_success and output_path and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
             mimetype_map = {'pdf': 'application/pdf', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'}
             mimetype = mimetype_map.get(out_ext, 'application/octet-stream')
             try:
                 response = send_file(output_path, as_attachment=True, download_name=output_filename, mimetype=mimetype)
-                # Use call_on_close for cleanup after request finishes
                 @response.call_on_close
                 def cleanup_success():
                     logger.debug(f"Cleaning up successful /convert: {input_path_for_process}, {output_path}")
@@ -697,72 +669,60 @@ def convert_file():
                 return response
             except Exception as send_err:
                 logger.error(f"Error sending file {output_filename}: {send_err}", exc_info=True)
-                # If send_file fails, the error handler below will trigger cleanup
                 raise RuntimeError("err-unknown") from send_err
         else:
-            # If conversion failed or output is invalid
-            final_error_key = error_key or "err-conversion" # Ensure there's always an error key
+            final_error_key = error_key or "err-conversion"
             logger.error(f"Conversion failed or produced invalid output. Final Error Key: {final_error_key}. Time: {time.time() - start_time:.2f}s")
-            # Raise an exception to trigger the main handler's cleanup
             raise RuntimeError(final_error_key)
 
     except Exception as e:
-         # Centralized error handling and cleanup for the entire route
          final_error_key = str(e) if str(e).startswith("err-") else "err-unknown"
-         status_code = 400 # Default to 400 for most conversion errors
+         status_code = 400
          if final_error_key == "err-unknown":
              status_code = 500
              logger.error(f"Unexpected error in /convert handler: {e}", exc_info=True)
-         elif final_error_key == "err-file-too-large":
-              status_code = 413
-         elif final_error_key == "err-rate-limit-exceeded":
-              status_code = 429
-         elif final_error_key == "err-csrf-invalid":
-              status_code = 400 # CSRF handled by specific handler, but keep consistent
+         elif final_error_key == "err-file-too-large": status_code = 413
+         elif final_error_key == "err-rate-limit-exceeded": status_code = 429
+         elif final_error_key == "err-csrf-invalid": status_code = 400
 
          logger.debug(f"Cleaning up failed /convert request (Error: {final_error_key}).")
-         # Cleanup all potentially created files
          for p in saved_input_paths: safe_remove(p)
          safe_remove(output_path)
-         if temp_libreoffice_output and os.path.exists(temp_libreoffice_output):
-              safe_remove(temp_libreoffice_output)
+         if temp_libreoffice_output and os.path.exists(temp_libreoffice_output): safe_remove(temp_libreoffice_output)
 
          return make_error_response(final_error_key, status_code)
 
 
 # === PDF / Image Conversion Route ===
 @app.route('/convert_image', methods=['POST'])
-@limiter.limit("10 per minute") # Apply specific rate limit
+@limiter.limit("10 per minute")
 def convert_image_route():
     """Handles PDF <-> Image conversions with security checks."""
-    output_path = None; input_path_for_pdf_input = None; saved_input_paths = [] # Store paths of successfully saved *valid* inputs
+    # (Giữ nguyên route /convert_image)
+    output_path = None; input_path_for_pdf_input = None; saved_input_paths = []
     actual_conversion_type = None; output_filename = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
-    temp_upload_dir = None # Use a temporary directory for multi-image uploads
+    temp_upload_dir = None
 
     try:
-        uploaded_files = request.files.getlist('image_file') # Use getlist for multiple files
+        uploaded_files = request.files.getlist('image_file')
         if not uploaded_files or not all(f and f.filename for f in uploaded_files):
             return make_error_response("err-select-file", 400)
 
         logger.info(f"Request /convert_image: Received {len(uploaded_files)} file(s).")
 
-        # --- Determine Conversion Type & Initial Validation ---
         first_file = uploaded_files[0]
         first_filename = secure_filename(first_file.filename)
         first_ext = first_filename.rsplit('.', 1)[-1].lower() if '.' in first_filename else ''
 
         validation_error_key = None
         out_ext = None
-        valid_files_for_processing = [] # List to hold FileStorage objects that pass validation
+        valid_files_for_processing = []
 
         if first_ext == 'pdf':
-            if len(uploaded_files) > 1:
-                validation_error_key = "err-image-single-pdf"
-            elif not _allowed_file_extension(first_filename, ALLOWED_IMAGE_EXTENSIONS):
-                validation_error_key = "err-image-format"
+            if len(uploaded_files) > 1: validation_error_key = "err-image-single-pdf"
+            elif not _allowed_file_extension(first_filename, ALLOWED_IMAGE_EXTENSIONS): validation_error_key = "err-image-format"
             else:
-                # Validate PDF MIME type
                 mime_type = get_actual_mime_type(first_file)
                 if not mime_type or mime_type not in ALLOWED_MIME_TYPES['pdf']:
                      logger.warning(f"Invalid MIME type for PDF upload {first_filename}: {mime_type}")
@@ -770,108 +730,68 @@ def convert_image_route():
                 else:
                      actual_conversion_type = 'pdf_to_image'
                      out_ext = 'zip'
-                     valid_files_for_processing.append(first_file) # Add the single valid PDF
+                     valid_files_for_processing.append(first_file)
 
         elif first_ext in ['jpg', 'jpeg']:
             actual_conversion_type = 'image_to_pdf'
             out_ext = 'pdf'
             allowed_mimes = ALLOWED_MIME_TYPES['jpeg']
-            temp_upload_dir = tempfile.mkdtemp(prefix="img2pdf_") # Create temp dir for validated images
+            temp_upload_dir = tempfile.mkdtemp(prefix="img2pdf_")
 
             for i, f in enumerate(uploaded_files):
                 fname_sec = secure_filename(f.filename)
                 f_ext = fname_sec.rsplit('.', 1)[-1].lower() if '.' in fname_sec else ''
-
-                # Check extension first (quick fail)
                 if f_ext not in ['jpg', 'jpeg']:
-                    validation_error_key = "err-image-all-images"
-                    logger.warning(f"Invalid extension for image upload {fname_sec}")
-                    break # Stop validation on first invalid file
-
-                # Check MIME type
+                    validation_error_key = "err-image-all-images"; logger.warning(f"Invalid extension for image upload {fname_sec}"); break
                 mime_type = get_actual_mime_type(f)
                 if not mime_type or mime_type not in allowed_mimes:
-                    validation_error_key = "err-invalid-mime-type-image"
-                    logger.warning(f"Invalid MIME type for image upload {fname_sec}: {mime_type}")
-                    break # Stop validation
-
-                # If valid, save to temp dir and add path to list (or keep FileStorage if needed later?)
-                # Let's save them to manage lifecycle better, especially with many files.
+                    validation_error_key = "err-invalid-mime-type-image"; logger.warning(f"Invalid MIME type for image upload {fname_sec}: {mime_type}"); break
                 temp_image_path = os.path.join(temp_upload_dir, f"{i}_{fname_sec}")
                 try:
-                    f.save(temp_image_path)
-                    valid_files_for_processing.append(temp_image_path) # Add path to list
-                    saved_input_paths.append(temp_image_path) # Track for cleanup
+                    f.save(temp_image_path); valid_files_for_processing.append(temp_image_path); saved_input_paths.append(temp_image_path)
                 except Exception as save_err:
-                    logger.error(f"Failed to save temporary image {fname_sec}: {save_err}")
-                    validation_error_key = "err-unknown" # Treat save failure as server error
-                    break
-            if validation_error_key: # If loop broke due to error
-                 pass # Error key is set
-            elif not valid_files_for_processing: # Should not happen if initial checks pass
-                 validation_error_key = "err-select-file"
-
-        else: # First file has neither pdf, jpg, nor jpeg extension
-            validation_error_key = "err-image-format"
+                    logger.error(f"Failed to save temporary image {fname_sec}: {save_err}"); validation_error_key = "err-unknown"; break
+            if validation_error_key: pass
+            elif not valid_files_for_processing: validation_error_key = "err-select-file"
+        else: validation_error_key = "err-image-format"
 
         if validation_error_key:
-            safe_remove(temp_upload_dir) # Clean up temp image dir if validation failed
-            return make_error_response(validation_error_key, 400)
+            safe_remove(temp_upload_dir); return make_error_response(validation_error_key, 400)
 
         logger.info(f"Determined conversion type: {actual_conversion_type}. Validated {len(valid_files_for_processing)} file(s).")
 
-        # --- Save Single PDF Input (if applicable) ---
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Ensure main upload folder exists
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         if actual_conversion_type == 'pdf_to_image':
-            # valid_files_for_processing contains the single PDF FileStorage object
             pdf_file_storage = valid_files_for_processing[0]
             input_filename_ts = f"input_{timestamp}_{secure_filename(pdf_file_storage.filename)}"
             input_path_for_pdf_input = os.path.join(UPLOAD_FOLDER, input_filename_ts)
             try:
-                pdf_file_storage.save(input_path_for_pdf_input)
-                saved_input_paths.append(input_path_for_pdf_input) # Track for cleanup
+                pdf_file_storage.save(input_path_for_pdf_input); saved_input_paths.append(input_path_for_pdf_input)
                 logger.info(f"Input PDF saved: {input_path_for_pdf_input}")
             except Exception as save_err:
-                logger.error(f"Failed to save PDF input {secure_filename(pdf_file_storage.filename)}: {save_err}")
-                safe_remove(temp_upload_dir) # Cleanup if image conversion was intended initially but failed saving PDF
+                logger.error(f"Failed to save PDF input {secure_filename(pdf_file_storage.filename)}: {save_err}"); safe_remove(temp_upload_dir)
                 return make_error_response("err-unknown", 500)
 
-        # --- Prepare Output Path ---
-        base_name = first_filename.rsplit('.', 1)[0] # Base name from the *first* file for consistency
+        base_name = first_filename.rsplit('.', 1)[0]
         output_filename = f"converted_{timestamp}_{secure_filename(base_name)}.{out_ext}"
         output_path = os.path.join(UPLOAD_FOLDER, output_filename)
 
-        # --- Perform Conversion ---
         try:
             if actual_conversion_type == 'pdf_to_image':
-                # Input path is input_path_for_pdf_input
-                if convert_pdf_to_image_zip(input_path_for_pdf_input, output_path):
-                    conversion_success = True
+                if convert_pdf_to_image_zip(input_path_for_pdf_input, output_path): conversion_success = True
             elif actual_conversion_type == 'image_to_pdf':
-                # Input is the list of validated image paths in valid_files_for_processing
-                # Modify convert_images_to_pdf to accept file paths instead of FileStorage objects
-                # Or, reopen the files from the paths. Let's reopen for simplicity here.
                 image_file_objects_reopened = []
                 try:
-                    for img_path in valid_files_for_processing:
-                        # Reopen in binary read mode
-                        image_file_objects_reopened.append(open(img_path, 'rb'))
-
-                    # Pass the list of open file objects to the conversion function
-                    # We need a slightly modified version or adapter for convert_images_to_pdf
-                    # Let's adapt the function call logic here instead of modifying the core function:
-
                     # --- Inlined/Adapted image_to_pdf logic using file paths ---
                     image_objects_pil = []
                     try:
-                        sorted_paths = sorted(valid_files_for_processing) # Sort paths
+                        sorted_paths = sorted(valid_files_for_processing)
                         for img_path in sorted_paths:
                              filename_log = os.path.basename(img_path)
                              try:
                                  with Image.open(img_path) as img:
                                      img.load(); converted_img = None
-                                     # Pillow conversion logic (same as before)
                                      if img.mode in ['RGBA', 'LA']:
                                           bg = Image.new('RGB', img.size, (255, 255, 255)); mask=None
                                           try: mask = img.getchannel('A' if img.mode == 'RGBA' else 'L')
@@ -880,47 +800,28 @@ def convert_image_route():
                                      elif img.mode not in ['RGB', 'L', 'CMYK']: converted_img = img.convert('RGB')
                                      else: converted_img = img.copy()
                                      image_objects_pil.append(converted_img)
-                             except UnidentifiedImageError:
-                                  logger.error(f"File {filename_log} is not a valid image format recognized by Pillow (re-check).")
-                                  raise ValueError("err-invalid-image-file")
-                             except Exception as img_err:
-                                  logger.error(f"Error processing image {filename_log}: {img_err}")
-                                  raise RuntimeError("err-conversion") from img_err
-
-                        if not image_objects_pil: raise ValueError("err-select-file") # Should not happen
-
+                             except UnidentifiedImageError: raise ValueError("err-invalid-image-file")
+                             except Exception as img_err: raise RuntimeError("err-conversion") from img_err
+                        if not image_objects_pil: raise ValueError("err-select-file")
                         image_objects_pil[0].save(output_path, "PDF", resolution=100.0, save_all=True, append_images=image_objects_pil[1:])
-                        conversion_success = True # Set success flag here
-
+                        conversion_success = True
                     except ValueError as ve: raise ve
                     except RuntimeError as rte: raise rte
-                    except Exception as e:
-                        logger.error(f"Unexpected error converting images to PDF (inline logic): {e}", exc_info=True)
-                        raise RuntimeError("err-unknown") from e
+                    except Exception as e: raise RuntimeError("err-unknown") from e
                     finally:
-                        for img_obj in image_objects_pil: # Close PIL Image objects
+                        for img_obj in image_objects_pil:
                             try: img_obj.close()
                             except: pass
                     # --- End Inlined/Adapted Logic ---
-
                 finally:
-                     # Ensure all reopened file objects are closed
-                     for f_obj in image_file_objects_reopened:
+                     for f_obj in image_file_objects_reopened: # Actually, this list is empty now, cleanup might be elsewhere
                          try: f_obj.close()
                          except: pass
 
+        except ValueError as val_err: error_key = str(val_err) if str(val_err).startswith("err-") else "err-conversion"; logger.error(f"Image conversion ValueError: {error_key}", exc_info=False)
+        except RuntimeError as rt_err: error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-conversion"; logger.error(f"Image conversion RuntimeError: {error_key}", exc_info=False)
+        except Exception as conv_err: error_key = "err-unknown"; logger.error(f"Unexpected error during image conversion process: {conv_err}", exc_info=True)
 
-        except ValueError as val_err:
-            error_key = str(val_err) if str(val_err).startswith("err-") else "err-conversion"
-            logger.error(f"Image conversion ValueError: {error_key}", exc_info=False)
-        except RuntimeError as rt_err:
-            error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-conversion"
-            logger.error(f"Image conversion RuntimeError: {error_key}", exc_info=False)
-        except Exception as conv_err:
-            error_key = "err-unknown"
-            logger.error(f"Unexpected error during image conversion process: {conv_err}", exc_info=True)
-
-        # --- Handle Result ---
         if conversion_success and output_path and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
             mimetype = 'application/zip' if out_ext == 'zip' else 'application/pdf'
             try:
@@ -928,43 +829,31 @@ def convert_image_route():
                 @response.call_on_close
                 def cleanup_image_success():
                     logger.debug(f"Cleaning up successful /convert_image: Inputs: {saved_input_paths}, Output: {output_path}, TempDir: {temp_upload_dir}")
-                    # saved_input_paths contains the single PDF input OR the temp image paths
                     for p in saved_input_paths: safe_remove(p)
                     safe_remove(output_path)
-                    safe_remove(temp_upload_dir) # Remove temp image dir
+                    safe_remove(temp_upload_dir)
                 return response
-            except Exception as send_err:
-                logger.error(f"Error sending image conversion file {output_filename}: {send_err}", exc_info=True)
-                raise RuntimeError("err-unknown") from send_err
-        else:
-            final_error_key = error_key or "err-conversion"
-            logger.error(f"Image conversion failed or produced invalid output. Final Error Key: {final_error_key}. Time: {time.time() - start_time:.2f}s")
-            raise RuntimeError(final_error_key)
+            except Exception as send_err: logger.error(f"Error sending image conversion file {output_filename}: {send_err}", exc_info=True); raise RuntimeError("err-unknown") from send_err
+        else: final_error_key = error_key or "err-conversion"; logger.error(f"Image conversion failed or produced invalid output. Final Error Key: {final_error_key}. Time: {time.time() - start_time:.2f}s"); raise RuntimeError(final_error_key)
 
     except Exception as e:
-        # Centralized error handling and cleanup for the image route
         final_error_key = str(e) if str(e).startswith("err-") else "err-unknown"
         status_code = 400
-        if final_error_key == "err-unknown":
-             status_code = 500
-             logger.error(f"Unexpected error in /convert_image handler: {e}", exc_info=True)
+        if final_error_key == "err-unknown": status_code = 500; logger.error(f"Unexpected error in /convert_image handler: {e}", exc_info=True)
         elif final_error_key == "err-file-too-large": status_code = 413
         elif final_error_key == "err-rate-limit-exceeded": status_code = 429
         elif final_error_key == "err-csrf-invalid": status_code = 400
-
         logger.debug(f"Cleaning up failed /convert_image request (Error: {final_error_key}).")
-        # Cleanup potentially saved input files/dirs
         for p in saved_input_paths: safe_remove(p)
         safe_remove(output_path)
-        safe_remove(temp_upload_dir) # Crucial: remove temp dir for multi-image uploads
-
+        safe_remove(temp_upload_dir)
         return make_error_response(final_error_key, status_code)
 
 
 # --- Teardown (Cleanup old files in UPLOAD_FOLDER) ---
 @app.teardown_appcontext
 def cleanup_old_files(exception=None):
-    # (No changes needed in this function's logic)
+    # (Giữ nguyên hàm cleanup_old_files)
     if not os.path.exists(UPLOAD_FOLDER): return
     logger.debug("Running teardown cleanup for UPLOAD_FOLDER...")
     try:
@@ -974,20 +863,16 @@ def cleanup_old_files(exception=None):
         except OSError as list_err: logger.error(f"Teardown: Listdir error {UPLOAD_FOLDER}: {list_err}"); return
 
         for item_name in items:
-            # Avoid deleting potentially active temp dirs used by image conversion
-            if item_name.startswith("img2pdf_"): continue
-
+            if item_name.startswith("img2pdf_"): continue # Bỏ qua các thư mục tạm img2pdf
             path = os.path.join(UPLOAD_FOLDER, item_name)
             try:
-                 # Check if it's a file before getting stats
                  if os.path.isfile(path):
                      stat_result = os.stat(path)
                      file_age = now - stat_result.st_mtime; checked_count += 1
                      if file_age > max_age:
                          if safe_remove(path): deleted_count += 1
-                 elif os.path.isdir(path): # Could add logic to clean old temp dirs if needed
-                      pass # Currently only removing files
-            except FileNotFoundError: continue # File might have been removed by another process/request
+                 elif os.path.isdir(path): pass
+            except FileNotFoundError: continue
             except Exception as e: logger.error(f"Teardown check error {path}: {e}")
 
         if checked_count > 0 or deleted_count > 0: logger.info(f"Teardown: Checked {checked_count}, removed {deleted_count} files older than {max_age}s from {UPLOAD_FOLDER}.")
@@ -996,6 +881,7 @@ def cleanup_old_files(exception=None):
 
 # === Main Execution ===
 if __name__ == '__main__':
+    # (Giữ nguyên phần main execution)
     try:
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         logger.info(f"Upload folder created/exists: {os.path.abspath(UPLOAD_FOLDER)}")
@@ -1003,27 +889,25 @@ if __name__ == '__main__':
         logger.critical(f"FATAL: Cannot create upload folder {UPLOAD_FOLDER}: {mkdir_err}.")
         sys.exit(1)
 
-    logger.info(f"LibreOffice path: {SOFFICE_PATH or 'Not Found - Some conversions will fail'}")
+    # Log trạng thái SOFFICE_PATH đã được xử lý ở trên
     logger.info(f"CSRF Protection Enabled: {'WTF_CSRF_ENABLED' in app.config and app.config['WTF_CSRF_ENABLED']}")
     logger.info(f"Rate Limiting Enabled: Yes (Default limits active)")
 
     port = int(os.environ.get('PORT', 5003))
-    host = os.environ.get('HOST', '0.0.0.0') # Bind to 0.0.0.0 for external access (e.g., Docker, Railway)
+    host = os.environ.get('HOST', '0.0.0.0')
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
 
     logger.info(f"Starting server on {host}:{port} - Debug: {debug_mode}")
 
     if debug_mode:
         logger.warning("Running in Flask DEBUG mode (Insecure for production).")
-        # Flask's dev server is fine for debugging, use_reloader=True is helpful
         app.run(host=host, port=port, debug=True, threaded=True, use_reloader=True)
     else:
-        # Use Waitress for production
         logger.info("Running with Waitress production server.")
         try:
             from waitress import serve
-            serve(app, host=host, port=port, threads=8) # Adjust threads as needed
+            serve(app, host=host, port=port, threads=8)
         except ImportError:
             logger.critical("Waitress not found! Cannot start production server.")
             logger.warning("FALLING BACK TO FLASK DEVELOPMENT SERVER (NOT RECOMMENDED FOR PRODUCTION).")
-            app.run(host=host, port=port, debug=False, threaded=True) # Run without debug/reloader
+            app.run(host=host, port=port, debug=False, threaded=True)
