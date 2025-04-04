@@ -51,7 +51,7 @@ csrf = CSRFProtect(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["300 per day", "200 per hour", "50 per minute"], # Đã tăng giới hạn
+    default_limits=["419 per day", "210 per hour", "30 per minute"], # Đã tăng giới hạn
     storage_uri="memory://",
     strategy="fixed-window"
 )
@@ -401,7 +401,7 @@ def get_translations():
             'err-rate-limit-exceeded': 'Too many requests. Please wait a moment and try again.',
             'err-invalid-mime-type': 'Invalid file type detected. The file content does not match the expected format.',
             # --- THÊM DỊCH CHO LỖI MỚI ---
-            'err-mime-unidentified-office': "Could not identify file type, it might be non-standard. Please 'Save As...' in the original application and upload the new file.",
+            'err-mime-unidentified-office': "Could not identify file type, it might be non-standard. Please open your file in an Office application, press Save or Ctrl + S to save again and upload again.",
             # --- KẾT THÚC THÊM DỊCH ---
             'err-invalid-mime-type-image': 'Invalid image type detected. Only JPEG files are allowed for Image-to-PDF.',
             'err-pdf-protected': 'Cannot process password-protected PDF.',
@@ -440,7 +440,7 @@ def get_translations():
             'err-rate-limit-exceeded': 'Quá nhiều yêu cầu. Vui lòng đợi một lát và thử lại.',
             'err-invalid-mime-type': 'Phát hiện loại tệp không hợp lệ. Nội dung tệp không khớp định dạng mong đợi.',
             # --- THÊM DỊCH CHO LỖI MỚI ---
-            'err-mime-unidentified-office': "Không thể nhận dạng loại file dù có đuôi Office. Vui lòng dùng chức năng 'Lưu thành...' (Save As...) trong ứng dụng gốc để lưu bản mới và tải lên lại.",
+            'err-mime-unidentified-office': "Không thể nhận dạng loại file dù có đuôi Office. Vui lòng mở file của bạn lên bằng ứng dụng Office, ấn Lưu hoặc Ctrl + S để lưu lại lần nữa và tải lên lại.",
             # --- KẾT THÚC THÊM DỊCH ---
             'err-invalid-mime-type-image': 'Phát hiện loại ảnh không hợp lệ. Chỉ cho phép tệp JPEG để chuyển đổi Ảnh sang PDF.',
             'err-pdf-protected': 'Không thể xử lý PDF được bảo vệ bằng mật khẩu.',
@@ -1088,7 +1088,7 @@ if __name__ == '__main__':
         logger.info("Running with Waitress production server.")
         try:
             from waitress import serve
-            serve(app, host=host, port=port, threads=8) # Adjust threads as needed
+            serve(app, host=host, port=port, threads=4) # Adjust threads as needed
         except ImportError:
             logger.critical("Waitress not found! Cannot start production server.")
             logger.warning("FALLING BACK TO FLASK DEVELOPMENT SERVER (NOT RECOMMENDED FOR PRODUCTION).")
