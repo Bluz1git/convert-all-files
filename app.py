@@ -22,14 +22,18 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 import zipfile
 import magic # MIME Type Detection
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # === Basic Flask App Setup ===
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # === Configuration ===
-app.config['MAX_CONTENT_LENGTH'] = 105 * 1024 * 1024  # ~105MB limit server-side
+app.config['MAX_CONTENT_LENGTH'] = 101 * 1024 * 1024  # ~101MB limit server-side
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1 # Các tham số quan trọng
+)
 
 # === Logging ===
 logging.basicConfig(
@@ -44,7 +48,7 @@ csrf = CSRFProtect(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour", "15 per minute"],
+    default_limits=["300 per day", "200 per hour", "50per minute"],
     storage_uri="memory://",
     strategy="fixed-window"
 )
