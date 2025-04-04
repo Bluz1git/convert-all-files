@@ -83,7 +83,7 @@ EXPOSE 5003
 # Run the application using Waitress
 # Ensure waitress is in requirements.txt (it is)
 # Using 0.0.0.0 to bind to all interfaces inside the container
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=5003", "--threads=8", "app:app"]
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=5003", "--threads=4", "app:app"]
 
 # Health check (Adjusted to use the correct port and assume waitress startup time)
 # Removed curl dependency from healthcheck to simplify, relying on waitress/app exit code
