@@ -550,7 +550,6 @@ def index():
         translations_url = url_for('get_translations', _external=False)
         gs_available = GS_PATH is not None
         soffice_available = SOFFICE_PATH is not None
-        compress_word_image_url = url_for('static', filename='images/notthingtoseehere.png')
         return render_template('index.html',
                                translations_url=translations_url,
                                gs_available=gs_available,
