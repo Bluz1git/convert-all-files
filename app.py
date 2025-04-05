@@ -563,7 +563,7 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
 
     if quality_level == 'low':
         # Use specific resolution settings for 96 PPI, mimicking Word's "Email"
-        ppi = 96
+        ppi = 120
         specific_settings = [
             '-dDownsampleColorImages=true',
             '-dDownsampleGrayImages=true',
