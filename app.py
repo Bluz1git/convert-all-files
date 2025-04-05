@@ -12,7 +12,7 @@ import subprocess
 import logging
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge # Better handling for large files
-from pdf2docx import Converter
+from pdf2docx import Converter # Cần cho bước chuyển đổi cuối
 import tempfile
 import PyPDF2
 import shutil # Cần cho safe_remove, which
@@ -214,10 +214,8 @@ def setup_slide_size(prs, pdf_path):
     return prs
 
 def sort_key_for_pptx_images(filename):
-    try:
-        return int(os.path.splitext(filename)[0].split('-')[-1].split('_')[-1])
-    except (ValueError, IndexError):
-        return 0
+    try: return int(os.path.splitext(filename)[0].split('-')[-1].split('_')[-1])
+    except (ValueError, IndexError): return 0
 
 def _convert_pdf_to_pptx_images(input_path, output_path):
     temp_dir = None
@@ -349,7 +347,6 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
                      with zipfile.ZipFile(output_zip_path, 'w') as zf: pass
                      success = True
             else:
-                # CORRECTED SyntaxError: Properly indented nested function
                 def sort_key_pdf2image(f):
                     try:
                         name_part = os.path.splitext(f)[0]
@@ -448,9 +445,9 @@ def get_translations():
             'lang-compress-title': 'Compress PDF', 'lang-compress-desc': 'Reduce PDF file size while optimizing for quality',
             'lang-compress-input-label': 'Select PDF file', 'lang-compress-btn': 'Compress PDF',
             'lang-compressing': 'Compressing PDF...', 'lang-select-quality': 'Compression Level',
-            'lang-quality-low': 'Low Quality (Smallest Size)',
-            'lang-quality-medium': 'Medium Quality (Good Balance)',
-            'lang-quality-high': 'High Quality (Less Compression)',
+            'lang-quality-low': 'Screen/Email (Smallest Size, ~120 PPI)',
+            'lang-quality-medium': 'Medium Quality (Good Balance, ~150 PPI)',
+            'lang-quality-high': 'High Quality (Less Compression, ~300 PPI)',
             'lang-merge-title': 'Merge PDF', 'lang-merge-desc': 'Combine multiple PDFs into one file',
             'lang-split-title': 'Split PDF', 'lang-split-desc': 'Extract pages from your PDF',
             'lang-image-title': 'PDF ↔ Image', 'lang-image-desc': 'Convert PDF to images or images to PDF',
@@ -487,8 +484,8 @@ def get_translations():
             'lang-clear-all': 'Clear All', 'lang-upload-a-file': 'Upload files',
             'lang-drag-drop': 'or drag and drop', 'lang-image-types': 'PDF, JPG, JPEG up to 100MB total',
             'lang-compress-docx-title': 'Compress Word',
-            'lang-compress-docx-desc': 'Convert Word to a compressed PDF (Smallest Size)',
-            'lang-compress-docx-input-label': 'Select Word file',
+            'lang-compress-docx-desc': 'Convert DOCX to a compressed DOCX file (via PDF)',
+            'lang-compress-docx-input-label': 'Select DOCX file',
             'lang-compressing-docx': 'Compressing Word...',
             'lang-compress-docx-btn': 'Compress Word',
         },
@@ -496,12 +493,12 @@ def get_translations():
             'lang-title': 'Công Cụ PDF & Office', 'lang-subtitle': 'Công cụ đơn giản, mạnh mẽ cho tài liệu của bạn',
             'lang-error-title': 'Lỗi!', 'lang-convert-title': 'Chuyển đổi PDF/Office',
             'lang-convert-desc': 'Chuyển đổi PDF sang Word/PPT và ngược lại',
-            'lang-compress-title': 'docx', 'lang-compress-desc': 'Giảm kích thước tệp PDF trong khi tối ưu hóa chất lượng',
-            'lang-compress-input-label': 'Chọn tệp PDF', 'lang-compress-btn': 'docx',
-            'lang-compressing': 'Đang docx...', 'lang-select-quality': 'Mức độ nén',
-            'lang-quality-low': 'Nén Mạnh (Nhẹ Nhất)',
-            'lang-quality-medium': 'Nén Vừa (Cân Bằng)',
-            'lang-quality-high': 'Nén Nhẹ (Nén Ít)',
+            'lang-compress-title': 'Nén PDF', 'lang-compress-desc': 'Giảm kích thước tệp PDF trong khi tối ưu hóa chất lượng',
+            'lang-compress-input-label': 'Chọn tệp PDF', 'lang-compress-btn': 'Nén PDF',
+            'lang-compressing': 'Đang nén PDF...', 'lang-select-quality': 'Mức độ nén',
+            'lang-quality-low': 'Màn hình/Email (Nhỏ nhất, ~120 PPI)',
+            'lang-quality-medium': 'Trung bình (Cân bằng, ~150 PPI)',
+            'lang-quality-high': 'Cao (Nén ít, ~300 PPI)',
             'lang-merge-title': 'Gộp PDF', 'lang-merge-desc': 'Kết hợp nhiều tệp PDF thành một tệp',
             'lang-split-title': 'Tách PDF', 'lang-split-desc': 'Trích xuất các trang từ tệp PDF của bạn',
             'lang-image-title': 'PDF ↔ Ảnh', 'lang-image-desc': 'Chuyển PDF thành ảnh hoặc ảnh thành PDF',
@@ -538,8 +535,8 @@ def get_translations():
             'lang-clear-all': 'Xóa tất cả', 'lang-upload-a-file': 'Tải tệp lên',
             'lang-drag-drop': 'hoặc kéo và thả', 'lang-image-types': 'PDF, JPG, JPEG tối đa 100MB tổng',
             'lang-compress-docx-title': 'Nén Word',
-            'lang-compress-docx-desc': 'Chuyển đổi Word thành PDF được nén (Kích thước nhỏ nhất)',
-            'lang-compress-docx-input-label': 'Chọn tệp Word',
+            'lang-compress-docx-desc': 'Chuyển đổi DOCX thành file DOCX nén (thông qua PDF)',
+            'lang-compress-docx-input-label': 'Chọn tệp DOCX',
             'lang-compressing-docx': 'Đang nén Word...',
             'lang-compress-docx-btn': 'Nén Word',
         }
@@ -549,7 +546,6 @@ def get_translations():
 
 @app.route('/')
 def index():
-    """Renders the main page."""
     try:
         translations_url = url_for('get_translations', _external=False)
         gs_available = GS_PATH is not None
@@ -565,7 +561,6 @@ def index():
 @app.route('/convert', methods=['POST'])
 @limiter.limit("10 per minute")
 def convert_file():
-    """Handles PDF <-> DOCX and PDF <-> PPT conversions with security checks."""
     output_path = temp_libreoffice_output = input_path_for_process = None
     saved_input_paths = []; actual_conversion_type = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
@@ -628,17 +623,12 @@ def convert_file():
                     logger.info(f"pdf2docx successful: {output_path}")
                 except Exception as pdf2docx_err:
                     err_str = str(pdf2docx_err).lower()
-                    if "encrypted" in err_str or "password" in err_str or "decrypt" in err_str:
-                        error_key = "err-pdf-protected"
-                    elif "corrupt" in err_str or "eof marker" in err_str or "invalid" in err_str :
-                        error_key = "err-pdf-corrupt"
-                    else:
-                        logger.error(f"pdf2docx failed: {pdf2docx_err}", exc_info=True)
-                        error_key = "err-conversion"
+                    if "encrypted" in err_str or "password" in err_str or "decrypt" in err_str: error_key = "err-pdf-protected"
+                    elif "corrupt" in err_str or "eof marker" in err_str or "invalid" in err_str : error_key = "err-pdf-corrupt"
+                    else: logger.error(f"pdf2docx failed: {pdf2docx_err}", exc_info=True); error_key = "err-conversion"
                 finally:
                     if cv: cv.close()
-                if not conversion_success:
-                    raise RuntimeError(error_key)
+                if not conversion_success: raise RuntimeError(error_key)
 
             elif actual_conversion_type in ['docx_to_pdf', 'ppt_to_pdf']:
                 if not SOFFICE_PATH: raise RuntimeError("err-libreoffice")
@@ -647,8 +637,7 @@ def convert_file():
                 try:
                     result = subprocess.run(cmd, check=True, timeout=LIBREOFFICE_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
                     logger.info(f"LO stdout:\n{result.stdout}")
-                    if result.stderr:
-                        logger.warning(f"LO stderr:\n{result.stderr}")
+                    if result.stderr: logger.warning(f"LO stderr:\n{result.stderr}")
                     if os.path.exists(temp_libreoffice_output) and os.path.getsize(temp_libreoffice_output) > 0: os.rename(temp_libreoffice_output, output_path); conversion_success = True; logger.info(f"LO conversion successful: {output_path}")
                     else: logger.error(f"LO ran but output '{temp_libreoffice_output}' missing/empty."); error_key = "err-libreoffice"
                 except subprocess.TimeoutExpired: logger.error(f"LO timed out ({LIBREOFFICE_TIMEOUT}s)."); error_key = "err-conversion-timeout"
@@ -679,18 +668,14 @@ def convert_file():
                     try:
                         result = subprocess.run(cmd, check=True, timeout=LIBREOFFICE_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
                         logger.info(f"LO stdout:\n{result.stdout}")
-                        if result.stderr:
-                            logger.warning(f"LO stderr:\n{result.stderr}") # Corrected
+                        if result.stderr: logger.warning(f"LO stderr:\n{result.stderr}")
                         if os.path.exists(temp_libreoffice_output) and os.path.getsize(temp_libreoffice_output) > 0: os.rename(temp_libreoffice_output, output_path); conversion_success = True; error_key = None; logger.info("LO fallback for PDF->PPTX successful.")
                         else: logger.error("LO fallback ran but output missing/empty."); error_key = "err-libreoffice"
                     except subprocess.TimeoutExpired: logger.error("LO fallback timed out."); error_key = "err-conversion-timeout"
                     except subprocess.CalledProcessError as lo_err:
                         logger.error(f"LO fallback failed. RC: {lo_err.returncode}")
-                        # CORRECTED SyntaxError: Separated statements
-                        if lo_err.stdout:
-                            logger.error(f"LO stdout:\n{lo_err.stdout}")
-                        if lo_err.stderr:
-                            logger.error(f"LO stderr:\n{lo_err.stderr}")
+                        if lo_err.stdout: logger.error(f"LO stdout:\n{lo_err.stdout}")
+                        if lo_err.stderr: logger.error(f"LO stderr:\n{lo_err.stderr}")
                         error_key = "err-libreoffice"
                     except FileNotFoundError: logger.error(f"LO not found: {SOFFICE_PATH}"); error_key = "err-libreoffice"
                     except Exception as lo_run_err: logger.error(f"Unexpected LO fallback error: {lo_run_err}", exc_info=True); error_key = "err-libreoffice"
@@ -872,11 +857,13 @@ def compress_pdf_route():
 @app.route('/compress_docx', methods=['POST'])
 @limiter.limit("10 per minute")
 def compress_docx_route():
-    """Handles DOCX compression (DOCX -> PDF -> Compress PDF -> Send PDF)."""
-    input_path_docx = temp_pdf_path = final_output_path = None
+    """Handles DOCX compression (DOCX -> PDF -> Compress PDF -> DOCX)."""
+    input_path_docx = temp_pdf_uncompressed = temp_pdf_compressed = final_output_docx = None
     saved_input_paths = []; intermediate_files = []
     start_time = time.time(); error_key = "err-conversion"; process_success = False
     response_to_send = None
+    final_output_filename_base = None
+    final_download_name = None
     try:
         if not SOFFICE_PATH: raise RuntimeError("err-libreoffice")
         if not GS_PATH: raise RuntimeError("err-gs-missing")
@@ -895,8 +882,12 @@ def compress_docx_route():
         try: file.seek(0); file.save(input_path_docx); saved_input_paths.append(input_path_docx); logger.info(f"Input DOCX saved: {input_path_docx}")
         except Exception as save_err: logger.error(f"Save failed for DOCX {filename}: {save_err}"); raise RuntimeError("err-unknown") from save_err
         base_name = filename.rsplit('.', 1)[0]; output_dir = os.path.dirname(input_path_docx)
-        expected_lo_output_name = os.path.basename(input_path_docx).replace('.docx', '.pdf'); temp_pdf_path = os.path.join(output_dir, f"temp_{timestamp}_{expected_lo_output_name}"); intermediate_files.append(temp_pdf_path)
-        final_output_filename_base = secure_filename(f"{base_name}_compressed"); final_output_filename = f"{final_output_filename_base}.pdf"; final_output_path = os.path.join(UPLOAD_FOLDER, final_output_filename)
+        expected_lo_output_name = os.path.basename(input_path_docx).replace('.docx', '.pdf'); temp_pdf_uncompressed = os.path.join(output_dir, f"temp_uncomp_{timestamp}_{expected_lo_output_name}"); intermediate_files.append(temp_pdf_uncompressed)
+        temp_pdf_compressed = os.path.join(output_dir, f"temp_comp_{timestamp}_{expected_lo_output_name}"); intermediate_files.append(temp_pdf_compressed)
+        final_output_filename_base = secure_filename(f"{base_name}_compressed"); final_output_docx = os.path.join(UPLOAD_FOLDER, f"{final_output_filename_base}.docx");
+        final_download_name = f"{final_output_filename_base}.docx"
+
+        # --- Step 1: Convert DOCX to Uncompressed PDF ---
         lo_success = False
         try:
             cmd_lo = [SOFFICE_PATH, '--headless', '--convert-to', 'pdf', '--outdir', output_dir, input_path_docx]
@@ -905,37 +896,67 @@ def compress_docx_route():
             result_lo = subprocess.run(cmd_lo, check=True, timeout=LIBREOFFICE_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
             logger.info(f"LO stdout (DOCX->PDF):\n{result_lo.stdout}")
             if result_lo.stderr: logger.warning(f"LO stderr (DOCX->PDF):\n{result_lo.stderr}")
-            if os.path.exists(lo_direct_output_path) and os.path.getsize(lo_direct_output_path) > 0: os.rename(lo_direct_output_path, temp_pdf_path); lo_success = True; logger.info(f"LO DOCX->PDF successful: {temp_pdf_path}")
+            if os.path.exists(lo_direct_output_path) and os.path.getsize(lo_direct_output_path) > 0: os.rename(lo_direct_output_path, temp_pdf_uncompressed); lo_success = True; logger.info(f"LO DOCX->PDF successful: {temp_pdf_uncompressed}")
             else: logger.error(f"LO ran but PDF '{lo_direct_output_path}' missing/empty."); error_key = "err-libreoffice"
         except subprocess.TimeoutExpired: logger.error(f"LO DOCX->PDF timed out ({LIBREOFFICE_TIMEOUT}s)."); error_key = "err-conversion-timeout"
         except subprocess.CalledProcessError as lo_err:
             logger.error(f"LO DOCX->PDF failed. RC: {lo_err.returncode}")
-            if lo_err.stdout: logger.error(f"LO stdout:\n{lo_err.stdout}") # Corrected
-            if lo_err.stderr: logger.error(f"LO stderr:\n{lo_err.stderr}") # Corrected
+            if lo_err.stdout: logger.error(f"LO stdout:\n{lo_err.stdout}")
+            if lo_err.stderr: logger.error(f"LO stderr:\n{lo_err.stderr}")
             error_key = "err-libreoffice"
         except FileNotFoundError: logger.error(f"LO not found: {SOFFICE_PATH}"); error_key = "err-libreoffice"
         except Exception as lo_run_err: logger.error(f"Unexpected LO error DOCX->PDF: {lo_run_err}", exc_info=True); error_key = "err-libreoffice"
         if not lo_success: raise RuntimeError(error_key)
+
+        # --- Step 2: Compress the intermediate PDF ---
         gs_success = False
-        if os.path.exists(temp_pdf_path) and os.path.getsize(temp_pdf_path) > 0:
+        if os.path.exists(temp_pdf_uncompressed) and os.path.getsize(temp_pdf_uncompressed) > 0:
             try:
-                gs_success = compress_pdf_ghostscript(temp_pdf_path, final_output_path, quality_level='low')
+                gs_success = compress_pdf_ghostscript(temp_pdf_uncompressed, temp_pdf_compressed, quality_level='low')
                 if not gs_success: raise RuntimeError(error_key or "err-gs-failed")
             except ValueError as ve: error_key = str(ve) if str(ve).startswith("err-") else "err-conversion"; logger.warning(f"GS compression ValueError: {error_key}"); raise
             except RuntimeError as rt_err: error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-gs-failed"; logger.error(f"Caught RuntimeError GS compress: {error_key}", exc_info=False); raise
             except Exception as comp_err: error_key = "err-unknown"; logger.error(f"Unexpected GS compress error: {comp_err}", exc_info=True); raise
-        else: logger.error(f"Intermediate PDF '{temp_pdf_path}' missing/empty."); raise RuntimeError("err-libreoffice")
+        else: logger.error(f"Intermediate uncompressed PDF '{temp_pdf_uncompressed}' missing/empty."); raise RuntimeError("err-libreoffice")
+        if not gs_success: raise RuntimeError(error_key)
 
-        process_success = True
-        if final_output_path and os.path.exists(final_output_path) and os.path.getsize(final_output_path) > 0:
+        # --- Step 3: Convert Compressed PDF back to DOCX ---
+        pdf2docx_success = False
+        if os.path.exists(temp_pdf_compressed) and os.path.getsize(temp_pdf_compressed) > 0:
+            cv = None
             try:
-                response = send_file(final_output_path, as_attachment=True, download_name=final_output_filename, mimetype='application/pdf')
-                @response.call_on_close
-                def cleanup_compress_docx_success(): logger.debug(f"Cleanup success /compress_docx: In: {input_path_docx}, Temp: {temp_pdf_path}, Final: {final_output_path}"); safe_remove(input_path_docx); safe_remove(temp_pdf_path); safe_remove(final_output_path)
-                logger.info(f"DOCX compression successful. Sending: {final_output_filename}. Time: {time.time() - start_time:.2f}s")
+                logger.info(f"Starting pdf2docx for compressed PDF {temp_pdf_compressed}")
+                cv = Converter(temp_pdf_compressed)
+                cv.convert(final_output_docx)
+                pdf2docx_success = True
+                logger.info(f"pdf2docx conversion successful: {final_output_docx}")
+            except Exception as pdf2docx_err:
+                err_str = str(pdf2docx_err).lower()
+                if "encrypted" in err_str or "password" in err_str or "decrypt" in err_str: error_key = "err-pdf-protected"
+                elif "corrupt" in err_str or "eof marker" in err_str or "invalid" in err_str : error_key = "err-pdf-corrupt"
+                else: logger.error(f"pdf2docx conversion failed for {temp_pdf_compressed}: {pdf2docx_err}", exc_info=True); error_key = "err-conversion"
+            finally:
+                if cv: cv.close()
+        else: logger.error(f"Intermediate compressed PDF '{temp_pdf_compressed}' missing/empty."); error_key = "err-gs-failed"
+        if not pdf2docx_success: raise RuntimeError(error_key)
+
+        # --- Step 4: Handle Success ---
+        process_success = True
+        if final_output_docx and os.path.exists(final_output_docx) and os.path.getsize(final_output_docx) > 0:
+            try:
+                final_mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                response = send_file(final_output_docx, as_attachment=True, download_name=final_download_name, mimetype=final_mimetype)
+                def cleanup_compress_docx_success():
+                    logger.debug(f"Cleanup success /compress_docx: Input: {input_path_docx}, TempUncomp: {temp_pdf_uncompressed}, TempComp: {temp_pdf_compressed}, Final: {final_output_docx}")
+                    safe_remove(input_path_docx)
+                    safe_remove(temp_pdf_uncompressed)
+                    safe_remove(temp_pdf_compressed)
+                    safe_remove(final_output_docx)
+                response.call_on_close(cleanup_compress_docx_success)
+                logger.info(f"DOCX compression successful. Sending: {final_download_name}. Time: {time.time() - start_time:.2f}s")
                 response_to_send = response
-            except Exception as send_err: logger.error(f"Error sending DOCX->PDF file {final_output_filename}: {send_err}", exc_info=True); raise RuntimeError("err-unknown") from send_err
-        else: logger.error(f"Process finished but final file '{final_output_path}' missing/empty."); raise RuntimeError("err-gs-failed")
+            except Exception as send_err: logger.error(f"Error sending final DOCX file {final_download_name}: {send_err}", exc_info=True); raise RuntimeError("err-unknown") from send_err # Use correct name in log
+        else: logger.error(f"Process finished but final DOCX file path '{final_output_docx}' missing/empty."); raise RuntimeError("err-conversion")
 
     except Exception as e:
         final_error_key = str(e) if str(e).startswith("err-") else "err-unknown"; status_code = 400
@@ -945,9 +966,9 @@ def compress_docx_route():
         elif final_error_key == "err-csrf-invalid": status_code = 400
         elif final_error_key in ["err-format-docx", "err-invalid-mime-type", "err-mime-unidentified-office", "err-select-file"]: status_code = 400
         elif final_error_key in ["err-pdf-protected", "err-pdf-corrupt"]: status_code = 400
-        elif final_error_key in ["err-libreoffice", "err-gs-missing", "err-gs-failed"]: status_code = 503
+        elif final_error_key in ["err-libreoffice", "err-gs-missing", "err-gs-failed", "err-conversion"]: status_code = 503
         elif final_error_key in ["err-conversion-timeout", "err-gs-timeout"]: status_code = 504
-        logger.debug(f"Cleanup failed /compress_docx (Error: {final_error_key})."); [safe_remove(p) for p in saved_input_paths]; [safe_remove(p) for p in intermediate_files]; safe_remove(final_output_path)
+        logger.debug(f"Cleanup failed /compress_docx (Error: {final_error_key})."); [safe_remove(p) for p in saved_input_paths]; [safe_remove(p) for p in intermediate_files]; safe_remove(final_output_docx)
         return make_error_response(final_error_key, status_code)
 
     if response_to_send: return response_to_send
