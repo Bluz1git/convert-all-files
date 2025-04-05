@@ -136,9 +136,6 @@
                             <div class="relative"> <input type="file" name="file" id="compressDocxFileInput" accept=".docx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required> <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-teal-400 transition-colors"> <span id="compressDocxFileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span> <span class="bg-teal-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span> </div> </div>
                             <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
                         </div>
-
-                        
-                        </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4">
                              <!-- Removed compressDocxLoadingIndicator div -->
