@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Title sẽ được cập nhật bởi JS -->
-    <title>PDF Tools - Easy PDF Management</title>
+    <title>PDF Tools - Easy PDF Management</title> <!-- Title sẽ được cập nhật bởi JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -72,8 +71,7 @@
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-blue-100 text-blue-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg> </div> <h3 class="lang-convert-title" style="position: relative; left: 32px;"> Convert PDF/Office </h3> </div>
-                    <!-- Cập nhật mô tả để rõ hơn -->
-                    <p class="card-description lang-convert-desc">Transform PDF to Word(DOCX)/PPT and vice versa</p>
+                    <p class="card-description lang-convert-desc">Transform PDF to Word/PPT and vice versa</p>
                     <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
                         <div class="mb-4"> <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label> <div class="relative"> <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required> <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400 transition-colors"> <span id="fileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span> <span class="bg-blue-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span> </div> </div> <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p> </div>
                         <div class="mb-4"> <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label> <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500 cursor-pointer" required> <option value="" disabled selected class="lang-select-conversion">Select conversion type</option> <option value="pdf_docx">PDF ↔ DOCX</option> <option value="pdf_ppt">PDF ↔ PPT/PPTX</option> </select> <input type="hidden" name="conversion_type" id="actualConversionType"> </div>
@@ -83,7 +81,7 @@
                 </div>
             </div>
 
-             <!-- 2. PDF <-> Image Card -->
+             <!-- 2. PDF <-> Image Card (Stacked Pills Version) -->
             <div class="card form-card">
                 <div class="card-content">
                     <div class="card-header-box bg-orange-100 text-orange-800"> <div class="icon-wrapper"> <svg class="h-6 w-6 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /> </svg> </div> <h3 class="lang-image-title" style="position: relative; left: 55px;"> PDF ↔ Image </h3> </div>
@@ -110,11 +108,14 @@
                                  </div>
                              </div>
                              <input type="hidden" id="imageConversionMode" value="">
+                             <!-- ADDED: Size Limit and Clear All Button Container -->
                              <div class="flex justify-between items-center mt-1">
                                  <p class="text-xs text-gray-500 lang-size-limit">Size limit: 100MB (total)</p>
                                  <button type="button" id="clearAllImageFiles" class="text-xs text-blue-600 hover:text-blue-800 hover:underline focus:outline-none lang-clear-all" style="display: none;">Clear All</button>
                              </div>
+                             <!-- END ADDED -->
                         </div>
+                        <!-- Đây là token cho form ảnh -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4"> <div id="imageLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600"> <div class="loader loader-sm"></div> <span class="lang-image-converting ml-2">Converting...</span> </div> <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Convert Now</button> </div>
                     </form>
@@ -131,13 +132,12 @@
 
          <footer class="text-center mt-10 py-4 text-sm text-gray-500">
             © 2025 PDF Tools. More features coming soon - I hope you will enjoy my website.
-            <p class="text-xs mt-1"></p>
+            <p class="text-xs mt-1">Bug LibreOffice.</p> <!-- Giữ lại nếu bạn muốn -->
         </footer>
 
     </div> <!-- End main container -->
 
     <!-- ========== JAVASCRIPT SECTION ========== -->
-    <!-- Giữ nguyên phần Javascript -->
     <script>
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         let currentTranslations = {};
@@ -164,7 +164,7 @@
         const imageVerticalFileList = document.getElementById('imageVerticalFileList');
         const imageDropZoneInstructions = document.getElementById('imageDropZoneInstructions');
         const imageConversionModeInput = document.getElementById('imageConversionMode');
-        const clearAllImageFilesButton = document.getElementById('clearAllImageFiles');
+        const clearAllImageFilesButton = document.getElementById('clearAllImageFiles'); // ADDED
 
         let selectedImageFiles = []; // Stores File objects for image card
 
@@ -172,22 +172,35 @@
         function showError(errorKeyOrMessage, alertElement = errorAlert, messageElement = errorMessage) {
              let message = errorKeyOrMessage;
              let errorKey = '';
+
+             // Try to extract the error key if the message has the prefix
              if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Conversion failed:')) {
                  errorKey = errorKeyOrMessage.substring(18).trim();
-                 message = errorKey;
-             } else { errorKey = errorKeyOrMessage; }
+                 message = errorKey; // Use the key first for translation lookup
+             } else {
+                 errorKey = errorKeyOrMessage; // Assume the input is the key itself
+             }
 
+             // --- START: MODIFIED ERROR MESSAGE HANDLING ---
              if (currentTranslations && currentTranslations[errorKey]) {
+                 // Found a direct translation for the key
                  message = currentTranslations[errorKey];
              } else if (errorKey === 'err-mime-unidentified-office') {
+                 // Specific fallback message for the new error if translation is missing
                  message = currentTranslations['err-mime-unidentified-office'] || "Could not identify file type, it might be non-standard. Please 'Save As...' in the original application and upload the new file.";
-             } else if (errorKey && !currentTranslations[errorKey]){
+             }
+             // --- END: MODIFIED ERROR MESSAGE HANDLING ---
+             else if (errorKey && !currentTranslations[errorKey]){
+                 // If it looked like a key but no translation found, use the key itself or a generic message
                  const genericError = currentTranslations['err-conversion'] || 'An error occurred during conversion.';
+                 // Add the key detail if it doesn't look like a full sentence already
                  message = genericError + (errorKey.includes(' ') ? '' : ` (${errorKey})`);
                  console.warn(`Missing translation for error key: ${errorKey}`);
              } else {
+                 // Fallback if input wasn't a key or couldn't be parsed
                  message = currentTranslations['err-conversion'] || errorKeyOrMessage || 'An error occurred.';
              }
+
 
              messageElement.textContent = message;
              const errorTitle = alertElement.querySelector('.lang-error-title');
@@ -197,6 +210,7 @@
              alertElement.classList.remove('hidden');
         }
 
+
         function hideError(alertElement = errorAlert) {
             alertElement.classList.add('hidden');
         }
@@ -205,13 +219,15 @@
             document.documentElement.lang = currentLang;
             document.title = (translations['lang-title'] || "PDF Tools") + " - Easy File Conversion";
 
+            // Apply translations based on class names starting with "lang-"
             document.querySelectorAll('[class*="lang-"]').forEach(element => {
                 const langClass = Array.from(element.classList).find(cls => cls.startsWith('lang-'));
                 if (langClass && translations[langClass]) {
                     const text = translations[langClass];
-                    const tags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE', 'SELECT'];
+                    const tags = ['BUTTON', 'OPTION', 'LABEL', 'P', 'H2', 'H3', 'SPAN', 'STRONG', 'TITLE', 'SELECT']; // Added SELECT for default option
 
                     if (tags.includes(element.tagName)) {
+                        // Handle <select> default option specifically
                         if (element.tagName === 'SELECT' && element.options.length > 0 && element.options[0].disabled) {
                              element.options[0].textContent = text;
                         } else {
@@ -219,8 +235,10 @@
                         }
                     }
                     else if (element.placeholder) { element.placeholder = text; }
+                    // Handle data attribute for file status default text
                     else if (element.dataset.langNoFile !== undefined) {
                         element.dataset.langNoFile = text;
+                        // Only update text if it's currently showing the default "no file" message
                         if (element.textContent === element.dataset.previousNoFileText || !element.dataset.previousNoFileText) {
                            element.textContent = text;
                         }
@@ -228,16 +246,18 @@
                 }
             });
 
+            // Explicitly update file status text if no file is selected
             const noFileText = translations['file-no-selected'] || 'No file selected';
             if(fileStatus) {
                 const prevText = fileStatus.dataset.langNoFile || 'No file selected';
                 fileStatus.dataset.langNoFile = noFileText;
-                fileStatus.dataset.previousNoFileText = prevText;
+                fileStatus.dataset.previousNoFileText = prevText; // Store previous default for comparison
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                     fileStatus.textContent = noFileText;
                 }
             }
 
+             // Update file dropzone texts explicitly using specific keys from translations
              const uploadTextEl = document.querySelector('.lang-upload-a-file');
              if (uploadTextEl) uploadTextEl.textContent = translations['lang-upload-a-file'] || 'Upload files';
              const dragDropTextEl = document.querySelector('.lang-drag-drop');
@@ -248,40 +268,44 @@
 
         async function updateLanguage(lang) {
             currentLang = lang;
-            hideError();
+            hideError(); // Hide error on language change
             try {
                 const response = await fetch(`${TRANSLATIONS_URL}?lang=${lang}`);
-                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 currentTranslations = await response.json();
 
-                 // Fallbacks (Ensure these keys exist in backend or provide defaults here)
+                 // --- Ensure fallback for dynamic/JS-specific texts if not in main translations ---
+                 // (These keys were added to the backend translations, so this might be redundant but safe)
                  currentTranslations['lang-upload-a-file'] = currentTranslations['lang-upload-a-file'] || (lang === 'vi' ? 'Tải tệp lên' : 'Upload files');
                  currentTranslations['lang-drag-drop'] = currentTranslations['lang-drag-drop'] || (lang === 'vi' ? 'hoặc kéo và thả' : 'or drag and drop');
                  currentTranslations['lang-image-types'] = currentTranslations['lang-image-types'] || (lang === 'vi' ? 'PDF, JPG, JPEG tối đa 100MB tổng' : 'PDF, JPG, JPEG up to 100MB total');
                  currentTranslations['file-no-selected'] = currentTranslations['file-no-selected'] || (lang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected');
                  currentTranslations['err-conversion'] = currentTranslations['err-conversion'] || (lang === 'vi' ? 'Đã xảy ra lỗi trong quá trình chuyển đổi.' : 'An error occurred during conversion.');
+                 // Ensure fallback for the new error message
                  currentTranslations['err-mime-unidentified-office'] = currentTranslations['err-mime-unidentified-office'] || (lang === 'vi' ? "Không thể nhận dạng loại file dù có đuôi Office. Vui lòng dùng chức năng 'Lưu thành...' (Save As...) trong ứng dụng gốc để lưu bản mới và tải lên lại." : "Could not identify file type, it might be non-standard. Please 'Save As...' in the original application and upload the new file.");
-                 // Add fallbacks for OCR errors if necessary (should be in backend)
-                 currentTranslations['err-ocr-failed'] = currentTranslations['err-ocr-failed'] || (lang === 'vi' ? 'Xử lý OCR thất bại.' : 'OCR processing failed.');
-                 currentTranslations['err-tesseract-missing'] = currentTranslations['err-tesseract-missing'] || (lang === 'vi' ? 'Không tìm thấy công cụ OCR.' : 'OCR engine not found.');
+                 // --- End Fallbacks ---
 
                 applyTranslations(currentTranslations);
                 localStorage.setItem('preferred-language', lang);
                 languageSelector.value = lang;
-                document.documentElement.lang = lang;
-                updateImageFileDisplay();
+                document.documentElement.lang = lang; // Set lang attribute on <html>
+                updateImageFileDisplay(); // Re-render file list after language change
             } catch (error) {
                 console.error('Failed to fetch translations:', error);
-                currentTranslations = {};
+                currentTranslations = {}; // Reset translations on failure
+                // Show error using the specific key if possible, else a generic message
                 showError('err-fetch-translations');
             }
         }
 
        function formatBytes(bytes, decimals = 2) {
-            if (!+bytes || bytes === 0) return '0 Bytes';
+            if (!+bytes || bytes === 0) return '0 Bytes'; // Handle 0 bytes
             const k = 1024;
             const dm = decimals < 0 ? 0 : decimals;
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            // Ensure index is within bounds
             const i = Math.max(0, Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1));
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
         }
@@ -297,90 +321,129 @@
                 const firstFileExt = firstFileName.split('.').pop().toLowerCase();
 
                 if (firstFileExt === 'pdf') {
-                    if (combinedFiles.length > 1) { errorKey = 'err-image-single-pdf'; mode = 'invalid'; }
-                    else { mode = 'pdf_to_image'; }
+                    if (combinedFiles.length > 1) {
+                        errorKey = 'err-image-single-pdf';
+                        mode = 'invalid';
+                    } else {
+                        mode = 'pdf_to_image';
+                    }
                 } else if (['jpg', 'jpeg'].includes(firstFileExt)) {
                     mode = 'image_to_pdf';
+                    // Check if all files are images
                     for (let i = 0; i < combinedFiles.length; i++) {
                         const fileName = combinedFiles[i].name || '';
                         const ext = fileName.split('.').pop().toLowerCase();
-                        if (!['jpg', 'jpeg'].includes(ext)) { errorKey = 'err-image-all-images'; mode = 'invalid'; break; }
+                        if (!['jpg', 'jpeg'].includes(ext)) {
+                            errorKey = 'err-image-all-images';
+                            mode = 'invalid';
+                            break;
+                        }
                     }
-                } else { errorKey = 'err-image-format'; mode = 'invalid'; }
+                } else {
+                    // First file is neither PDF nor valid image
+                    errorKey = 'err-image-format';
+                    mode = 'invalid';
+                }
 
+                // Check total size only if mode is still potentially valid
                 if (mode !== 'invalid') {
                     let totalSize = combinedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
-                    const maxSize = 101 * 1024 * 1024;
-                    if (totalSize > maxSize) { errorKey = 'err-file-too-large'; mode = 'invalid'; }
+                    const maxSize = 101 * 1024 * 1024; // Use the same limit as backend
+                    if (totalSize > maxSize) {
+                        errorKey = 'err-file-too-large';
+                        mode = 'invalid';
+                    }
                 }
             }
 
-            imageConversionModeInput.value = mode;
+            imageConversionModeInput.value = mode; // Update hidden input
 
             if (errorKey) {
                 showError(errorKey);
-                return { valid: false, mode: 'invalid', files: currentFiles };
+                return { valid: false, mode: 'invalid', files: currentFiles }; // Return old files if validation fails
             }
 
+            // If valid and files exist, clear any previous error
             if (combinedFiles.length > 0) hideError();
             return { valid: true, mode: mode, files: combinedFiles };
         }
 
         function addImageFiles(newFiles) {
+            // Filter only allowed extensions initially
             const filesToAdd = Array.from(newFiles).filter(f => f.name && ['pdf', 'jpg', 'jpeg'].includes(f.name.split('.').pop().toLowerCase()));
+
+            // Allow adding files with the same name (no strict duplicate check based on name/size here)
             const uniqueFilesToAdd = filesToAdd;
 
             if (uniqueFilesToAdd.length === 0) {
+                 // If original list had files, but none were valid types
                  if (newFiles.length > 0 && Array.from(newFiles).some(f => !['pdf', 'jpg', 'jpeg'].includes(f.name?.split('.').pop()?.toLowerCase()))) {
                       showError('err-image-format');
                  }
-                 return;
+                 return; // No valid files to add
             }
+
+            // Validate the combined list (current + new)
             const validationResult = validateImageFiles(uniqueFilesToAdd);
-            if (validationResult.valid) { selectedImageFiles = validationResult.files; }
-            else { console.warn("Validation failed. Files not added."); }
+
+            if (validationResult.valid) {
+                selectedImageFiles = validationResult.files; // Update the global list
+            } else {
+                // Validation failed, don't add the new files
+                console.warn("Validation failed. Files not added.");
+                // Error message should already be shown by validateImageFiles
+            }
+            // Always update display, even if validation failed (to potentially show the error state)
             updateImageFileDisplay();
         }
 
         function removeImageFile(index) {
             if (index >= 0 && index < selectedImageFiles.length) {
                 selectedImageFiles.splice(index, 1);
-                validateImageFiles([]);
+                validateImageFiles([]); // Re-validate the list after removal
                 updateImageFileDisplay();
             }
         }
 
+        // ========== updateImageFileDisplay - Handles file list, buttons, and clear all ==========
         function updateImageFileDisplay() {
+            // Get references inside the function to ensure they exist
             const verticalFileList = document.getElementById('imageVerticalFileList');
             const instructions = document.getElementById('imageDropZoneInstructions');
             const clearButton = document.getElementById('clearAllImageFiles');
             const convertBtn = document.getElementById('imageConvertButton');
             const modeInput = document.getElementById('imageConversionMode');
 
-            if (!verticalFileList || !instructions || !clearButton || !convertBtn || !modeInput) { return; }
-            verticalFileList.innerHTML = '';
+            if (!verticalFileList || !instructions || !clearButton || !convertBtn || !modeInput) {
+                console.error("Required image card elements not found in updateImageFileDisplay!");
+                return;
+            }
+            verticalFileList.innerHTML = ''; // Clear current list
 
+            // Determine if the current state is valid for conversion
             const isValidState = selectedImageFiles.length > 0 && modeInput.value !== '' && modeInput.value !== 'invalid';
 
             if (selectedImageFiles.length > 0) {
                 verticalFileList.classList.remove('hidden');
                 instructions.classList.add('hidden');
-                clearButton.style.display = 'inline';
+                clearButton.style.display = 'inline'; // Show Clear All button
 
                 selectedImageFiles.forEach((file, index) => {
                     const originalFileName = file.name || 'unknown';
                     let displayFileName = originalFileName;
+                    // Simple duplicate display name handling (optional)
                     let duplicateCount = 0;
                     for (let i = 0; i < index; i++) { if (selectedImageFiles[i].name === originalFileName) { duplicateCount++; } }
                     if (duplicateCount > 0) { const parts = originalFileName.split('.'); const ext = parts.pop(); displayFileName = `${parts.join('.')}_(${duplicateCount + 1})${ext ? '.'+ext : ''}`; }
 
+
                     const pill = document.createElement('div');
                     let pillClasses = ['inline-flex', 'items-center', 'justify-between', 'bg-orange-100', 'text-orange-800', 'text-sm', 'font-medium', 'px-3', 'py-1.5', 'rounded-full', 'space-x-2', 'w-full', 'max-w-full'];
-                    if (index > 0) { pillClasses.push('mt-1'); }
+                    if (index > 0) { pillClasses.push('mt-1'); } // Add margin top for subsequent pills
                     pill.className = pillClasses.join(' ');
 
                     const fileSize = formatBytes(file.size || 0);
-                    const title = `${originalFileName} (${fileSize})`;
+                    const title = `${originalFileName} (${fileSize})`; // Tooltip shows original name
 
                     pill.innerHTML = `
                         <span class="truncate flex-grow min-w-0 mr-2" title="${title}">${displayFileName} (${fileSize})</span>
@@ -389,59 +452,90 @@
                         </button>`;
                     verticalFileList.appendChild(pill);
                 });
-                verticalFileList.scrollTop = verticalFileList.scrollHeight;
+                verticalFileList.scrollTop = verticalFileList.scrollHeight; // Scroll to bottom
             } else {
+                // No files selected
                 verticalFileList.classList.add('hidden');
                 instructions.classList.remove('hidden');
-                clearButton.style.display = 'none';
-                modeInput.value = '';
+                clearButton.style.display = 'none'; // Hide Clear All button
+                modeInput.value = ''; // Reset mode if no files
+                // Don't hide errors automatically here, let validation handle it
+                // hideError();
             }
+
+            // Enable/Disable Convert button based on valid state
             convertBtn.disabled = !isValidState;
         }
+        // ========== END: updateImageFileDisplay ==========
 
+        // ===== handleFetch (Handles form submission, loading state, and download) =====
         function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey, formData = null) {
             let isManualFormData = false;
             if (!formData) {
-                if (!formElement) { console.error("Form element missing"); /*...*/ return; }
+                // If no manual FormData provided, create from formElement
+                if (!formElement) {
+                    console.error("Form element missing for handleFetch");
+                    loadingElement.classList.add('hidden');
+                    buttonElement.disabled = false;
+                    buttonElement.innerHTML = currentTranslations[buttonTextKey] || 'Convert Now';
+                    return;
+                }
                 formData = new FormData(formElement);
-            } else { isManualFormData = true; }
+            } else {
+                isManualFormData = true;
+            }
 
             let conversionDirection = null;
+            // Try to get conversion direction for logging/filename fallback if applicable
             if (!isManualFormData && formElement) {
                 const el = formElement.querySelector('input[name="conversion_type"]');
                 conversionDirection = el ? el.value : null;
             }
 
+            // Show loading state
             loadingElement.classList.remove('hidden');
             buttonElement.disabled = true;
             const convertingTextKey = buttonElement.id === 'imageConvertButton' ? 'lang-image-converting' : 'lang-converting';
             const convertingText = currentTranslations[convertingTextKey] || 'Converting...';
             buttonElement.innerHTML = `<div class="loader loader-sm inline-block !border-t-white !border-l-white !border-b-white !border-r-transparent mr-2 align-middle"></div><span class="inline-block align-middle">${convertingText}</span>`;
-            hideError();
+            hideError(); // Clear previous errors on new submission
 
-            fetch(endpoint, { method: 'POST', body: formData })
+            fetch(endpoint, {
+                method: 'POST',
+                body: formData
+                // Headers are not explicitly set, letting browser handle FormData header
+            })
             .then(response => {
                 if (!response.ok) {
+                    // Try to get error message text from the response body
                     return response.text().then(text => {
+                        // Throw an error with the text from the server (which includes the prefix)
                         throw new Error(text || 'Conversion failed: err-unknown');
                     });
                 }
-                return response;
+                return response; // Pass the successful response along
             })
             .then(response => {
+                // Handle file download
                 const disposition = response.headers.get('Content-Disposition');
-                let downloadFilename = `converted_file`;
+                let downloadFilename = `converted_file`; // Default filename
+
                 if (disposition && disposition.includes('attachment')) {
+                    // Try to parse filename* (UTF-8) first
                     const m1 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-                    if (m1 && m1[1]) { try { downloadFilename = decodeURIComponent(m1[1]); } catch (e) { /* fallback */ } }
+                    if (m1 && m1[1]) {
+                        try { downloadFilename = decodeURIComponent(m1[1]); }
+                        catch (e) { console.warn("Failed to decode UTF-8 filename, falling back:", m1[1]); /* Continue to fallback */ }
+                    }
+                    // Fallback to filename= (ASCII) if UTF-8 failed or wasn't present
                     if (downloadFilename === 'converted_file' || (m1 && !m1[1])) {
                          const m2 = /filename="?([^"]+)"?/i.exec(disposition);
                          if (m2 && m2[1]) { downloadFilename = m2[1]; }
                     }
+                     // If still default, construct a fallback name based on input/conversion type
                      if (downloadFilename === 'converted_file') {
-                         let base = 'file'; let ext = 'unknown';
-                         // ... (logic để tạo tên fallback giữ nguyên) ...
-                          if (endpoint === '/convert_image' && selectedImageFiles.length > 0) {
+                         let base = 'file';
+                         if (endpoint === '/convert_image' && selectedImageFiles.length > 0) {
                              const name = selectedImageFiles[0].name;
                              base = name.substring(0, name.lastIndexOf('.')) || 'file';
                          } else if (formElement) {
@@ -451,6 +545,7 @@
                                  base = name.substring(0, name.lastIndexOf('.')) || 'file';
                              }
                          }
+                         let ext = 'unknown';
                          if (endpoint === '/convert') {
                              if (conversionDirection === 'pdf_to_docx') ext = 'docx';
                              else if (conversionDirection === 'docx_to_pdf') ext = 'pdf';
@@ -464,165 +559,257 @@
                          console.warn("Could not parse filename from header, using constructed name:", downloadFilename);
                      }
                 }
+                // Return blob and filename for download
                 return response.blob().then(blob => ({ blob, downloadFilename }));
             })
             .then(({ blob, downloadFilename }) => {
+                // Create a temporary link to trigger download
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.style.display = 'none'; a.href = url; a.download = downloadFilename;
-                document.body.appendChild(a); a.click();
-                window.URL.revokeObjectURL(url); a.remove();
+                a.style.display = 'none';
+                a.href = url;
+                a.download = downloadFilename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url); // Clean up the object URL
+                a.remove(); // Remove the temporary link
 
+                // Reset form/state after successful download
                 if (endpoint === '/convert_image') {
-                    selectedImageFiles = []; updateImageFileDisplay();
+                    selectedImageFiles = []; // Clear image selection
+                    updateImageFileDisplay(); // Update UI
                 } else if (formElement) {
-                    formElement.reset();
+                    formElement.reset(); // Reset the standard conversion form
                     if (fileStatus) { fileStatus.textContent = fileStatus.dataset.langNoFile || 'No file selected'; }
-                    if (conversionTypeSelect) conversionTypeSelect.value = "";
-                    if (actualConversionTypeInput) actualConversionTypeInput.value = "";
+                    if (conversionTypeSelect) conversionTypeSelect.value = ""; // Reset dropdown
+                    if (actualConversionTypeInput) actualConversionTypeInput.value = ""; // Clear hidden input
                 }
-                 hideError();
+                 hideError(); // Hide error message on success
             })
             .catch(error => {
                 console.error(`${endpoint} request failed:`, error);
+                // Show the error message from the server (or a default)
                 showError(error.message || 'err-unknown');
             })
             .finally(() => {
+                // Restore button state
                 loadingElement.classList.add('hidden');
                 const text = currentTranslations[buttonTextKey] || 'Convert Now';
                 buttonElement.innerHTML = text;
-                if (endpoint === '/convert_image') { updateImageFileDisplay(); }
-                else { buttonElement.disabled = false; }
+                // Re-enable button, considering the state for the image converter
+                if (endpoint === '/convert_image') {
+                     // Button state is managed by updateImageFileDisplay based on selectedImageFiles
+                     updateImageFileDisplay();
+                } else {
+                     buttonElement.disabled = false; // Always re-enable for the simple convert form
+                }
             });
         }
 
 
         // Event Listeners
         if (languageSelector) {
-            languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
+            languageSelector.addEventListener('change', function() {
+                updateLanguage(this.value);
+            });
         }
 
-        // Card 1 Listeners
+        // Card 1 Listeners (Convert PDF/Office)
         if (fileInput) {
             fileInput.addEventListener('change', function() {
+                // Reset dependent fields on file change
                 if (actualConversionTypeInput) actualConversionTypeInput.value = '';
-                if (conversionTypeSelect) conversionTypeSelect.value = "";
-                hideError();
+                if (conversionTypeSelect) conversionTypeSelect.value = ""; // Reset dropdown too
+                hideError(); // Hide errors on new file selection
+
                 const file = this.files[0];
                 const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
+
                 if (file) {
-                    fileStatus.textContent = file.name;
+                    fileStatus.textContent = file.name; // Display selected file name
                     const ext = file.name.split('.').pop().toLowerCase();
+
+                    // Automatically suggest a conversion type based on extension
                     if (conversionTypeSelect) {
-                        if (ext === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; }
-                        else if (ext === 'docx') { conversionTypeSelect.value = 'pdf_docx'; }
-                        else if (ext === 'ppt' || ext === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; }
+                        if (ext === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; } // Default PDF -> DOCX
+                        else if (ext === 'docx') { conversionTypeSelect.value = 'pdf_docx'; } // Default DOCX -> PDF
+                        else if (ext === 'ppt' || ext === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; } // Default PPT -> PDF
                         else {
-                            conversionTypeSelect.value = ""; showError('err-format-docx');
-                            fileStatus.textContent = noFileText; this.value = null;
+                            // Unsupported extension for this card
+                            conversionTypeSelect.value = "";
+                            showError('err-format-docx'); // Show appropriate error
+                            fileStatus.textContent = noFileText; // Reset display text
+                            this.value = null; // Clear the file input
                         }
+                         // No need to hide error here, only hide on valid selection/change
                     }
                 } else {
+                    // No file selected or selection cleared
                     if (fileStatus) fileStatus.textContent = noFileText;
                     if (conversionTypeSelect) conversionTypeSelect.value = "";
-                    hideError();
+                    hideError(); // Hide errors if selection is cleared
                 }
             });
         }
+        // Update hidden input when dropdown changes manually
         if(conversionTypeSelect) {
             conversionTypeSelect.addEventListener('change', function() {
-                if (actualConversionTypeInput) actualConversionTypeInput.value = '';
-                hideError();
+                if (actualConversionTypeInput) actualConversionTypeInput.value = ''; // Clear hidden value, it will be set on submit
+                hideError(); // Hide errors when user makes a manual selection
             });
         }
+        // Handle form submission for Card 1
         if (convertForm) {
             convertForm.addEventListener('submit', function(e) {
-                e.preventDefault(); hideError();
+                e.preventDefault(); // Prevent default form submission
+                hideError(); // Clear previous errors
+
+                // --- Validation before sending ---
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; }
                 const file = fileInput.files[0];
+                // Use the server-side limit (adjust if needed)
                 if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; }
                 if (!conversionTypeSelect || !conversionTypeSelect.value) { showError('err-select-conversion'); return; }
+                // --- End Validation ---
 
-                const selVal = conversionTypeSelect.value;
+                // Determine the actual conversion_type based on dropdown and file extension
+                const selVal = conversionTypeSelect.value; // e.g., "pdf_docx"
                 const ext = file.name.toLowerCase().split('.').pop();
                 let actualType = '';
 
                 if (selVal === 'pdf_docx') {
                     if (ext === 'pdf') actualType = 'pdf_to_docx';
                     else if (ext === 'docx') actualType = 'docx_to_pdf';
-                    else { showError('err-format-docx'); return; }
+                    else { showError('err-format-docx'); return; } // Mismatch
                 } else if (selVal === 'pdf_ppt') {
                     if (ext === 'pdf') actualType = 'pdf_to_ppt';
                     else if (ext === 'ppt' || ext === 'pptx') actualType = 'ppt_to_pdf';
-                    else { showError('err-format-ppt'); return; }
-                } else { showError('err-select-conversion'); return; }
+                    else { showError('err-format-ppt'); return; } // Mismatch
+                } else {
+                    showError('err-select-conversion'); // Should not happen if dropdown is required
+                    return;
+                }
 
-                if (!actualType) { showError('err-select-conversion'); return; }
+                if (!actualType) { showError('err-select-conversion'); return; } // Should not happen
+
+                // Set the determined type in the hidden input
                 if (actualConversionTypeInput) actualConversionTypeInput.value = actualType;
+
+                // Proceed with fetch
                 handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn');
             });
         }
 
-        // Card 2 Listeners
+        // Card 2 Listeners (Image Conversion)
         if (imageDropZone && imageFileInput) {
+            // Click to browse
             imageDropZone.addEventListener('click', (e) => {
+                 // Prevent triggering file input if clicking on remove button or file list itself
                  if (e.target.closest('button') || (imageVerticalFileList && imageVerticalFileList.contains(e.target))) { return; }
+                 // Prevent triggering file input if clicking the label explicitly (browser might handle this anyway)
                  if (e.target.closest('label[for="imageFileInput"]')) { return; }
+                  // Otherwise, trigger the file input
                  imageFileInput.click();
              });
+             // File input change
              imageFileInput.addEventListener('change', (e) => {
-                 if (e.target.files.length > 0) { addImageFiles(e.target.files); }
-                 e.target.value = null;
+                 if (e.target.files.length > 0) {
+                     addImageFiles(e.target.files);
+                 }
+                 e.target.value = null; // Reset input value to allow selecting the same file again
              });
+             // Drag and Drop
              imageDropZone.addEventListener('dragover', (e) => {
-                 e.preventDefault(); imageDropZone.classList.add('border-orange-500', 'bg-orange-50');
+                 e.preventDefault(); // Necessary to allow drop
+                 imageDropZone.classList.add('border-orange-500', 'bg-orange-50'); // Visual feedback
              });
              imageDropZone.addEventListener('dragleave', (e) => {
+                  // Remove visual feedback only if leaving the drop zone entirely
                   if (!imageDropZone.contains(e.relatedTarget)) {
                       imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
                   }
               });
              imageDropZone.addEventListener('drop', (e) => {
-                 e.preventDefault(); imageDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+                 e.preventDefault(); // Prevent browser default (opening file)
+                 imageDropZone.classList.remove('border-orange-500', 'bg-orange-50'); // Remove visual feedback
                  const files = e.dataTransfer.files;
-                 if (files.length > 0) { addImageFiles(files); }
+                 if (files.length > 0) {
+                     addImageFiles(files);
+                 }
              });
         }
+        // Handle form submission for Card 2
         if (imageConvertForm) {
             imageConvertForm.addEventListener('submit', function(e) {
-                e.preventDefault(); hideError();
-                if (selectedImageFiles.length === 0) { showError('err-select-file'); return; }
-                const validationResult = validateImageFiles([]);
-                if (!validationResult.valid) { return; }
+                e.preventDefault();
+                hideError(); // Clear previous errors
 
+                if (selectedImageFiles.length === 0) { showError('err-select-file'); return; }
+
+                // Re-validate before submit just in case state is inconsistent
+                const validationResult = validateImageFiles([]);
+                if (!validationResult.valid) {
+                     console.error("Submit blocked due to invalid file state.");
+                     // Error message should already be shown by validateImageFiles/updateDisplay
+                     return;
+                }
+
+                // Create FormData manually from selectedImageFiles
                 const formData = new FormData();
-                selectedImageFiles.forEach(file => { formData.append('image_file', file, file.name); });
+                selectedImageFiles.forEach(file => {
+                    // Append each file with the key expected by Flask ('image_file')
+                    // Use the original file name for the server
+                    formData.append('image_file', file, file.name);
+                });
+
+                // Append CSRF token manually
                 const csrfInput = imageConvertForm.querySelector('input[name="csrf_token"]');
-                if (csrfInput && csrfInput.value) { formData.append('csrf_token', csrfInput.value); }
-                else { console.warn('CSRF token missing from image form!'); showError('err-csrf-invalid'); return; }
+                if (csrfInput && csrfInput.value) {
+                     formData.append('csrf_token', csrfInput.value);
+                 } else {
+                     console.warn('CSRF token missing from image form!');
+                     showError('err-csrf-invalid'); // Show CSRF error
+                     return;
+                 }
+
+                // Call fetch with manual FormData
                 handleFetch( null, imageLoadingIndicator, imageConvertButton, '/convert_image', 'lang-image-convert-btn', formData );
             });
         }
+        // Clear All Button Listener for Image Card
         if (clearAllImageFilesButton) {
             clearAllImageFilesButton.addEventListener('click', () => {
-                selectedImageFiles = []; validateImageFiles([]); updateImageFileDisplay(); hideError();
+                selectedImageFiles = []; // Clear the file array
+                validateImageFiles([]);   // Re-run validation (resets mode)
+                updateImageFileDisplay(); // Update the UI (hides list, shows instructions, hides clear button)
+                hideError();              // Hide any previous file validation errors
             });
         }
 
-        // Initial Setup
+        // Initial Setup on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Determine initial language
             const savedLang = localStorage.getItem('preferred-language');
-            const browserLang = navigator.language.split('-')[0];
-            const initialLang = savedLang || (browserLang === 'vi' ? 'vi' : 'en');
-            const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en';
-            languageSelector.value = finalInitialLang;
+            const browserLang = navigator.language.split('-')[0]; // Get 'en', 'vi', etc.
+            const initialLang = savedLang || (browserLang === 'vi' ? 'vi' : 'en'); // Default to 'en' if browser lang isn't 'vi'
+            const finalInitialLang = ['en', 'vi'].includes(initialLang) ? initialLang : 'en'; // Ensure it's one of the supported languages
+
+            languageSelector.value = finalInitialLang; // Set dropdown value
+
+            // Fetch translations and update UI
             updateLanguage(finalInitialLang).then(() => {
-                 updateImageFileDisplay();
-                 if(fileStatus && fileInput) {
+                 // Ensure initial state of UI elements is correct after language load
+                 updateImageFileDisplay(); // Set initial state for image card
+                 if(fileStatus && fileInput) { // Set initial state for convert card
                      const noFileText = fileStatus.dataset.langNoFile || 'No file selected';
-                     if (!fileInput.files || fileInput.files.length === 0) { fileStatus.textContent = noFileText; }
+                     if (!fileInput.files || fileInput.files.length === 0) {
+                         fileStatus.textContent = noFileText;
+                     }
                  }
-                 if (conversionTypeSelect) { applyTranslations(currentTranslations); }
+                 // Ensure default select option text is updated
+                 if (conversionTypeSelect) {
+                     applyTranslations(currentTranslations); // Re-apply to catch the select option
+                 }
             });
         });
     </script>

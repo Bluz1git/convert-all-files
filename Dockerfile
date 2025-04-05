@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Create working directory
 WORKDIR /app
 
-# Install system dependencies, including fonts, OCR, in a single RUN layer
+# Install system dependencies, including fonts, in a single RUN layer
 RUN apt-get update && \
     # Pre-accept the Microsoft EULA for ttf-mscorefonts-installer
     echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
@@ -43,14 +43,10 @@ RUN apt-get update && \
         libgl1 \
         # --- Needed for font rendering/management ---
         libfreetype6 \
-        # --- Needed for python-magic ---
+        # --- Needed for python-magic (ADDED) ---
         libmagic1 \
         # --- Curl (Used in HEALTHCHECK) ---
         curl \
-        # --- TESSERACT OCR ---
-        tesseract-ocr \
-        tesseract-ocr-eng \
-        tesseract-ocr-vie \
     # Clean up apt cache
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -90,6 +86,10 @@ EXPOSE 5003
 CMD ["waitress-serve", "--host=0.0.0.0", "--port=5003", "--threads=4", "app:app"]
 
 # Health check (Adjusted to use the correct port and assume waitress startup time)
+# Removed curl dependency from healthcheck to simplify, relying on waitress/app exit code
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+#   CMD exit 0 # Simplified - rely on container orchestration health checks if possible
+
 # If you need a curl based healthcheck, ensure curl is installed (it is) and adjust host/port:
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
    CMD curl -f http://localhost:5003/ || exit 1 # Check index route
