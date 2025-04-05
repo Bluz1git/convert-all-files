@@ -14,8 +14,8 @@
         html[lang="vi"] .card-header-box .lang-image-title { left: 60px !important; }
         html[lang="vi"] .card-header-box .lang-merge-title { left: 75px !important; }
         html[lang="vi"] .card-header-box .lang-split-title { left: 75px !important; }
-        html[lang="vi"] .card-header-box .lang-compress-title { left: 80px !important; top: 0px !important; } /* Example adjustment */
-        html[lang="vi"] .card-header-box .lang-compress-docx-title { left: 70px !important; top: 0px !important; } /* Example adjustment */
+        html[lang="vi"] .card-header-box .lang-compress-title { left: 65px !important; top: 0px !important; }
+        html[lang="vi"] .card-header-box .lang-compress-docx-title { left: 60px !important; top: 0px !important; }
 
         /* CSS nội tuyến */
         body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
@@ -52,26 +52,26 @@
 <body>
     <div class="main-container">
         <!-- Nav, Header, Alert -->
-         <nav class="bg-white shadow-sm rounded-xl mb-6">
-            <div class="max-w-7xl mx-auto px-4 py-2">
-                <div class="flex justify-between h-16 items-center">
-                    <div class="flex-shrink-0"> <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1> </div>
-                    <div class="flex items-center space-x-4">
-                        <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <option value="en">English</option> <option value="vi">Tiếng Việt</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        <div class="text-center mb-8">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF & Office Tools</h2>
-            <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful tools for your documents</p>
-        </div>
-        <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-             <strong class="font-bold lang-error-title">Error!</strong> <span id="errorMessage" class="block sm:inline">Error occurred.</span>
-             <span class="absolute top-0 bottom-0 right-0 px-4 py-3"> <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> <title>Close</title> <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/> </svg> </span>
-        </div>
+        <nav class="bg-white shadow-sm rounded-xl mb-6">
+           <div class="max-w-7xl mx-auto px-4 py-2">
+               <div class="flex justify-between h-16 items-center">
+                   <div class="flex-shrink-0"> <h1 class="text-2xl font-bold text-blue-600">PDF Tools</h1> </div>
+                   <div class="flex items-center space-x-4">
+                       <select id="languageSelector" class="bg-gray-100 rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">
+                           <option value="en">English</option> <option value="vi">Tiếng Việt</option>
+                       </select>
+                   </div>
+               </div>
+           </div>
+       </nav>
+       <div class="text-center mb-8">
+           <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold main-title text-gray-900 lang-title">PDF & Office Tools</h2>
+           <p class="mt-3 text-lg sm:text-xl text-gray-500 lang-subtitle">Simple, powerful tools for your documents</p>
+       </div>
+       <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+            <strong class="font-bold lang-error-title">Error!</strong> <span id="errorMessage" class="block sm:inline">Error occurred.</span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3"> <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> <title>Close</title> <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/> </svg> </span>
+       </div>
 
         <!-- ========== GRID SECTION ========== -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,7 +85,10 @@
                         <div class="mb-4"> <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-file-input-label">Select file</label> <div class="relative"> <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.ppt,.pptx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required> <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-blue-400 transition-colors"> <span id="fileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span> <span class="bg-blue-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span> </div> </div> <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p> </div>
                         <div class="mb-4"> <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label> <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500 cursor-pointer" required> <option value="" disabled selected class="lang-select-conversion">Select conversion type</option> <option value="pdf_docx">PDF ↔ DOCX</option> <option value="pdf_ppt">PDF ↔ PPT/PPTX</option> </select> <input type="hidden" name="conversion_type" id="actualConversionType"> </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="mt-auto pt-4"> <div id="loadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600"> <div class="loader loader-sm"></div> <span class="lang-converting ml-2">Converting...</span> </div> <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold lang-convert-btn" disabled>Convert Now</button> </div>
+                        <div class="mt-auto pt-4">
+                            <!-- Removed loadingIndicator div -->
+                            <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold lang-convert-btn" disabled>Convert Now</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -111,19 +114,22 @@
                              <div class="flex justify-between items-center mt-1"> <p class="text-xs text-gray-500 lang-size-limit-total">Size limit: 100MB (total)</p> <button type="button" id="clearAllImageFiles" class="text-xs text-blue-600 hover:text-blue-800 hover:underline focus:outline-none lang-clear-all" style="display: none;">Clear All</button> </div>
                         </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="mt-auto pt-4"> <div id="imageLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600"> <div class="loader loader-sm"></div> <span class="lang-image-converting ml-2">Converting...</span> </div> <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Convert Now</button> </div>
+                        <div class="mt-auto pt-4">
+                             <!-- Removed imageLoadingIndicator div -->
+                             <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Convert Now</button>
+                        </div>
                     </form>
                  </div>
             </div>
 
-            <!-- 3. Compress DOCX Card (Position #1 in image) -->
+            <!-- 3. Compress DOCX Card -->
             <div class="card form-card {% if not soffice_available or not gs_available %}disabled{% endif %}" id="compressDocxCard">
                 <div class="card-content">
                     <div class="card-header-box bg-teal-100 text-teal-800">
                         <div class="icon-wrapper"> <svg class="h-6 w-6 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /> </svg> </div>
-                        <h3 class="lang-compress-docx-title" style="position: relative; left: 45px;">Compress DOCX</h3>
+                        <h3 class="lang-compress-docx-title" style="position: relative; left: 45px;">Compress Word</h3>
                     </div>
-                    <p class="card-description lang-compress-docx-desc">Convert DOCX to a compressed PDF (Smallest Size)</p>
+                    <p class="card-description lang-compress-docx-desc">Convert DOCX to a compressed DOCX file (via PDF)</p>
                     <form id="compressDocxForm" action="/compress_docx" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
                         <div class="mb-4">
                             <label for="compressDocxFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-compress-docx-input-label">Select DOCX file</label>
@@ -132,46 +138,46 @@
                         </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4">
-                            <div id="compressDocxLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600"> <div class="loader loader-sm"></div> <span class="lang-compressing-docx ml-2">Compressing DOCX...</span> </div>
-                            <button type="submit" id="compressDocxButton" class="w-full bg-teal-600 text-white py-2.5 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-sm font-semibold lang-compress-docx-btn" disabled>Compress DOCX</button>
+                             <!-- Removed compressDocxLoadingIndicator div -->
+                            <button type="submit" id="compressDocxButton" class="w-full bg-teal-600 text-white py-2.5 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-sm font-semibold lang-compress-docx-btn" disabled>Compress Word</button>
                         </div>
                     </form>
                     {% if not soffice_available or not gs_available %}
-                    <p class="mt-4 text-xs text-center text-red-600">DOCX Compression unavailable (server setup required).</p>
+                    <p class="mt-4 text-xs text-center text-red-600">Word Compression unavailable (server setup required).</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- 4. Compress PDF Card (Position #2 in image) -->
+            <!-- 4. Compress PDF Card -->
             <div class="card form-card {% if not gs_available %}disabled{% endif %}" id="compressCard">
-                <div class="card-content">
-                    <div class="card-header-box bg-green-100 text-green-800">
-                        <div class="icon-wrapper"> <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" /> </svg> </div>
-                        <h3 class="lang-compress-title" style="position: relative; left: 50px;">Compress PDF</h3>
-                    </div>
-                    <p class="card-description lang-compress-desc">Reduce PDF file size while optimizing for quality</p>
-                    <form id="compressForm" action="/compress_pdf" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
-                        <div class="mb-4">
-                            <label for="compressFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-compress-input-label">Select PDF file</label>
-                            <div class="relative"> <input type="file" name="file" id="compressFileInput" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required> <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-green-400 transition-colors"> <span id="compressFileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span> <span class="bg-green-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span> </div> </div>
-                            <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
-                        </div>
-                        <div class="mb-4">
-                             <label for="compressQuality" class="block text-sm font-medium text-gray-700 mb-1 lang-select-quality">Compression Level</label>
-                             <select name="quality" id="compressQuality" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-green-500 focus:border-green-500 cursor-pointer" required>
-                                 <option value="low" class="lang-quality-low">Screen/Email (Smallest Size, ~120 PPI)</option>
-                                 <option value="medium" selected class="lang-quality-medium">Medium Quality (Good Balance, ~150 PPI)</option>
-                                 <option value="high" class="lang-quality-high">High Quality (Less Compression, ~300 PPI)</option>
-                             </select>
+                 <div class="card-content">
+                     <div class="card-header-box bg-green-100 text-green-800">
+                         <div class="icon-wrapper"> <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" /> </svg> </div>
+                         <h3 class="lang-compress-title" style="position: relative; left: 50px;">Compress PDF</h3>
+                     </div>
+                     <p class="card-description lang-compress-desc">Reduce PDF file size while optimizing for quality</p>
+                     <form id="compressForm" action="/compress_pdf" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
+                         <div class="mb-4">
+                             <label for="compressFileInput" class="block text-sm font-medium text-gray-700 mb-1 lang-compress-input-label">Select PDF file</label>
+                             <div class="relative"> <input type="file" name="file" id="compressFileInput" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required> <div class="border border-gray-300 rounded-lg p-2 text-sm text-gray-500 flex justify-between items-center hover:border-green-400 transition-colors"> <span id="compressFileStatus" class="truncate pr-2" data-lang-no-file="No file selected">No file selected</span> <span class="bg-green-100 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full lang-select-btn-text pointer-events-none">Browse</span> </div> </div>
+                             <p class="mt-1 text-xs text-gray-500 lang-size-limit">Size limit: 100MB</p>
                          </div>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="mt-auto pt-4">
-                            <div id="compressLoadingIndicator" class="hidden text-center mb-2 flex items-center justify-center text-sm text-gray-600"> <div class="loader loader-sm"></div> <span class="lang-compressing ml-2">Compressing PDF...</span> </div>
-                            <button type="submit" id="compressButton" class="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-semibold lang-compress-btn" disabled>Compress PDF</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                         <div class="mb-4">
+                              <label for="compressQuality" class="block text-sm font-medium text-gray-700 mb-1 lang-select-quality">Compression Level</label>
+                              <select name="quality" id="compressQuality" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-green-500 focus:border-green-500 cursor-pointer" required>
+                                  <option value="low" class="lang-quality-low">Screen/Email (Smallest Size, ~120 PPI)</option>
+                                  <option value="medium" selected class="lang-quality-medium">Medium Quality (Good Balance, ~150 PPI)</option>
+                                  <option value="high" class="lang-quality-high">High Quality (Less Compression, ~300 PPI)</option>
+                              </select>
+                          </div>
+                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                         <div class="mt-auto pt-4">
+                             <!-- Removed compressLoadingIndicator div -->
+                             <button type="submit" id="compressButton" class="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-semibold lang-compress-btn" disabled>Compress PDF</button>
+                         </div>
+                     </form>
+                 </div>
+             </div>
 
             <!-- 5. Merge PDF Card (Coming Soon) -->
             <div class="card">
@@ -217,12 +223,10 @@
         const actualConversionTypeInput = document.getElementById('actualConversionType');
         const fileStatus = document.getElementById('fileStatus');
         const convertForm = document.getElementById('convertForm');
-        const loadingIndicator = document.getElementById('loadingIndicator');
         const convertButton = document.getElementById('convertButton');
         // Card 2 Elements
         const imageFileInput = document.getElementById('imageFileInput');
         const imageConvertForm = document.getElementById('imageConvertForm');
-        const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
         const imageConvertButton = document.getElementById('imageConvertButton');
         const imageDropZone = document.getElementById('imageDropZone');
         const imageVerticalFileList = document.getElementById('imageVerticalFileList');
@@ -234,7 +238,6 @@
         const compressDocxFileInput = document.getElementById('compressDocxFileInput');
         const compressDocxFileStatus = document.getElementById('compressDocxFileStatus');
         const compressDocxForm = document.getElementById('compressDocxForm');
-        const compressDocxLoadingIndicator = document.getElementById('compressDocxLoadingIndicator');
         const compressDocxButton = document.getElementById('compressDocxButton');
         // Card 4 (Compress PDF) Elements
         const compressCard = document.getElementById('compressCard');
@@ -242,19 +245,23 @@
         const compressFileStatus = document.getElementById('compressFileStatus');
         const compressQualitySelect = document.getElementById('compressQuality');
         const compressForm = document.getElementById('compressForm');
-        const compressLoadingIndicator = document.getElementById('compressLoadingIndicator');
         const compressButton = document.getElementById('compressButton');
+        // REMOVED loading indicator variables
+        // const loadingIndicator = document.getElementById('loadingIndicator');
+        // const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
+        // const compressDocxLoadingIndicator = document.getElementById('compressDocxLoadingIndicator');
+        // const compressLoadingIndicator = document.getElementById('compressLoadingIndicator');
 
         let selectedImageFiles = [];
 
-        // --- Functions (showError, hideError, applyTranslations, updateLanguage, formatBytes, Image Handling, handleFetch) ---
+        // --- Functions ---
         function showError(errorKeyOrMessage, alertElement = errorAlert, messageElement = errorMessage) {
             let message = errorKeyOrMessage; let errorKey = '';
             if (typeof errorKeyOrMessage === 'string' && errorKeyOrMessage.startsWith('Conversion failed:')) { errorKey = errorKeyOrMessage.substring(18).trim(); message = errorKey; }
             else { errorKey = errorKeyOrMessage; }
             if (currentTranslations && currentTranslations[errorKey]) { message = currentTranslations[errorKey]; }
             else if (errorKey === 'err-format-docx' && !currentTranslations[errorKey]) { message = (currentLang === 'vi' ? 'Vui lòng chọn một tệp DOCX.' : 'Please select a DOCX file.'); }
-            else if (errorKey === 'err-compressing-docx' && !currentTranslations[errorKey]) { message = (currentLang === 'vi' ? 'Đang nén DOCX...' : 'Compressing DOCX...'); }
+            else if (errorKey === 'err-compressing-docx' && !currentTranslations[errorKey]) { message = (currentLang === 'vi' ? 'Đang nén Word...' : 'Compressing Word...'); }
             else if (errorKey && !currentTranslations[errorKey]){ const genericError = currentTranslations['err-conversion'] || (currentLang === 'vi' ? 'Đã xảy ra lỗi.' : 'An error occurred.'); message = genericError + (errorKey.includes(' ') || errorKey.length < 5 ? '' : ` (${errorKey})`); console.warn(`Missing translation for error key: ${errorKey}`); }
             else { message = currentTranslations['err-unknown'] || errorKeyOrMessage || (currentLang === 'vi' ? 'Đã xảy ra lỗi không xác định.' : 'An unknown error occurred.'); }
             messageElement.textContent = message;
@@ -352,7 +359,8 @@
             convertBtn.disabled = !isValidState;
         }
 
-        function handleFetch(formElement, loadingElement, buttonElement, endpoint, buttonTextKey, formData = null) {
+        // UPDATED handleFetch: Removed loadingElement handling
+        function handleFetch(formElement, _loadingElement_ignored, buttonElement, endpoint, buttonTextKey, formData = null) {
             let isManualFormData = !formElement;
             if (!isManualFormData) { formData = new FormData(formElement); }
             else if (!formData) { console.error("Manual FormData missing"); showError('err-unknown'); return; }
@@ -361,53 +369,64 @@
             if (fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) { const name = fileInputEl.files[0].name; inputFilenameBase = name.substring(0, name.lastIndexOf('.')) || 'file'; }
             else if (endpoint === '/convert_image' && selectedImageFiles.length > 0) { const name = selectedImageFiles[0].name; inputFilenameBase = name.substring(0, name.lastIndexOf('.')) || 'file'; }
             if (endpoint === '/convert') { const typeEl = formElement?.querySelector('input[name="conversion_type"]'); if (typeEl) conversionDirection = typeEl.value; }
-            if(loadingElement) loadingElement.classList.remove('hidden');
-            if(buttonElement) { buttonElement.disabled = true; const convertingTextKeyMap = { '/convert': 'lang-converting', '/convert_image': 'lang-image-converting', '/compress_pdf': 'lang-compressing', '/compress_docx': 'lang-compressing-docx' }; const convertingTextKey = convertingTextKeyMap[endpoint] || 'lang-converting'; const convertingText = currentTranslations[convertingTextKey] || 'Processing...'; buttonElement.innerHTML = `<div class="loader loader-sm inline-block !border-t-white !border-l-white !border-b-white !border-r-transparent mr-2 align-middle"></div><span class="inline-block align-middle">${convertingText}</span>`; }
+
+            // Show loader ONLY inside button
+            if(buttonElement) {
+                buttonElement.disabled = true;
+                const convertingTextKeyMap = { '/convert': 'lang-converting', '/convert_image': 'lang-image-converting', '/compress_pdf': 'lang-compressing', '/compress_docx': 'lang-compressing-docx' };
+                const convertingTextKey = convertingTextKeyMap[endpoint] || 'lang-converting';
+                const convertingText = currentTranslations[convertingTextKey] || 'Processing...';
+                buttonElement.innerHTML = `<div class="loader loader-sm inline-block !border-t-white !border-l-white !border-b-white !border-r-transparent mr-2 align-middle"></div><span class="inline-block align-middle">${convertingText}</span>`;
+            }
             hideError();
+
             fetch(endpoint, { method: 'POST', body: formData })
             .then(response => { if (!response.ok) { return response.text().then(text => { let errorKey = `err-unknown-${response.status}`; if (text && text.startsWith('Conversion failed:')) { errorKey = text.substring(18).trim(); } else if (text) { console.warn("Non-standard error:", text); errorKey = text.substring(0, 100); } throw new Error(errorKey); }); } return response; })
-            .then(response => { const disposition = response.headers.get('Content-Disposition'); let downloadFilename = `converted_file`; if (disposition && disposition.includes('attachment')) { const m1 = disposition.match(/filename\*=UTF-8''([^;]+)/i); if (m1 && m1[1]) { try { downloadFilename = decodeURIComponent(m1[1]); } catch (e) { console.warn("UTF-8 filename decode failed:", e); } } if (downloadFilename === 'converted_file' || !(m1 && m1[1])) { const m2 = /filename="?([^"]+)"?/i.exec(disposition); if (m2 && m2[1]) { downloadFilename = m2[1]; } } } if (downloadFilename === 'converted_file') { let ext = 'unknown'; let suffix = ''; if (endpoint === '/convert') { const typeMap = {'pdf_to_docx': 'docx', 'docx_to_pdf': 'pdf', 'pdf_to_ppt': 'pptx', 'ppt_to_pdf': 'pdf'}; ext = typeMap[conversionDirection] || 'unknown'; } else if (endpoint === '/convert_image') { const mode = imageConversionModeInput ? imageConversionModeInput.value : ''; ext = (mode === 'pdf_to_image') ? 'zip' : 'pdf'; } else if (endpoint === '/compress_pdf') { ext = 'pdf'; const qualityEl = formElement?.querySelector('#compressQuality'); suffix = `_compressed${qualityEl ? '_'+qualityEl.value : ''}`; } else if (endpoint === '/compress_docx') { ext = 'pdf'; suffix = '_compressed_low'; } downloadFilename = `${inputFilenameBase}${suffix}.${ext}`; console.warn("Using constructed filename:", downloadFilename); } return response.blob().then(blob => ({ blob, downloadFilename })); })
+            .then(response => { const disposition = response.headers.get('Content-Disposition'); let downloadFilename = `converted_file`; if (disposition && disposition.includes('attachment')) { const m1 = disposition.match(/filename\*=UTF-8''([^;]+)/i); if (m1 && m1[1]) { try { downloadFilename = decodeURIComponent(m1[1]); } catch (e) { console.warn("UTF-8 filename decode failed:", e); } } if (downloadFilename === 'converted_file' || !(m1 && m1[1])) { const m2 = /filename="?([^"]+)"?/i.exec(disposition); if (m2 && m2[1]) { downloadFilename = m2[1]; } } } if (downloadFilename === 'converted_file') { let ext = 'unknown'; let suffix = ''; if (endpoint === '/convert') { const typeMap = {'pdf_to_docx': 'docx', 'docx_to_pdf': 'pdf', 'pdf_to_ppt': 'pptx', 'ppt_to_pdf': 'pdf'}; ext = typeMap[conversionDirection] || 'unknown'; } else if (endpoint === '/convert_image') { const mode = imageConversionModeInput ? imageConversionModeInput.value : ''; ext = (mode === 'pdf_to_image') ? 'zip' : 'pdf'; } else if (endpoint === '/compress_pdf') { ext = 'pdf'; const qualityEl = formElement?.querySelector('#compressQuality'); suffix = `_compressed${qualityEl ? '_'+qualityEl.value : ''}`; } else if (endpoint === '/compress_docx') { ext = 'docx'; suffix = '_compressed'; } downloadFilename = `${inputFilenameBase}${suffix}.${ext}`; console.warn("Using constructed filename:", downloadFilename); } return response.blob().then(blob => ({ blob, downloadFilename })); })
             .then(({ blob, downloadFilename }) => { const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = downloadFilename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove(); if (endpoint === '/convert_image') { selectedImageFiles = []; updateImageFileDisplay(); } else if (formElement) { formElement.reset(); const statusElId = formElement.id.replace('Form','FileStatus'); const statusEl = document.getElementById(statusElId); if (statusEl) { statusEl.textContent = statusEl.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); } if (endpoint === '/convert' && conversionTypeSelect) { conversionTypeSelect.value = ""; if(actualConversionTypeInput) actualConversionTypeInput.value = ""; } if (endpoint === '/compress_pdf' && compressQualitySelect) { compressQualitySelect.value = 'medium'; } if(buttonElement) { buttonElement.disabled = true; } } hideError(); })
             .catch(error => { console.error(`${endpoint} request failed:`, error); showError(error.message || 'err-unknown'); })
-            .finally(() => { if(loadingElement) loadingElement.classList.add('hidden'); if(buttonElement) { const text = currentTranslations[buttonTextKey] || 'Submit'; buttonElement.innerHTML = text; if (endpoint === '/convert_image') { updateImageFileDisplay(); } else { buttonElement.disabled = true; } } });
+            .finally(() => {
+                // No need to hide separate loadingElement
+                if(buttonElement) { const text = currentTranslations[buttonTextKey] || 'Submit'; buttonElement.innerHTML = text; if (endpoint === '/convert_image') { updateImageFileDisplay(); } else { buttonElement.disabled = true; } }
+            });
         }
 
         function setupEventListeners() {
             if (languageSelector) languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
 
-            // Card 1: Convert PDF/Office
-            if (fileInput && fileStatus && conversionTypeSelect && actualConversionTypeInput && convertForm && loadingIndicator && convertButton) {
+            // Card 1: Convert PDF/Office (Pass null for loadingElement)
+            if (fileInput && fileStatus && conversionTypeSelect && actualConversionTypeInput && convertForm && convertButton) {
                 fileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = fileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValidSelection = false; if (file) { fileStatus.textContent = file.name; const ext = file.name.split('.').pop().toLowerCase(); if (ext === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; isValidSelection = true; } else if (ext === 'docx') { conversionTypeSelect.value = 'pdf_docx'; isValidSelection = true; } else if (ext === 'ppt' || ext === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; isValidSelection = true; } else { conversionTypeSelect.value = ""; showError('err-invalid-mime-type'); fileStatus.textContent = noFileText; this.value = null; isValidSelection = false; } if(isValidSelection && file.size > 101*1024*1024) { showError('err-file-too-large'); this.value=null; fileStatus.textContent = noFileText; conversionTypeSelect.value = ""; isValidSelection = false; } } else { fileStatus.textContent = noFileText; conversionTypeSelect.value = ""; isValidSelection = false; } convertButton.disabled = !(isValidSelection && conversionTypeSelect.value !== ""); if(actualConversionTypeInput) actualConversionTypeInput.value = ''; });
                 conversionTypeSelect.addEventListener('change', function() { hideError(); convertButton.disabled = !(fileInput.files && fileInput.files.length > 0 && this.value !== ""); if(actualConversionTypeInput) actualConversionTypeInput.value = ''; });
-                convertForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; } const file = fileInput.files[0]; if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; } const selVal = conversionTypeSelect.value; const ext = file.name.toLowerCase().split('.').pop(); let actualType = ''; if (selVal === 'pdf_docx') { if (ext === 'pdf') actualType = 'pdf_to_docx'; else if (ext === 'docx') actualType = 'docx_to_pdf'; else { showError('err-format-docx'); return; } } else if (selVal === 'pdf_ppt') { if (ext === 'pdf') actualType = 'pdf_to_ppt'; else if (ext === 'ppt' || ext === 'pptx') actualType = 'ppt_to_pdf'; else { showError('err-format-ppt'); return; } } else { showError('err-select-conversion'); return; } if (!actualType) { showError('err-select-conversion'); return; } if(actualConversionTypeInput) actualConversionTypeInput.value = actualType; handleFetch(convertForm, loadingIndicator, convertButton, '/convert', 'lang-convert-btn'); });
+                convertForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!fileInput.files || fileInput.files.length === 0) { showError('err-select-file'); return; } const file = fileInput.files[0]; if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } if (!conversionTypeSelect.value) { showError('err-select-conversion'); return; } const selVal = conversionTypeSelect.value; const ext = file.name.toLowerCase().split('.').pop(); let actualType = ''; if (selVal === 'pdf_docx') { if (ext === 'pdf') actualType = 'pdf_to_docx'; else if (ext === 'docx') actualType = 'docx_to_pdf'; else { showError('err-format-docx'); return; } } else if (selVal === 'pdf_ppt') { if (ext === 'pdf') actualType = 'pdf_to_ppt'; else if (ext === 'ppt' || ext === 'pptx') actualType = 'ppt_to_pdf'; else { showError('err-format-ppt'); return; } } else { showError('err-select-conversion'); return; } if (!actualType) { showError('err-select-conversion'); return; } if(actualConversionTypeInput) actualConversionTypeInput.value = actualType; handleFetch(convertForm, null, convertButton, '/convert', 'lang-convert-btn'); });
                 convertButton.disabled = true;
             } else { console.warn("Missing elements for Card 1"); }
 
-            // Card 2: PDF <-> Image
-            if (imageDropZone && imageFileInput && imageVerticalFileList && imageDropZoneInstructions && imageConvertForm && imageLoadingIndicator && imageConvertButton && clearAllImageFilesButton) {
+            // Card 2: PDF <-> Image (Pass null for loadingElement)
+            if (imageDropZone && imageFileInput && imageVerticalFileList && imageDropZoneInstructions && imageConvertForm && imageConvertButton && clearAllImageFilesButton) {
                 imageDropZone.addEventListener('click', (e) => { if (e.target.closest('button') || (imageVerticalFileList && imageVerticalFileList.contains(e.target)) || e.target.closest('label[for="imageFileInput"]')) { return; } imageFileInput.click(); });
                 imageFileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { addImageFiles(e.target.files); } e.target.value = null; });
                 imageDropZone.addEventListener('dragover', (e) => { e.preventDefault(); imageDropZone.classList.add('border-orange-500', 'bg-orange-50'); });
                 imageDropZone.addEventListener('dragleave', (e) => { if (!imageDropZone.contains(e.relatedTarget)) { imageDropZone.classList.remove('border-orange-500', 'bg-orange-50'); } });
                 imageDropZone.addEventListener('drop', (e) => { e.preventDefault(); imageDropZone.classList.remove('border-orange-500', 'bg-orange-50'); if (e.dataTransfer.files.length > 0) { addImageFiles(e.dataTransfer.files); } });
-                imageConvertForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (selectedImageFiles.length === 0) { showError('err-select-file'); return; } const validationResult = validateImageFiles([]); if (!validationResult.valid || validationResult.mode === 'invalid') { return; } const formData = new FormData(); selectedImageFiles.forEach(file => { formData.append('image_file', file, file.name); }); const csrfInput = imageConvertForm.querySelector('input[name="csrf_token"]'); if (csrfInput && csrfInput.value) { formData.append('csrf_token', csrfInput.value); } else { showError('err-csrf-invalid'); return; } handleFetch( null, imageLoadingIndicator, imageConvertButton, '/convert_image', 'lang-image-convert-btn', formData ); });
+                imageConvertForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (selectedImageFiles.length === 0) { showError('err-select-file'); return; } const validationResult = validateImageFiles([]); if (!validationResult.valid || validationResult.mode === 'invalid') { return; } const formData = new FormData(); selectedImageFiles.forEach(file => { formData.append('image_file', file, file.name); }); const csrfInput = imageConvertForm.querySelector('input[name="csrf_token"]'); if (csrfInput && csrfInput.value) { formData.append('csrf_token', csrfInput.value); } else { showError('err-csrf-invalid'); return; } handleFetch( null, null, imageConvertButton, '/convert_image', 'lang-image-convert-btn', formData ); });
                 clearAllImageFilesButton.addEventListener('click', () => { selectedImageFiles = []; validateImageFiles([]); updateImageFileDisplay(); hideError(); });
                 updateImageFileDisplay();
             } else { console.warn("Missing elements for Card 2"); }
 
-            // Card 3: Compress DOCX
+            // Card 3: Compress DOCX (Pass null for loadingElement)
             const docxCompressEnabled = SOFFICE_AVAILABLE && GS_AVAILABLE;
-            if (docxCompressEnabled && compressDocxFileInput && compressDocxFileStatus && compressDocxForm && compressDocxLoadingIndicator && compressDocxButton) {
+            if (docxCompressEnabled && compressDocxFileInput && compressDocxFileStatus && compressDocxForm && compressDocxButton) {
                 compressDocxFileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = compressDocxFileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValid = false; if (file) { if (!file.name.toLowerCase().endsWith('.docx')) { showError('err-format-docx'); compressDocxFileStatus.textContent = noFileText; this.value = null; } else if (file.size > 101*1024*1024) { showError('err-file-too-large'); compressDocxFileStatus.textContent = noFileText; this.value = null; } else { compressDocxFileStatus.textContent = file.name; isValid = true; } } else { compressDocxFileStatus.textContent = noFileText; } compressDocxButton.disabled = !isValid; });
-                compressDocxForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!compressDocxFileInput.files || compressDocxFileInput.files.length === 0) { showError('err-select-file'); return; } const file = compressDocxFileInput.files[0]; if (!file.name.toLowerCase().endsWith('.docx')) { showError('err-format-docx'); return; } if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } handleFetch(compressDocxForm, compressDocxLoadingIndicator, compressDocxButton, '/compress_docx', 'lang-compress-docx-btn'); });
+                compressDocxForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!compressDocxFileInput.files || compressDocxFileInput.files.length === 0) { showError('err-select-file'); return; } const file = compressDocxFileInput.files[0]; if (!file.name.toLowerCase().endsWith('.docx')) { showError('err-format-docx'); return; } if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } handleFetch(compressDocxForm, null, compressDocxButton, '/compress_docx', 'lang-compress-docx-btn'); });
                 compressDocxButton.disabled = true;
             } else if (!docxCompressEnabled && compressDocxCard) { console.warn("Compress DOCX disabled"); }
               else if (docxCompressEnabled) { console.warn("Missing elements for Card 3"); }
 
-            // Card 4: Compress PDF
-            if (GS_AVAILABLE && compressFileInput && compressFileStatus && compressQualitySelect && compressForm && compressLoadingIndicator && compressButton) {
+            // Card 4: Compress PDF (Pass null for loadingElement)
+            if (GS_AVAILABLE && compressFileInput && compressFileStatus && compressQualitySelect && compressForm && compressButton) {
                 compressFileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = compressFileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValid = false; if (file) { if (!file.name.toLowerCase().endsWith('.pdf')) { showError('err-format-pdf'); compressFileStatus.textContent = noFileText; this.value = null; } else if (file.size > 101*1024*1024) { showError('err-file-too-large'); compressFileStatus.textContent = noFileText; this.value = null; } else { compressFileStatus.textContent = file.name; isValid = true; } } else { compressFileStatus.textContent = noFileText; } compressButton.disabled = !isValid; });
-                compressForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!compressFileInput.files || compressFileInput.files.length === 0) { showError('err-select-file'); return; } const file = compressFileInput.files[0]; if (!file.name.toLowerCase().endsWith('.pdf')) { showError('err-format-pdf'); return; } if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } handleFetch(compressForm, compressLoadingIndicator, compressButton, '/compress_pdf', 'lang-compress-btn'); });
+                compressForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!compressFileInput.files || compressFileInput.files.length === 0) { showError('err-select-file'); return; } const file = compressFileInput.files[0]; if (!file.name.toLowerCase().endsWith('.pdf')) { showError('err-format-pdf'); return; } if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } handleFetch(compressForm, null, compressButton, '/compress_pdf', 'lang-compress-btn'); });
                 compressButton.disabled = true;
             } else if (!GS_AVAILABLE && compressCard) { console.warn("Compress PDF disabled"); }
               else if (GS_AVAILABLE) { console.warn("Missing elements for Card 4"); }
