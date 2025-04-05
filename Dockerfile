@@ -36,7 +36,7 @@ RUN apt-get update && \
         fontconfig \
         # --- PDF and image processing ---
         poppler-utils \
-        ghostscript \ # <--- THÊM GHOSTSCRIPT VÀO ĐÂY
+        ghostscript \
         # --- X11 dependencies for headless LibreOffice ---
         libsm6 \
         libxext6 \
