@@ -1,3 +1,5 @@
+# --- START OF FILE app.py ---
+
 from flask import Flask, request, send_file, render_template, jsonify, url_for, make_response
 from flask_talisman import Talisman # Security Headers
 from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Protection
@@ -68,11 +70,11 @@ csp = {
 talisman = Talisman(
     app,
     content_security_policy=csp,
-    force_https=False,
-    session_cookie_secure=True, # Set to True if using HTTPS
+    force_https=False, # Đặt thành True nếu có HTTPS
+    session_cookie_secure=True, # Đặt thành True nếu có HTTPS
     session_cookie_http_only=True,
     frame_options='DENY',
-    strict_transport_security=True, # Set to False if not using HTTPS
+    strict_transport_security=True, # Đặt thành False nếu không dùng HTTPS
 )
 
 # === Constants ===
@@ -167,21 +169,30 @@ def get_pdf_page_size(pdf_path):
             reader = PyPDF2.PdfReader(f);
             if reader.is_encrypted:
                 try:
+                    # Try decrypting with an empty password
                     if reader.decrypt('') != PyPDF2.PasswordType.OWNER_PASSWORD:
                          logger.warning(f"Could not decrypt PDF {pdf_path} with empty password.")
                          raise ValueError("err-pdf-protected")
-                except Exception:
-                     logger.warning(f"Error during decryption attempt for {pdf_path}.")
-                     raise ValueError("err-pdf-protected")
+                except Exception as decrypt_err: # Catch potential errors during decrypt
+                     logger.warning(f"Error during decryption attempt for {pdf_path}: {decrypt_err}")
+                     raise ValueError("err-pdf-protected") from decrypt_err
             if not reader.pages: return None, None
-            page = reader.pages[0]; box = page.mediabox or page.cropbox
-            if box: width = float(box.width); height = float(box.height); return width, height
-    except PyPDF2.errors.PdfReadError as pdf_err: raise ValueError("err-pdf-corrupt") from pdf_err
-    except ValueError as ve: raise ve
-    except Exception as e: logger.error(f"Error reading PDF size {pdf_path}: {e}"); return None, None
+            page = reader.pages[0]; box = page.mediabox or page.cropbox # Prefer mediabox
+            if box:
+                width = float(box.width); height = float(box.height)
+                return width, height
+    except PyPDF2.errors.PdfReadError as pdf_err:
+        logger.warning(f"PyPDF2 error reading {pdf_path}: {pdf_err}")
+        raise ValueError("err-pdf-corrupt") from pdf_err
+    except ValueError as ve: # Re-raise specific errors like err-pdf-protected
+        raise ve
+    except Exception as e:
+        logger.error(f"Error reading PDF size {pdf_path}: {e}", exc_info=True)
+        return None, None # Fallback
     return None, None
 
 def setup_slide_size(prs, pdf_path):
+    # (Keep this function as is)
     pdf_width_pt, pdf_height_pt = get_pdf_page_size(pdf_path)
     if pdf_width_pt is None: prs.slide_width, prs.slide_height = Inches(10), Inches(7.5); return prs
     try:
@@ -192,9 +203,13 @@ def setup_slide_size(prs, pdf_path):
             else: final_height, final_width = max_dim, max_dim * ratio
         else: final_width, final_height = pdf_width_in, pdf_height_in
         prs.slide_width, prs.slide_height = Inches(final_width), Inches(final_height); return prs
-    except Exception: prs.slide_width, prs.slide_height = Inches(10), Inches(7.5); return prs
+    except Exception as e:
+        logger.warning(f"Error setting slide size from PDF, using default: {e}")
+        prs.slide_width, prs.slide_height = Inches(10), Inches(7.5)
+        return prs
 
 def sort_key_for_pptx_images(filename):
+    # (Keep this function as is)
     try: return int(os.path.splitext(filename)[0].split('-')[-1].split('_')[-1])
     except: return 0
 
@@ -202,6 +217,7 @@ def sort_key_for_pptx_images(filename):
 def _convert_pdf_to_pptx_images(input_path, output_path):
     # (Keep this function as is)
     temp_dir = None
+    images_ppt = [] # List to hold PIL image objects for cleanup
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdfimg_")
         page_count_info = pdfinfo_from_path(input_path, poppler_path=None)
@@ -210,41 +226,63 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
         if page_count_info.get('Encrypted', 'no') == 'yes': raise ValueError("err-pdf-protected")
 
         if page_count == 0: Presentation().save(output_path); return True
-        images = convert_from_path(input_path, dpi=300, fmt='jpeg', output_folder=temp_dir, thread_count=4, poppler_path=None)
-        if not images: raise RuntimeError("err-conversion-img")
+        images_ppt = convert_from_path(input_path, dpi=300, fmt='jpeg', output_folder=temp_dir, thread_count=4, poppler_path=None)
+        if not images_ppt: raise RuntimeError("err-conversion-img") # Should have images if page_count > 0
+
         prs = Presentation(); prs = setup_slide_size(prs, input_path); blank_layout = prs.slide_layouts[6]
+        # Use the saved file paths for sorting and adding to presentation
         gen_imgs = sorted([f for f in os.listdir(temp_dir) if f.lower().endswith(('.jpg', '.jpeg'))], key=sort_key_for_pptx_images)
-        if not gen_imgs: raise RuntimeError("err-conversion-img")
+        if not gen_imgs: raise RuntimeError("err-conversion-img") # Check again after listing dir
+
         slide_w, slide_h = prs.slide_width, prs.slide_height
         for img_fn in gen_imgs:
             img_path = os.path.join(temp_dir, img_fn)
+            img_pil_ppt = None # Define for finally block
             try:
                 slide = prs.slides.add_slide(blank_layout)
-                with Image.open(img_path) as img: img_w, img_h = img.size
-                img_width_emu = int(img_w / 72 * 914400)
-                img_height_emu = int(img_h / 72 * 914400)
-                r_w = slide_w / img_width_emu if img_width_emu > 0 else 1
-                r_h = slide_h / img_height_emu if img_height_emu > 0 else 1
-                s = min(r_w, r_h); pic_w, pic_h = int(img_width_emu * s), int(img_height_emu * s)
+                img_pil_ppt = Image.open(img_path)
+                img_w, img_h = img_pil_ppt.size
+                if img_w <= 0 or img_h <= 0: continue # Skip zero-dimension images
+
+                img_width_emu = int(img_w / 72.0 * 914400) # Use float division
+                img_height_emu = int(img_h / 72.0 * 914400)
+                if img_width_emu <= 0 or img_height_emu <= 0: continue # Skip if EMU calculation fails
+
+                # Calculate scaling factor to fit image within slide dimensions
+                r_w = slide_w / img_width_emu
+                r_h = slide_h / img_height_emu
+                s = min(r_w, r_h) # Scale factor
+                pic_w, pic_h = int(img_width_emu * s), int(img_height_emu * s)
+
+                # Center the picture on the slide
                 pic_l, pic_t = int((slide_w - pic_w) / 2), int((slide_h - pic_h) / 2)
-                if pic_w > 0 and pic_h > 0: slide.shapes.add_picture(img_path, pic_l, pic_t, width=pic_w, height=pic_h)
+
+                if pic_w > 0 and pic_h > 0:
+                    slide.shapes.add_picture(img_path, pic_l, pic_t, width=pic_w, height=pic_h)
             except UnidentifiedImageError:
                  logger.warning(f"Skipping invalid image file during PPTX creation: {img_fn}")
                  continue
-            except Exception as page_err: logger.warning(f"Error adding image {img_fn} to PPTX: {page_err}")
+            except Exception as page_err:
+                logger.warning(f"Error adding image {img_fn} to PPTX: {page_err}")
+                # Continue to next image instead of failing the whole conversion
             finally:
-                # Close the image file handle if using pdf2image >= 1.17.0 which returns PIL objects
-                if hasattr(img, 'close'):
-                    try: img.close()
-                    except Exception: pass # Ignore errors during close
+                 if img_pil_ppt: # Close the PIL image object opened from file
+                    try: img_pil_ppt.close()
+                    except Exception: pass
 
         prs.save(output_path); return True
     except (PDFInfoNotInstalledError) as e: logger.error(f"PDF->PPTX Poppler Error: {e}"); raise ValueError("err-poppler-missing") from e
     except (PDFPageCountError, PDFSyntaxError) as e: logger.error(f"PDF->PPTX PDF Error: {e}"); raise ValueError("err-pdf-corrupt") from e
-    except ValueError as ve: logger.error(f"PDF->PPTX Value Error: {ve}"); raise ve
-    except RuntimeError as rte: logger.error(f"PDF->PPTX Runtime Error: {rte}"); raise rte
+    except ValueError as ve: logger.error(f"PDF->PPTX Value Error: {ve}"); raise ve # Handles err-pdf-protected
+    except RuntimeError as rte: logger.error(f"PDF->PPTX Runtime Error: {rte}"); raise rte # Handles err-conversion-img
     except Exception as e: logger.error(f"Unexpected PDF->PPTX Error: {e}", exc_info=True); raise RuntimeError("err-unknown") from e
-    finally: safe_remove(temp_dir)
+    finally:
+        # Close image objects returned by convert_from_path
+        for img in images_ppt:
+            if hasattr(img, 'close'):
+                try: img.close()
+                except Exception: pass
+        safe_remove(temp_dir) # Clean up temp directory
 
 def convert_pdf_to_pptx_python(input_path, output_path):
     logger.info("Attempting PDF -> PPTX via Python (image-based)...")
@@ -291,6 +329,7 @@ def convert_images_to_pdf(image_files, output_path):
         image_objects[0].save(output_path, "PDF", resolution=100.0, save_all=True, append_images=image_objects[1:])
         return True
     except ValueError as ve: raise ve
+    except RuntimeError as rte: raise rte
     except Exception as e:
         logger.error(f"Unexpected error converting images to PDF: {e}", exc_info=True)
         raise RuntimeError("err-unknown") from e
@@ -303,6 +342,7 @@ def convert_images_to_pdf(image_files, output_path):
 def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
     # (Keep this function as is)
     temp_dir = None; fmt = img_format.lower(); ext = 'jpg' if fmt in ['jpeg', 'jpg'] else fmt
+    images_zip = [] # List to hold PIL image objects for cleanup
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdf2imgzip_")
         try:
@@ -322,17 +362,20 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
             return True
 
         safe_base = secure_filename(f"page_{os.path.splitext(os.path.basename(input_path))[0]}")
-        images = convert_from_path(input_path, dpi=200, fmt=fmt, output_folder=temp_dir, output_file=safe_base, thread_count=4, poppler_path=None)
-        if not images:
+        # Save images to temp dir and get list of PIL objects
+        images_zip = convert_from_path(input_path, dpi=200, fmt=fmt, output_folder=temp_dir, output_file=safe_base, thread_count=4, poppler_path=None)
+        if not images_zip:
              if page_count > 0: raise RuntimeError("err-conversion-img")
              else: return True # No images generated, but PDF had 0 pages initially
 
         def sort_key(f):
              try: return int(os.path.splitext(f)[0].split('-')[-1])
              except: return 0
+
+        # List files actually created in the directory
         gen_files = sorted([f for f in os.listdir(temp_dir) if f.lower().startswith(safe_base.lower()) and f.lower().endswith(f'.{ext}')], key=sort_key)
         if not gen_files and page_count > 0:
-            raise RuntimeError("err-conversion-img")
+            raise RuntimeError("err-conversion-img") # Should match image count if > 0
         elif not gen_files and page_count == 0:
              logger.warning("PDF had 0 pages and no images were generated. Creating empty ZIP.")
              with zipfile.ZipFile(output_zip_path, 'w') as zf: pass
@@ -341,41 +384,26 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
         with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
              for i, filename in enumerate(gen_files):
                  zf.write(os.path.join(temp_dir, filename), f"page_{i+1}.{ext}")
-                 # Close image file handle after writing (pdf2image >= 1.17.0)
-                 img_obj = next((img for img in images if os.path.basename(img.filename) == filename), None)
-                 if img_obj and hasattr(img_obj, 'close'):
-                     try: img_obj.close()
-                     except Exception: pass
 
         return True
     except (PDFInfoNotInstalledError) as e: raise ValueError("err-poppler-missing") from e
     except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
-    except ValueError as ve: raise ve
-    except RuntimeError as rte: raise rte
+    except ValueError as ve: raise ve # Handles err-pdf-protected
+    except RuntimeError as rte: raise rte # Handles err-conversion-img
     except Exception as e: logger.error(f"Unexpected PDF->ZIP Error: {e}", exc_info=True); raise RuntimeError("err-unknown") from e
     finally:
-        # Clean up remaining image objects just in case
-        if 'images' in locals():
-            for img in images:
-                 if hasattr(img, 'close'):
-                     try: img.close()
-                     except Exception: pass
-        safe_remove(temp_dir)
+        # Close image objects returned by convert_from_path
+        for img in images_zip:
+             if hasattr(img, 'close'):
+                 try: img.close()
+                 except Exception: pass
+        safe_remove(temp_dir) # Clean up temp directory
 
 # --- START: OCR Specific Helpers ---
 def is_pdf_scanned(pdf_path, pages_to_check=3, char_threshold=PDF_SCAN_TEXT_THRESHOLD):
     """
     Kiểm tra xem file PDF có khả năng là file scan hay không bằng cách
     thử trích xuất text từ vài trang đầu.
-
-    Args:
-        pdf_path (str): Đường dẫn đến file PDF.
-        pages_to_check (int): Số trang đầu tiên cần kiểm tra.
-        char_threshold (int): Ngưỡng số ký tự trung bình trên mỗi trang kiểm tra.
-                               Nếu thấp hơn ngưỡng này, coi là file scan.
-
-    Returns:
-        bool: True nếu có vẻ là file scan, False nếu không.
     """
     logger.info(f"Checking if PDF is scanned: {pdf_path}")
     doc = None
@@ -385,7 +413,10 @@ def is_pdf_scanned(pdf_path, pages_to_check=3, char_threshold=PDF_SCAN_TEXT_THRE
             # Thử mở với mật khẩu rỗng, nếu vẫn lỗi -> không xử lý được
             if not doc.authenticate(""):
                 logger.warning(f"PDF is encrypted and cannot be authenticated with empty password: {pdf_path}")
-                return False # Mặc định không phải scan nếu không mở được
+                # Nếu không mở được, không thể biết là scan hay không, mặc định là không phải scan
+                return False
+            else:
+                logger.info(f"Decrypted PDF {pdf_path} with empty password for scan check.")
 
         page_count = doc.page_count
         if page_count == 0:
@@ -398,12 +429,14 @@ def is_pdf_scanned(pdf_path, pages_to_check=3, char_threshold=PDF_SCAN_TEXT_THRE
         for i in range(check_count):
             page = doc.load_page(i)
             text = page.get_text("text") # Trích xuất text thuần túy
-            # Đếm số ký tự không phải khoảng trắng
+            # Đếm số ký tự không phải khoảng trắng để tránh tính các trang trống
             total_chars += len(text.strip())
 
+        # Calculate average characters only on pages checked
         avg_chars_per_page = total_chars / check_count if check_count > 0 else 0
         logger.info(f"Scan check: Avg chars per page (first {check_count}): {avg_chars_per_page:.2f}. Threshold: {char_threshold}")
 
+        # Consider scanned if average characters are below threshold
         is_scanned = avg_chars_per_page < char_threshold
         logger.info(f"PDF '{os.path.basename(pdf_path)}' likely {'scanned' if is_scanned else 'normal (has text)'}.")
         return is_scanned
@@ -417,13 +450,14 @@ def is_pdf_scanned(pdf_path, pages_to_check=3, char_threshold=PDF_SCAN_TEXT_THRE
         return False
     finally:
         if doc:
-            doc.close()
+            try:
+                doc.close()
+            except Exception: pass # Ignore errors on close
 
 
 def convert_scanned_pdf_to_docx_ocr(input_path, output_path, lang='eng+vie'):
     """
     Chuyển đổi PDF (đặc biệt là file scan) sang DOCX sử dụng OCR (Tesseract).
-    (Hàm này giữ nguyên như phiên bản trước)
     """
     logger.info(f"Attempting PDF -> DOCX via OCR (Tesseract) for {input_path}...")
     temp_dir_ocr = None
@@ -433,42 +467,46 @@ def convert_scanned_pdf_to_docx_ocr(input_path, output_path, lang='eng+vie'):
         try:
             page_info = pdfinfo_from_path(input_path, poppler_path=None)
             if page_info.get('Encrypted', 'no') == 'yes':
+                # Double check with PyPDF2's decryption attempt logic if needed,
+                # but pdfinfo is usually sufficient for detection.
+                # For simplicity, we rely on pdfinfo here.
                 raise ValueError("err-pdf-protected")
             page_count = page_info.get('Pages', 0)
             if page_count == 0:
-                 logger.warning(f"PDF {input_path} has 0 pages. Creating empty DOCX.")
+                 logger.warning(f"PDF {input_path} has 0 pages (pdfinfo). Creating empty DOCX.")
                  Document().save(output_path)
                  return True
-        except (PDFInfoNotInstalledError, FileNotFoundError) as e: raise ValueError("err-poppler-missing") from e
-        except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
+        except (PDFInfoNotInstalledError, FileNotFoundError) as e:
+            logger.error(f"pdfinfo failed: {e}. Cannot reliably check encryption/page count before OCR.")
+            raise ValueError("err-poppler-missing") from e
+        except (PDFPageCountError, PDFSyntaxError) as e:
+            logger.error(f"pdfinfo reported PDF error: {e}")
+            raise ValueError("err-pdf-corrupt") from e
         except ValueError as ve: raise ve # Re-raise err-pdf-protected
-        except Exception as info_err: logger.error(f"pdfinfo error: {info_err}"); raise ValueError("err-poppler-check-failed") from info_err
+        except Exception as info_err:
+            logger.error(f"pdfinfo unexpected error: {info_err}", exc_info=True)
+            raise ValueError("err-poppler-check-failed") from info_err
 
 
         temp_dir_ocr = tempfile.mkdtemp(prefix="pdfocr_")
         logger.info(f"Converting PDF pages to images (DPI 300) in {temp_dir_ocr}...")
-        # pdf2image returns a list of PIL Image objects directly if output_folder is None
-        # If output_folder is specified, it saves files AND returns objects
         images_ocr = convert_from_path(
             input_path,
             dpi=300,
             output_folder=temp_dir_ocr, # Save images temporarily
-            fmt='png',
+            fmt='png', # PNG is generally better for OCR
             thread_count=4,
             poppler_path=None
         )
         logger.info(f"Generated {len(images_ocr)} images from PDF.")
 
         if not images_ocr:
-            # Check page count again, maybe pdfinfo was wrong?
-             actual_page_count_fitz = 0
-             try:
-                 with fitz.open(input_path) as doc_check: actual_page_count_fitz = doc_check.page_count
-             except: pass # Ignore errors here
-             if actual_page_count_fitz > 0:
-                 raise RuntimeError("err-conversion-img") # Error if pages exist but no images generated
-             else:
-                  logger.warning(f"PDF {input_path} has 0 pages confirmed by fitz. Creating empty DOCX.")
+            # If pdfinfo reported pages but no images were generated, likely a conversion error
+             if page_count > 0:
+                 logger.error(f"pdfinfo reported {page_count} pages, but pdf2image generated no images.")
+                 raise RuntimeError("err-conversion-img")
+             else: # Should have been caught by pdfinfo check, but handle anyway
+                  logger.warning(f"PDF {input_path} has 0 pages (confirmed by pdf2image). Creating empty DOCX.")
                   Document().save(output_path)
                   return True
 
@@ -478,8 +516,13 @@ def convert_scanned_pdf_to_docx_ocr(input_path, output_path, lang='eng+vie'):
 
         # Sort images based on the filename generated by pdf2image in the temp folder
         def sort_key_ocr_files(filepath):
-             try: return int(os.path.splitext(os.path.basename(filepath))[0].split('-')[-1])
-             except: return 0
+             try:
+                 # Extract page number (e.g., from '...-001.png', '...-1.png')
+                 base = os.path.splitext(os.path.basename(filepath))[0]
+                 num_part = base.split('-')[-1]
+                 return int(num_part)
+             except: return 0 # Fallback for unexpected naming
+
         image_files_sorted = sorted(
             [os.path.join(temp_dir_ocr, f) for f in os.listdir(temp_dir_ocr) if f.lower().endswith('.png')],
             key=sort_key_ocr_files
@@ -493,47 +536,56 @@ def convert_scanned_pdf_to_docx_ocr(input_path, output_path, lang='eng+vie'):
             try:
                 # Open the saved image file for OCR
                 img_pil = Image.open(img_path)
+                # Perform OCR using pytesseract
                 text = pytesseract.image_to_string(img_pil, lang=lang)
-                total_text_length += len(text)
+                total_text_length += len(text.strip()) # Count non-whitespace chars
+                # Add extracted text to the Word document
                 document.add_paragraph(text)
+                # Add page break between pages (optional, but mimics PDF structure)
                 if page_num < len(image_files_sorted):
                     document.add_page_break()
                 logger.debug(f"Processed OCR for page {page_num}/{len(image_files_sorted)}")
             except pytesseract.TesseractNotFoundError:
-                logger.error("Tesseract is not installed or not in PATH.")
+                logger.error("Tesseract executable not found. Ensure it's installed and in PATH.")
                 raise RuntimeError("err-tesseract-missing") from None
             except pytesseract.TesseractError as ocr_err:
+                 # Log specific Tesseract errors (e.g., language data missing)
                  logger.warning(f"Tesseract error on page {page_num} ({os.path.basename(img_path)}): {ocr_err}. Skipping page text.")
-                 document.add_paragraph(f"[OCR Error on page {page_num}]")
+                 document.add_paragraph(f"[OCR Error on page {page_num}]") # Add note to DOCX
                  if page_num < len(image_files_sorted): document.add_page_break()
             except Exception as page_err:
-                logger.error(f"Error processing page {page_num} ({os.path.basename(img_path)}) with OCR: {page_err}")
-                document.add_paragraph(f"[Error processing page {page_num}]")
+                logger.error(f"Error processing page {page_num} ({os.path.basename(img_path)}) with OCR: {page_err}", exc_info=True)
+                document.add_paragraph(f"[Error processing page {page_num}]") # Add note to DOCX
                 if page_num < len(image_files_sorted): document.add_page_break()
             finally:
-                 if img_pil: img_pil.close() # Close the PIL image opened from file
+                 # Ensure the PIL image object is closed
+                 if img_pil:
+                     try: img_pil.close()
+                     except Exception: pass
 
-        logger.info(f"OCR process completed. Total text length extracted: {total_text_length} chars.")
+        logger.info(f"OCR process completed. Total non-whitespace text length extracted: {total_text_length} chars.")
+        # Save the final Word document
         document.save(output_path)
         logger.info(f"OCR-based DOCX saved successfully: {output_path}")
         return True
 
-    except (ValueError, RuntimeError) as e: # Catch specific errors raised above
+    except (ValueError, RuntimeError) as e: # Catch specific errors raised within this function
          logger.error(f"OCR PDF->DOCX Specific Error: {e}")
-         raise e # Re-raise to be caught by the main handler
+         raise e # Re-raise to be caught by the main handler in the route
     except Exception as e:
+        # Catch any other unexpected errors during the OCR process
         logger.error(f"Unexpected error during OCR PDF->DOCX conversion: {e}", exc_info=True)
-        raise RuntimeError("err-ocr-failed") from e # Lỗi OCR chung
+        raise RuntimeError("err-ocr-failed") from e # Raise a generic OCR failure error
     finally:
-        # Dọn dẹp thư mục tạm chứa ảnh
+        # Clean up the temporary directory containing images
         if temp_dir_ocr:
             safe_remove(temp_dir_ocr)
             logger.debug(f"Cleaned up temporary OCR image directory: {temp_dir_ocr}")
-        # Close image objects returned by convert_from_path (just in case)
+        # Close image objects returned by convert_from_path (important)
         for img in images_ocr:
              if hasattr(img, 'close'):
                  try: img.close()
-                 except: pass
+                 except Exception: pass
 # --- END: OCR Specific Helpers ---
 
 
@@ -557,9 +609,12 @@ def ratelimit_handler(e):
 @app.errorhandler(Exception) # Generic fallback for unhandled exceptions
 def handle_generic_exception(e):
      from werkzeug.exceptions import HTTPException
+     # Let Flask/Werkzeug handle standard HTTP exceptions (like 404, 405)
      if isinstance(e, HTTPException):
           return e
+     # Log all other unhandled exceptions
      logger.error(f"Unhandled Exception: {e}", exc_info=True)
+     # Return a generic server error
      return make_error_response("err-unknown", 500)
 
 
@@ -569,11 +624,12 @@ def handle_generic_exception(e):
 @app.route('/api/translations')
 def get_translations():
     """Provides translation strings to the frontend (Hardcoded Version)."""
+    # (Ensure translations for err-ocr-failed and err-tesseract-missing are present)
     translations = {
         'en': {
             'lang-title': 'PDF & Office Tools', 'lang-subtitle': 'Simple, powerful tools for your documents',
             'lang-error-title': 'Error!', 'lang-convert-title': 'Convert PDF/Office',
-            'lang-convert-desc': 'Transform PDF to Word(DOCX)/PPT and vice versa', # Updated desc
+            'lang-convert-desc': 'Transform PDF to Word(DOCX)/PPT and vice versa',
             'lang-compress-title': 'Compress PDF','lang-compress-desc': 'Reduce file size while maintaining quality',
             'lang-merge-title': 'Merge PDF', 'lang-merge-desc': 'Combine multiple PDFs into one file',
             'lang-split-title': 'Split PDF','lang-split-desc': 'Extract pages from your PDF',
@@ -606,7 +662,7 @@ def get_translations():
              'lang-upload-a-file': 'Upload files',
              'lang-drag-drop': 'or drag and drop',
              'lang-image-types': 'PDF, JPG, JPEG up to 100MB total',
-             # --- OCR ERRORS (ADDED) ---
+             # --- OCR ERRORS ---
              'err-ocr-failed': 'OCR processing failed during conversion.',
              'err-tesseract-missing': 'OCR engine (Tesseract) not found or configured correctly.',
              # --- End OCR ---
@@ -614,7 +670,7 @@ def get_translations():
         'vi': {
             'lang-title': 'Công Cụ PDF & Office', 'lang-subtitle': 'Công cụ đơn giản, mạnh mẽ cho tài liệu của bạn',
             'lang-error-title': 'Lỗi!', 'lang-convert-title': 'Chuyển đổi PDF/Office',
-            'lang-convert-desc': 'Chuyển đổi PDF sang Word(DOCX)/PPT và ngược lại', # Updated desc
+            'lang-convert-desc': 'Chuyển đổi PDF sang Word(DOCX)/PPT và ngược lại',
             'lang-compress-title': 'Nén PDF','lang-compress-desc': 'Giảm kích thước tệp trong khi duy trì chất lượng',
             'lang-merge-title': 'Gộp PDF', 'lang-merge-desc': 'Kết hợp nhiều tệp PDF thành một tệp',
             'lang-split-title': 'Tách PDF', 'lang-split-desc': 'Trích xuất các trang từ tệp PDF của bạn',
@@ -647,7 +703,7 @@ def get_translations():
              'lang-upload-a-file': 'Tải tệp lên',
              'lang-drag-drop': 'hoặc kéo và thả',
              'lang-image-types': 'PDF, JPG, JPEG tối đa 100MB tổng',
-             # --- OCR ERRORS (ADDED) ---
+             # --- OCR ERRORS ---
              'err-ocr-failed': 'Xử lý OCR thất bại trong quá trình chuyển đổi.',
              'err-tesseract-missing': 'Không tìm thấy hoặc cấu hình sai công cụ OCR (Tesseract).',
              # --- End OCR ---
@@ -670,9 +726,9 @@ def index():
 
 # === PDF / Office Conversion Route ===
 @app.route('/convert', methods=['POST'])
-@limiter.limit("10 per minute") # Adjust limit if OCR takes longer
+@limiter.limit("10 per minute") # Limit remains, consider if OCR is slow
 def convert_file():
-    """Handles PDF <-> DOCX and PDF <-> PPT conversions with security checks and OCR for scanned PDFs."""
+    """Handles PDF <-> DOCX and PDF <-> PPT conversions with security checks and auto OCR for scanned PDFs."""
     output_path = temp_libreoffice_output = input_path_for_process = None
     saved_input_paths = []; actual_conversion_type = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
@@ -685,12 +741,10 @@ def convert_file():
         filename = secure_filename(file.filename)
         file_ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
         allowed_office_ext = {'pdf', 'docx', 'ppt', 'pptx'}
-        if not _allowed_file_extension(filename, allowed_office_ext):
-             return make_error_response("err-format-docx", 400)
+        if not _allowed_file_extension(filename, allowed_office_ext): return make_error_response("err-format-docx", 400)
         actual_conversion_type = request.form.get('conversion_type')
         valid_conversion_types = ['pdf_to_docx', 'docx_to_pdf', 'pdf_to_ppt', 'ppt_to_pdf']
-        if not actual_conversion_type or actual_conversion_type not in valid_conversion_types:
-             return make_error_response("err-select-conversion", 400)
+        if not actual_conversion_type or actual_conversion_type not in valid_conversion_types: return make_error_response("err-select-conversion", 400)
         required_ext = []
         if actual_conversion_type == 'pdf_to_docx': required_ext = ['pdf']
         elif actual_conversion_type == 'docx_to_pdf': required_ext = ['docx']
@@ -710,25 +764,17 @@ def convert_file():
         if not detected_mime or detected_mime not in expected_mimes:
             is_expected_office_ext = file_ext in ['ppt', 'pptx', 'docx']
             is_office_input_conversion = actual_conversion_type in ['ppt_to_pdf', 'docx_to_pdf']
-            if detected_mime == 'application/octet-stream' and is_expected_office_ext and is_office_input_conversion:
-                 return make_error_response("err-mime-unidentified-office", 400)
-            else:
-                 logger.warning(f"MIME type validation failed for {filename}. Detected: '{detected_mime}', Expected one of: {expected_mimes}")
-                 return make_error_response("err-invalid-mime-type", 400)
+            if detected_mime == 'application/octet-stream' and is_expected_office_ext and is_office_input_conversion: return make_error_response("err-mime-unidentified-office", 400)
+            else: logger.warning(f"MIME validation failed for {filename}. Detected: '{detected_mime}', Expected: {expected_mimes}"); return make_error_response("err-invalid-mime-type", 400)
         logger.info(f"MIME type validated for {filename}: {detected_mime}")
         # --- Save Uploaded File (Keep as is) ---
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         input_filename_ts = f"input_{timestamp}_{filename}"
         input_path_for_process = os.path.join(UPLOAD_FOLDER, input_filename_ts)
-        try:
-            file.save(input_path_for_process)
-            saved_input_paths.append(input_path_for_process)
-            logger.info(f"Input saved: {input_path_for_process}")
-        except Exception as save_err:
-            logger.error(f"File save failed for {filename}: {save_err}")
-            return make_error_response("err-unknown", 500)
-        # Determine output filename and path
+        try: file.save(input_path_for_process); saved_input_paths.append(input_path_for_process); logger.info(f"Input saved: {input_path_for_process}")
+        except Exception as save_err: logger.error(f"File save failed for {filename}: {save_err}"); return make_error_response("err-unknown", 500)
+        # --- Determine output path (Keep as is) ---
         base_name = filename.rsplit('.', 1)[0]
         out_ext_map = {'pdf_to_docx': 'docx', 'docx_to_pdf': 'pdf', 'pdf_to_ppt': 'pptx', 'ppt_to_pdf': 'pdf'}
         out_ext = out_ext_map.get(actual_conversion_type)
@@ -746,11 +792,12 @@ def convert_file():
                 if likely_scanned:
                     # Use OCR method
                     logger.info(f"PDF detected as scanned. Using OCR conversion for {input_path_for_process}")
+                    # Call the OCR helper function
                     if convert_scanned_pdf_to_docx_ocr(input_path_for_process, output_path, lang='eng+vie'):
                         conversion_success = True
                         logger.info(f"OCR PDF->DOCX conversion successful: {output_path}")
                     else:
-                        # Should not happen if OCR function raises errors properly
+                        # This part might not be reached if the function raises errors properly
                         error_key = "err-ocr-failed"
                         logger.error(f"OCR PDF->DOCX conversion function returned False.")
                 else:
@@ -759,27 +806,25 @@ def convert_file():
                     cv = None
                     try:
                         cv = Converter(input_path_for_process)
-                        cv.convert(output_path) # Default parameters
+                        cv.convert(output_path) # Use default parameters
                         conversion_success = True
                         logger.info(f"Standard pdf2docx conversion successful: {output_path}")
                     except ValueError as ve:
-                        # pdf2docx might raise ValueError for protected PDFs etc.
                          logger.error(f"Standard pdf2docx ValueError for {input_path_for_process}: {ve}")
-                         # Map common pdf2docx errors if possible, otherwise use generic
                          if "password" in str(ve).lower(): error_key = "err-pdf-protected"
-                         else: error_key = "err-conversion" # Generic error for standard conversion
+                         else: error_key = "err-conversion"
+                         # conversion_success remains False
                     except Exception as pdf2docx_err:
                         logger.error(f"Standard pdf2docx conversion failed for {input_path_for_process}: {pdf2docx_err}", exc_info=True)
-                        error_key = "err-conversion" # Keep generic
+                        error_key = "err-conversion"
+                        # conversion_success remains False
                     finally:
-                        if cv: cv.close()
+                        if cv: cv.close() # Ensure converter is closed
                 # --- END: Auto-detect Scan & Choose Method ---
 
             elif actual_conversion_type in ['docx_to_pdf', 'ppt_to_pdf']:
                 # --- LibreOffice Conversion (Keep as is) ---
-                if not SOFFICE_PATH:
-                    logger.error("LibreOffice path (SOFFICE_PATH) is not set or verified. Cannot perform conversion.")
-                    raise RuntimeError("err-libreoffice")
+                if not SOFFICE_PATH: raise RuntimeError("err-libreoffice")
                 output_dir = os.path.dirname(output_path)
                 input_file_ext_actual = os.path.splitext(input_path_for_process)[1].lower()
                 expected_lo_output_name = os.path.basename(input_path_for_process).replace(input_file_ext_actual, '.pdf')
@@ -792,25 +837,13 @@ def convert_file():
                     logger.info(f"LibreOffice stdout:\n{result.stdout}")
                     logger.info(f"LibreOffice stderr:\n{result.stderr}")
                     if os.path.exists(temp_libreoffice_output) and os.path.getsize(temp_libreoffice_output) > 0:
-                        os.rename(temp_libreoffice_output, output_path)
-                        conversion_success = True
+                        os.rename(temp_libreoffice_output, output_path); conversion_success = True
                         logger.info(f"LibreOffice conversion successful: {output_path}")
-                    else:
-                        logger.error(f"LibreOffice conversion ran but output file '{temp_libreoffice_output}' is missing or empty.")
-                        error_key = "err-libreoffice"
-                except subprocess.TimeoutExpired:
-                    logger.error(f"LibreOffice conversion timed out after {LIBREOFFICE_TIMEOUT}s for {input_path_for_process}.")
-                    error_key = "err-conversion-timeout"
-                except subprocess.CalledProcessError as lo_err:
-                    logger.error(f"LibreOffice conversion failed. Return code: {lo_err.returncode}")
-                    logger.error(f"LibreOffice stderr:\n{lo_err.stderr}")
-                    error_key = "err-libreoffice"
-                except FileNotFoundError:
-                    logger.error(f"LibreOffice executable not found at runtime: {SOFFICE_PATH}")
-                    error_key = "err-libreoffice"
-                except Exception as lo_run_err:
-                    logger.error(f"Unexpected error running LibreOffice for {input_path_for_process}: {lo_run_err}", exc_info=True)
-                    error_key = "err-libreoffice"
+                    else: logger.error(f"LibreOffice ran but output '{temp_libreoffice_output}' is missing/empty."); error_key = "err-libreoffice"
+                except subprocess.TimeoutExpired: logger.error(f"LibreOffice timed out for {input_path_for_process}."); error_key = "err-conversion-timeout"
+                except subprocess.CalledProcessError as lo_err: logger.error(f"LibreOffice failed. Code: {lo_err.returncode}\nStderr: {lo_err.stderr}"); error_key = "err-libreoffice"
+                except FileNotFoundError: logger.error(f"LibreOffice not found: {SOFFICE_PATH}"); error_key = "err-libreoffice"
+                except Exception as lo_run_err: logger.error(f"Unexpected LO error: {lo_run_err}", exc_info=True); error_key = "err-libreoffice"
                 # --- End LibreOffice ---
 
             elif actual_conversion_type == 'pdf_to_ppt':
@@ -818,28 +851,16 @@ def convert_file():
                 python_method_success = False; python_method_error_key = None
                 try:
                     if convert_pdf_to_pptx_python(input_path_for_process, output_path):
-                         python_method_success = True
-                         conversion_success = True
-                         error_key = None
-                         logger.info("PDF->PPTX conversion successful using Python method.")
-                except ValueError as ve:
-                    python_method_error_key = str(ve) if str(ve).startswith("err-") else "err-conversion"
-                    logger.warning(f"Python PDF->PPTX method failed with ValueError: {python_method_error_key}")
-                except RuntimeError as rte:
-                     python_method_error_key = str(rte) if str(rte).startswith("err-") else "err-conversion"
-                     logger.warning(f"Python PDF->PPTX runtime error: {python_method_error_key}")
-                except Exception as py_ppt_err:
-                     python_method_error_key = "err-conversion"
-                     logger.error(f"Unexpected error in Python PDF->PPTX method: {py_ppt_err}", exc_info=True)
+                         python_method_success = True; conversion_success = True; error_key = None
+                         logger.info("PDF->PPTX (Python method) successful.")
+                except ValueError as ve: python_method_error_key = str(ve) if str(ve).startswith("err-") else "err-conversion"; logger.warning(f"Python PDF->PPTX ValueError: {python_method_error_key}")
+                except RuntimeError as rte: python_method_error_key = str(rte) if str(rte).startswith("err-") else "err-conversion"; logger.warning(f"Python PDF->PPTX RuntimeError: {python_method_error_key}")
+                except Exception as py_ppt_err: python_method_error_key = "err-conversion"; logger.error(f"Unexpected Python PDF->PPTX error: {py_ppt_err}", exc_info=True)
 
-                can_fallback = (
-                    not python_method_success and
-                    SOFFICE_PATH and
-                    python_method_error_key not in ["err-pdf-corrupt", "err-pdf-protected", "err-poppler-missing"]
-                )
+                can_fallback = ( not python_method_success and SOFFICE_PATH and python_method_error_key not in ["err-pdf-corrupt", "err-pdf-protected", "err-poppler-missing"] )
                 if can_fallback:
-                    logger.info(f"Python PDF->PPTX failed ({python_method_error_key}), attempting LibreOffice fallback...")
-                    error_key = "err-conversion" # Reset error key
+                    logger.info(f"Python PDF->PPTX failed ({python_method_error_key}), attempting LO fallback...")
+                    error_key = "err-conversion" # Reset
                     output_dir = os.path.dirname(output_path)
                     input_file_ext_actual = os.path.splitext(input_path_for_process)[1].lower()
                     expected_lo_output_name = os.path.basename(input_path_for_process).replace(input_file_ext_actual, '.pptx')
@@ -849,44 +870,30 @@ def convert_file():
                     logger.info(f"Running LibreOffice command: {' '.join(cmd)}")
                     try:
                         result = subprocess.run(cmd, check=True, timeout=LIBREOFFICE_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
-                        logger.info(f"LibreOffice stdout:\n{result.stdout}")
-                        logger.info(f"LibreOffice stderr:\n{result.stderr}")
                         if os.path.exists(temp_libreoffice_output) and os.path.getsize(temp_libreoffice_output) > 0:
-                            os.rename(temp_libreoffice_output, output_path)
-                            conversion_success = True
-                            error_key = None
-                            logger.info("LibreOffice fallback for PDF->PPTX successful.")
-                        else:
-                            logger.error("LibreOffice fallback ran but output file is missing or empty.")
-                            error_key = "err-libreoffice"
-                    except subprocess.TimeoutExpired:
-                        logger.error("LibreOffice fallback conversion timed out.")
-                        error_key = "err-conversion-timeout"
-                    except subprocess.CalledProcessError as lo_err:
-                        logger.error(f"LibreOffice fallback conversion failed. Return code: {lo_err.returncode}")
-                        logger.error(f"LibreOffice stderr:\n{lo_err.stderr}")
-                        error_key = "err-libreoffice"
-                    except FileNotFoundError:
-                        logger.error(f"LibreOffice executable not found at runtime (should not happen): {SOFFICE_PATH}")
-                        error_key = "err-libreoffice"
-                    except Exception as lo_run_err:
-                        logger.error(f"Unexpected error running LibreOffice fallback: {lo_run_err}", exc_info=True)
-                        error_key = "err-libreoffice"
+                            os.rename(temp_libreoffice_output, output_path); conversion_success = True; error_key = None
+                            logger.info("LO fallback for PDF->PPTX successful.")
+                        else: logger.error("LO fallback ran but output is missing/empty."); error_key = "err-libreoffice"
+                    except subprocess.TimeoutExpired: logger.error("LO fallback timed out."); error_key = "err-conversion-timeout"
+                    except subprocess.CalledProcessError as lo_err: logger.error(f"LO fallback failed. Code: {lo_err.returncode}\nStderr: {lo_err.stderr}"); error_key = "err-libreoffice"
+                    except FileNotFoundError: logger.error(f"LO not found (fallback): {SOFFICE_PATH}"); error_key = "err-libreoffice"
+                    except Exception as lo_run_err: logger.error(f"Unexpected LO fallback error: {lo_run_err}", exc_info=True); error_key = "err-libreoffice"
                 elif not python_method_success:
                      error_key = python_method_error_key or "err-conversion"
-                     logger.warning(f"Skipping or no LibreOffice fallback available. Final error from Python method: {error_key}")
+                     logger.warning(f"Skipping LO fallback. Final error from Python method: {error_key}")
                 # --- End PDF to PPT ---
 
-        # --- Catch specific errors raised during conversion steps ---
+        # --- Catch specific errors (Includes errors raised by OCR/Scan Check helpers) ---
         except RuntimeError as rt_err:
-            # Will catch err-libreoffice, err-tesseract-missing, err-ocr-failed, err-conversion-img etc.
+            # Catches: err-libreoffice, err-tesseract-missing, err-ocr-failed, err-conversion-img etc.
             error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-unknown"
             logger.error(f"Caught RuntimeError during conversion: {error_key}", exc_info=False)
         except ValueError as val_err:
-             # Will catch err-pdf-protected, err-pdf-corrupt, err-poppler-missing etc.
+             # Catches: err-pdf-protected, err-pdf-corrupt, err-poppler-missing, err-poppler-check-failed etc.
              error_key = str(val_err) if str(val_err).startswith("err-") else "err-unknown"
              logger.error(f"Caught ValueError during conversion: {error_key}", exc_info=False)
         except Exception as conv_err:
+            # Catches any other unexpected error during the conversion block
             error_key = "err-unknown"
             logger.error(f"Unexpected error during conversion process: {conv_err}", exc_info=True)
         # --- End Conversion Logic ---
@@ -900,35 +907,50 @@ def convert_file():
                 @response.call_on_close
                 def cleanup_success():
                     logger.debug(f"Cleaning up successful /convert: Input: {input_path_for_process}, Output: {output_path}")
-                    safe_remove(input_path_for_process)
-                    safe_remove(output_path)
+                    safe_remove(input_path_for_process); safe_remove(output_path)
                 logger.info(f"Conversion successful. Sending file: {output_filename}. Time: {time.time() - start_time:.2f}s")
                 return response
             except Exception as send_err:
                 logger.error(f"Error sending file {output_filename}: {send_err}", exc_info=True)
-                raise RuntimeError("err-unknown") from send_err
+                raise RuntimeError("err-unknown") from send_err # Let outer handler catch for cleanup
         else:
             # Conversion failed or produced empty/missing output
             final_error_key = error_key or "err-conversion" # Use specific error if available
             logger.error(f"Conversion failed or produced invalid output. Final Error Key: {final_error_key}. Time: {time.time() - start_time:.2f}s")
-            raise RuntimeError(final_error_key) # Raise to be caught by outer handler
+            # Raise the determined error key to be caught by the outer handler for cleanup
+            raise RuntimeError(final_error_key)
 
-    # --- Outer Exception Handler (Catch all errors) ---
+    # --- Outer Exception Handler (Catches errors from validation, saving, conversion, and success handling) ---
     except Exception as e:
+         # Determine the final error key and status code
          final_error_key = str(e) if str(e).startswith("err-") else "err-unknown"
-         status_code = 400
-         if final_error_key == "err-unknown": status_code = 500; logger.error(f"Unexpected error in /convert handler: {e}", exc_info=True)
+         status_code = 400 # Default to Bad Request
+
+         # Map specific error keys to appropriate HTTP status codes
+         if final_error_key == "err-unknown":
+             status_code = 500
+             # Log unexpected errors with full trace if not already logged in detail
+             if not isinstance(e, (RuntimeError, ValueError)):
+                 logger.error(f"Unexpected error caught in outer /convert handler: {e}", exc_info=True)
          elif final_error_key == "err-file-too-large": status_code = 413
          elif final_error_key == "err-rate-limit-exceeded": status_code = 429
          elif final_error_key == "err-csrf-invalid": status_code = 400
+         # Add more specific status codes if needed (e.g., 503 for service unavailable like missing LO/Tesseract)
+         elif final_error_key in ["err-libreoffice", "err-tesseract-missing", "err-poppler-missing"]:
+              status_code = 503 # Service Unavailable might be appropriate
 
          # --- Cleanup for Failed Request ---
          logger.debug(f"Cleaning up failed /convert request (Error: {final_error_key}).")
+         # Cleanup input files that were successfully saved
          for p in saved_input_paths: safe_remove(p)
+         # Cleanup potential output files (even if incomplete/empty)
          safe_remove(output_path)
-         if temp_libreoffice_output and os.path.exists(temp_libreoffice_output): safe_remove(temp_libreoffice_output)
+         # Cleanup temporary LibreOffice output if it still exists
+         if temp_libreoffice_output and os.path.exists(temp_libreoffice_output):
+             safe_remove(temp_libreoffice_output)
          # --- End Cleanup ---
 
+         # Return the standardized error response
          return make_error_response(final_error_key, status_code)
 
 
@@ -938,6 +960,7 @@ def convert_file():
 @limiter.limit("10 per minute")
 def convert_image_route():
     """Handles PDF <-> Image conversions with security checks."""
+    # (Code for this route remains unchanged from your previous full version)
     output_path = None; input_path_for_pdf_input = None; saved_input_paths = []
     actual_conversion_type = None; output_filename = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
@@ -996,7 +1019,7 @@ def convert_image_route():
 
         if validation_error_key:
             safe_remove(temp_upload_dir)
-            for p in saved_input_paths: safe_remove(p)
+            for p in saved_input_paths: safe_remove(p) # Clean up any partially saved images
             return make_error_response(validation_error_key, 400)
         # --- End Input Validation ---
 
@@ -1004,19 +1027,22 @@ def convert_image_route():
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
 
+        # Save input PDF only if needed (PDF -> Image)
         if actual_conversion_type == 'pdf_to_image':
-            pdf_file_storage = valid_files_for_processing[0]
+            pdf_file_storage = valid_files_for_processing[0] # Should be the FileStorage object
             input_filename_ts = f"input_{timestamp}_{secure_filename(pdf_file_storage.filename)}"
             input_path_for_pdf_input = os.path.join(UPLOAD_FOLDER, input_filename_ts)
             try:
-                pdf_file_storage.stream.seek(0)
+                pdf_file_storage.stream.seek(0) # Ensure stream is at beginning
                 pdf_file_storage.save(input_path_for_pdf_input)
-                saved_input_paths.append(input_path_for_pdf_input)
+                saved_input_paths.append(input_path_for_pdf_input) # Track the saved PDF path
                 logger.info(f"Input PDF saved: {input_path_for_pdf_input}")
             except Exception as save_err:
                 logger.error(f"Failed to save PDF input {secure_filename(pdf_file_storage.filename)}: {save_err}")
+                safe_remove(temp_upload_dir) # Clean up image temp dir if it was created for img->pdf
                 return make_error_response("err-unknown", 500)
 
+        # Determine output filename and path
         base_name = first_filename.rsplit('.', 1)[0]
         output_filename = f"converted_{timestamp}_{secure_filename(base_name)}.{out_ext}"
         output_path = os.path.join(UPLOAD_FOLDER, output_filename)
@@ -1027,34 +1053,47 @@ def convert_image_route():
                 if convert_pdf_to_image_zip(input_path_for_pdf_input, output_path):
                     conversion_success = True
             elif actual_conversion_type == 'image_to_pdf':
-                image_objects_pil = []
-                try:
-                    sorted_paths = sorted(valid_files_for_processing)
-                    for img_path in sorted_paths:
-                         filename_log = os.path.basename(img_path)
-                         try:
-                             with Image.open(img_path) as img:
-                                 img.load(); converted_img = None
-                                 if img.mode in ['RGBA', 'LA']:
-                                      bg = Image.new('RGB', img.size, (255, 255, 255)); mask=None
-                                      try: mask = img.getchannel('A' if img.mode == 'RGBA' else 'L')
+                # valid_files_for_processing now contains paths to saved images in temp_upload_dir
+                if convert_images_to_pdf(valid_files_for_processing, output_path): # Pass paths directly
+                    # Modify convert_images_to_pdf to accept paths OR adapt logic here
+                    # For simplicity, assume convert_images_to_pdf is adapted or rewrite logic here
+                    # --- Inlined Image Path to PDF Logic ---
+                    image_objects_pil = []
+                    try:
+                        # Sort paths alphabetically (includes index prefix for order)
+                        sorted_paths = sorted(valid_files_for_processing)
+                        for img_path in sorted_paths:
+                             filename_log = os.path.basename(img_path)
+                             img_pil = None
+                             try:
+                                 img_pil = Image.open(img_path)
+                                 img_pil.load(); converted_img = None
+                                 if img_pil.mode in ['RGBA', 'LA']:
+                                      bg = Image.new('RGB', img_pil.size, (255, 255, 255)); mask=None
+                                      try: mask = img_pil.getchannel('A' if img_pil.mode == 'RGBA' else 'L')
                                       except: pass
-                                      bg.paste(img, mask=mask); converted_img = bg
-                                 elif img.mode not in ['RGB', 'L', 'CMYK']: converted_img = img.convert('RGB')
-                                 else: converted_img = img.copy()
+                                      bg.paste(img_pil, mask=mask); converted_img = bg
+                                 elif img_pil.mode not in ['RGB', 'L', 'CMYK']: converted_img = img_pil.convert('RGB')
+                                 else: converted_img = img_pil.copy()
                                  image_objects_pil.append(converted_img)
-                         except UnidentifiedImageError: raise ValueError("err-invalid-image-file")
-                         except Exception as img_err: raise RuntimeError("err-conversion") from img_err
-                    if not image_objects_pil: raise ValueError("err-select-file")
-                    image_objects_pil[0].save(output_path, "PDF", resolution=100.0, save_all=True, append_images=image_objects_pil[1:])
-                    conversion_success = True
-                except ValueError as ve: raise ve
-                except RuntimeError as rte: raise rte
-                except Exception as e: raise RuntimeError("err-unknown") from e
-                finally:
-                    for img_obj in image_objects_pil:
-                        try: img_obj.close()
-                        except: pass
+                             except UnidentifiedImageError: raise ValueError("err-invalid-image-file") from None
+                             except Exception as img_err: raise RuntimeError("err-conversion") from img_err
+                             finally:
+                                  if img_pil:
+                                      try: img_pil.close()
+                                      except Exception: pass
+                        if not image_objects_pil: raise ValueError("err-select-file")
+                        image_objects_pil[0].save(output_path, "PDF", resolution=100.0, save_all=True, append_images=image_objects_pil[1:])
+                        conversion_success = True
+                    except ValueError as ve: raise ve
+                    except RuntimeError as rte: raise rte
+                    except Exception as e: raise RuntimeError("err-unknown") from e
+                    finally:
+                        for img_obj in image_objects_pil:
+                            try: img_obj.close()
+                            except: pass
+                    # --- End Inlined Logic ---
+
         except ValueError as val_err: error_key = str(val_err) if str(val_err).startswith("err-") else "err-conversion"; logger.error(f"Image conversion ValueError: {error_key}", exc_info=False)
         except RuntimeError as rt_err: error_key = str(rt_err) if str(rt_err).startswith("err-") else "err-conversion"; logger.error(f"Image conversion RuntimeError: {error_key}", exc_info=False)
         except Exception as conv_err: error_key = "err-unknown"; logger.error(f"Unexpected error during image conversion process: {conv_err}", exc_info=True)
@@ -1068,33 +1107,44 @@ def convert_image_route():
                 @response.call_on_close
                 def cleanup_image_success():
                     logger.debug(f"Cleaning up successful /convert_image: Inputs: {saved_input_paths}, Output: {output_path}, TempDir: {temp_upload_dir}")
+                    # Clean up the main input file (PDF) or the temp image files
                     for p in saved_input_paths: safe_remove(p)
-                    safe_remove(output_path)
-                    safe_remove(temp_upload_dir)
+                    safe_remove(output_path) # Clean up the final output PDF/ZIP
+                    safe_remove(temp_upload_dir) # Clean up the temporary image directory
                 logger.info(f"Image conversion successful. Sending file: {output_filename}. Time: {time.time() - start_time:.2f}s")
                 return response
-            except Exception as send_err: logger.error(f"Error sending image conversion file {output_filename}: {send_err}", exc_info=True); raise RuntimeError("err-unknown") from send_err
+            except Exception as send_err:
+                logger.error(f"Error sending image conversion file {output_filename}: {send_err}", exc_info=True)
+                raise RuntimeError("err-unknown") from send_err # Let outer handler cleanup
         else:
             final_error_key = error_key or "err-conversion"
             logger.error(f"Image conversion failed or produced invalid output. Final Error Key: {final_error_key}. Time: {time.time() - start_time:.2f}s")
-            raise RuntimeError(final_error_key)
+            raise RuntimeError(final_error_key) # Let outer handler cleanup
 
     # --- Outer Exception Handler (Keep as is) ---
     except Exception as e:
         final_error_key = str(e) if str(e).startswith("err-") else "err-unknown"
         status_code = 400
-        if final_error_key == "err-unknown": status_code = 500; logger.error(f"Unexpected error in /convert_image handler: {e}", exc_info=True)
+        if final_error_key == "err-unknown":
+            status_code = 500
+            if not isinstance(e, (RuntimeError, ValueError)): # Avoid double logging known errors
+               logger.error(f"Unexpected error caught in outer /convert_image handler: {e}", exc_info=True)
         elif final_error_key == "err-file-too-large": status_code = 413
         elif final_error_key == "err-rate-limit-exceeded": status_code = 429
         elif final_error_key == "err-csrf-invalid": status_code = 400
+
+        # --- Cleanup for Failed Request ---
         logger.debug(f"Cleaning up failed /convert_image request (Error: {final_error_key}).")
+        # Clean up main input (PDF) or temporary saved images
         for p in saved_input_paths: safe_remove(p)
-        safe_remove(output_path)
-        safe_remove(temp_upload_dir)
+        safe_remove(output_path) # Clean potential output file
+        safe_remove(temp_upload_dir) # Clean temporary image directory
+        # --- End Cleanup ---
+
         return make_error_response(final_error_key, status_code)
 
 
-# --- Teardown (Keep existing cleanup logic) ---
+# --- Teardown (Keep existing cleanup logic, includes pdfocr_) ---
 @app.teardown_appcontext
 def cleanup_old_files(exception=None):
     if not os.path.exists(UPLOAD_FOLDER): return
@@ -1107,9 +1157,9 @@ def cleanup_old_files(exception=None):
 
         for item_name in items:
             # Skip temporary directories used by conversions
-            if item_name.startswith(("img2pdf_", "pdfimg_", "pdf2imgzip_", "pdfocr_")): # Added pdfocr_
+            if item_name.startswith(("img2pdf_", "pdfimg_", "pdf2imgzip_", "pdfocr_")):
                  logger.debug(f"Teardown: Skipping temporary item: {item_name}")
-                 # Consider adding logic to remove *old* temp dirs here too
+                 # Optionally, add logic here to remove *old* temp dirs based on their creation time
                  continue
 
             path = os.path.join(UPLOAD_FOLDER, item_name)
@@ -1119,6 +1169,7 @@ def cleanup_old_files(exception=None):
                      file_age = now - stat_result.st_mtime; checked_count += 1
                      if file_age > max_age:
                          if safe_remove(path): deleted_count += 1
+                 # Avoid removing directories here to prevent deleting active temp dirs
             except FileNotFoundError: continue
             except Exception as e: logger.error(f"Teardown check error {path}: {e}")
 
@@ -1148,13 +1199,14 @@ if __name__ == '__main__':
 
     if debug_mode:
         logger.warning("Running in Flask DEBUG mode (Insecure for production).")
+        # use_reloader=False might be needed if startup checks cause issues
         app.run(host=host, port=port, debug=True, threaded=True, use_reloader=True)
     else:
         logger.info("Running with Waitress production server.")
         try:
             from waitress import serve
-            # Increase threads slightly if OCR is heavy, monitor performance
-            serve(app, host=host, port=port, threads=6) # Example: increased threads
+            # Keep increased threads if OCR might be used
+            serve(app, host=host, port=port, threads=6)
         except ImportError:
             logger.critical("Waitress not found! Cannot start production server.")
             logger.warning("FALLING BACK TO FLASK DEVELOPMENT SERVER (NOT RECOMMENDED FOR PRODUCTION).")
