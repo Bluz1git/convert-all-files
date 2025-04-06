@@ -1,5 +1,3 @@
-# --- START OF FILE app.py ---
-
 from flask import Flask, request, send_file, render_template, jsonify, url_for, make_response
 from flask_talisman import Talisman # Security Headers
 from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Protection
