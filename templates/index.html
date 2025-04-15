@@ -8,46 +8,70 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        /* CSS Overrides cho Tiếng Việt (vi) */
-        html[lang="vi"] .card-header-box h3 {}
-        html[lang="vi"] .card-header-box .lang-convert-title { left: 25px !important; }
-        html[lang="vi"] .card-header-box .lang-image-title { left: 60px !important; }
-        html[lang="vi"] .card-header-box .lang-merge-title { left: 75px !important; }
-        html[lang="vi"] .card-header-box .lang-split-title { left: 75px !important; }
-        html[lang="vi"] .card-header-box .lang-compress-title { left: 80px !important; top: 0px !important; }
-        html[lang="vi"] .card-header-box .lang-compress-docx-title { left: 70px !important; top: 0px !important; }
+    /* CSS Cơ bản và Layout (Giữ nguyên từ code gốc của bạn) */
+    body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    .card { border-radius: 20px; background-color: #ffffff; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+    .card:hover:not(.disabled) { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); }
+    .card-content { flex-grow: 1; display: flex; flex-direction: column; padding: 1.5rem; }
+    .card-header-box { position: relative; padding: 1rem 1rem 1rem 3.5rem; border-radius: 12px; margin-bottom: 0.75rem; min-height: 45px; display: flex; align-items: center; }
+    .card-header-box .icon-wrapper { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); z-index: 1; }
+    .card-header-box h3 { font-weight: 600; line-height: 1.4; color: inherit; width: 100%; font-size: 1.1rem; }
+    .card-description { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
+    .form-card { height: auto; }
+    .main-title { font-family: 'Roboto', 'Noto Sans', sans-serif; font-weight: 900; letter-spacing: -0.025em; }
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+    .loader.loader-sm { width: 16px; height: 16px; border-width: 2px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .card.disabled { background-color: #f9fafb; opacity: 0.7; pointer-events: none; user-select: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important; transform: none !important; cursor: not-allowed; }
+    .card.disabled .card-header-box { background-color: #e5e7eb !important; color: #6b7280 !important; }
+    .card.disabled .icon-wrapper svg { color: #9ca3af !important; }
+    .card.disabled .card-description { color: #9ca3af !important; }
+    .card.disabled input, .card.disabled select, .card.disabled button { cursor: not-allowed !important; }
+    .card.disabled .hover\:border-blue-400:hover,
+    .card.disabled .hover\:border-orange-400:hover,
+    .card.disabled .hover\:border-green-400:hover,
+    .card.disabled .hover\:border-teal-400:hover { border-color: #d1d5db !important; }
+    @media (max-width: 640px) { .main-container { padding: 0.5rem; } }
+     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 8px; }
+     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
+     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px;}
+     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #bdbdbd; }
 
-        /* CSS nội tuyến */
-        body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
-        .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        .card { border-radius: 20px; background-color: #ffffff; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
-        .card:hover:not(.disabled) { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); }
-        .card-content { flex-grow: 1; display: flex; flex-direction: column; padding: 1.5rem; }
-        .card-header-box { position: relative; padding: 1rem 1rem 1rem 3.5rem; border-radius: 12px; margin-bottom: 0.75rem; min-height: 45px; display: flex; align-items: center; }
-        .card-header-box .icon-wrapper { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); z-index: 1; }
-        .card-header-box h3 { font-weight: 600; line-height: 1.4; color: inherit; width: 100%; font-size: 1.1rem; }
-        .card-description { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
-        .form-card { height: auto; }
-        .main-title { font-family: 'Roboto', 'Noto Sans', sans-serif; font-weight: 900; letter-spacing: -0.025em; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
-        .loader.loader-sm { width: 16px; height: 16px; border-width: 2px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .card.disabled { background-color: #f9fafb; opacity: 0.7; pointer-events: none; user-select: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important; transform: none !important; cursor: not-allowed; }
-        .card.disabled .card-header-box { background-color: #e5e7eb !important; color: #6b7280 !important; }
-        .card.disabled .icon-wrapper svg { color: #9ca3af !important; }
-        .card.disabled .card-description { color: #9ca3af !important; }
-        .card.disabled input, .card.disabled select, .card.disabled button { cursor: not-allowed !important; }
-        .card.disabled .hover\:border-blue-400:hover,
-        .card.disabled .hover\:border-orange-400:hover,
-        .card.disabled .hover\:border-green-400:hover,
-        .card.disabled .hover\:border-teal-400:hover { border-color: #d1d5db !important; }
-        @media (max-width: 640px) { .main-container { padding: 0.5rem; } }
-         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 8px; }
-         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
-         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px;}
-         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #bdbdbd; }
-    </style>
+    /* --- [THÊM MỚI] Định vị MẶC ĐỊNH cho tiêu đề Compress DOCX và PDF --- */
+    /* Đảm bảo các tiêu đề này có position: relative nếu chưa có từ nơi khác */
+    .card-header-box .lang-compress-docx-title,
+    .card-header-box .lang-compress-title {
+        position: relative; /* Quan trọng để 'left' hoạt động */
+    }
+    /* Giá trị 'left' mặc định (cho Tiếng Anh) */
+    .card-header-box .lang-compress-docx-title {
+        left: 45px;
+    }
+    .card-header-box .lang-compress-title {
+        left: 50px;
+    }
+
+    /* --- CSS Ghi đè cho Tiếng Việt (vi) (Giữ nguyên từ code cũ) --- */
+    /* Các quy tắc cho các card khác (giữ nguyên) */
+    html[lang="vi"] .card-header-box .lang-convert-title { left: 25px !important; }
+    html[lang="vi"] .card-header-box .lang-image-title { left: 60px !important; }
+    html[lang="vi"] .card-header-box .lang-merge-title { left: 75px !important; }
+    html[lang="vi"] .card-header-box .lang-split-title { left: 75px !important; }
+
+    /* Quy tắc cho 2 card đã sửa (nên đặt sau các quy tắc mặc định vừa thêm) */
+    html[lang="vi"] .card-header-box .lang-compress-title {
+        left: 80px !important; /* Giá trị khi là Tiếng Việt */
+        top: 0px !important;   /* Giữ lại top nếu cần */
+    }
+    html[lang="vi"] .card-header-box .lang-compress-docx-title {
+        left: 70px !important; /* Giá trị khi là Tiếng Việt */
+        top: 0px !important;   /* Giữ lại top nếu cần */
+    }
+    /* --- Kết thúc phần CSS Ghi đè --- */
+
+</style>
 </head>
 <body>
     <div class="main-container">
@@ -153,7 +177,7 @@
                  <div class="card-content">
                      <div class="card-header-box bg-green-100 text-green-800">
                          <div class="icon-wrapper"> <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" /> </svg> </div>
-                         <h3 class="lang-compress-title" style="position: relative; left: 50px;">Compress PDF</h3>
+                         <h3 class="lang-compress-title" style="position: relative;">Compress PDF</h3>
                      </div>
                      <p class="card-description lang-compress-desc">Reduce PDF file size while optimizing for quality</p>
                      <form id="compressForm" action="/compress_pdf" method="post" enctype="multipart/form-data" class="flex-grow flex flex-col">
