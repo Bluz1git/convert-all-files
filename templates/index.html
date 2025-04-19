@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-    /* CSS Cơ bản và Layout (Giữ nguyên từ code gốc của bạn) */
+    /* CSS Cơ bản và Layout */
     body { background-color: #f0f2f5; font-family: 'Roboto', 'Noto Sans', 'Arial', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
     .main-container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem; }
     .card { border-radius: 20px; background-color: #ffffff; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
@@ -39,13 +39,11 @@
      .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px;}
      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #bdbdbd; }
 
-    /* --- [THÊM MỚI] Định vị MẶC ĐỊNH cho tiêu đề Compress DOCX và PDF --- */
-    /* Đảm bảo các tiêu đề này có position: relative nếu chưa có từ nơi khác */
+    /* Định vị MẶC ĐỊNH cho tiêu đề Compress DOCX và PDF */
     .card-header-box .lang-compress-docx-title,
     .card-header-box .lang-compress-title {
-        position: relative; /* Quan trọng để 'left' hoạt động */
+        position: relative;
     }
-    /* Giá trị 'left' mặc định (cho Tiếng Anh) */
     .card-header-box .lang-compress-docx-title {
         left: 45px;
     }
@@ -53,24 +51,20 @@
         left: 50px;
     }
 
-    /* --- CSS Ghi đè cho Tiếng Việt (vi) (Giữ nguyên từ code cũ) --- */
-    /* Các quy tắc cho các card khác (giữ nguyên) */
+    /* CSS Ghi đè cho Tiếng Việt (vi) */
     html[lang="vi"] .card-header-box .lang-convert-title { left: 25px !important; }
     html[lang="vi"] .card-header-box .lang-image-title { left: 60px !important; }
     html[lang="vi"] .card-header-box .lang-merge-title { left: 75px !important; }
     html[lang="vi"] .card-header-box .lang-split-title { left: 75px !important; }
 
-    /* Quy tắc cho 2 card đã sửa (nên đặt sau các quy tắc mặc định vừa thêm) */
     html[lang="vi"] .card-header-box .lang-compress-title {
-        left: 80px !important; /* Giá trị khi là Tiếng Việt */
-        top: 0px !important;   /* Giữ lại top nếu cần */
+        left: 80px !important;
+        top: 0px !important;
     }
     html[lang="vi"] .card-header-box .lang-compress-docx-title {
-        left: 70px !important; /* Giá trị khi là Tiếng Việt */
-        top: 0px !important;   /* Giữ lại top nếu cần */
+        left: 70px !important;
+        top: 0px !important;
     }
-    /* --- Kết thúc phần CSS Ghi đè --- */
-
 </style>
 </head>
 <body>
@@ -108,7 +102,6 @@
                         <div class="mb-4"> <label for="conversionType" class="block text-sm font-medium text-gray-700 mb-1 lang-select-conversion-label">Conversion Type</label> <select name="conversion_type_select" id="conversionType" class="w-full p-2 border border-gray-300 rounded-lg text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500 cursor-pointer" required> <option value="" disabled selected class="lang-select-conversion">Select conversion type</option> <option value="pdf_docx">PDF ↔ DOCX</option> <option value="pdf_ppt">PDF ↔ PPT/PPTX</option> </select> <input type="hidden" name="conversion_type" id="actualConversionType"> </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4">
-                            <!-- Removed loadingIndicator div -->
                             <button type="submit" id="convertButton" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold lang-convert-btn" disabled>Convert Now</button>
                         </div>
                     </form>
@@ -137,7 +130,6 @@
                         </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4">
-                             <!-- Removed imageLoadingIndicator div -->
                              <button type="submit" id="imageConvertButton" class="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-sm font-semibold lang-image-convert-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Convert Now</button>
                         </div>
                     </form>
@@ -160,7 +152,6 @@
                         </div>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mt-auto pt-4">
-                             <!-- Removed compressDocxLoadingIndicator div -->
                             <button type="submit" id="compressDocxButton" class="w-full bg-teal-600 text-white py-2.5 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-sm font-semibold lang-compress-docx-btn" disabled>Compress Word</button>
                         </div>
                     </form>
@@ -194,7 +185,6 @@
                           </div>
                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                          <div class="mt-auto pt-4">
-                             <!-- Removed compressLoadingIndicator div -->
                              <button type="submit" id="compressButton" class="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-semibold lang-compress-btn" disabled>Compress PDF</button>
                          </div>
                      </form>
@@ -267,11 +257,6 @@
         const compressQualitySelect = document.getElementById('compressQuality');
         const compressForm = document.getElementById('compressForm');
         const compressButton = document.getElementById('compressButton');
-        // REMOVED loading indicator variables
-        // const loadingIndicator = document.getElementById('loadingIndicator');
-        // const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
-        // const compressDocxLoadingIndicator = document.getElementById('compressDocxLoadingIndicator');
-        // const compressLoadingIndicator = document.getElementById('compressLoadingIndicator');
 
         let selectedImageFiles = [];
 
@@ -380,7 +365,6 @@
             convertBtn.disabled = !isValidState;
         }
 
-        // UPDATED handleFetch: Removed loadingElement handling
         function handleFetch(formElement, _loadingElement_ignored, buttonElement, endpoint, buttonTextKey, formData = null) {
             let isManualFormData = !formElement;
             if (!isManualFormData) { formData = new FormData(formElement); }
@@ -391,7 +375,6 @@
             else if (endpoint === '/convert_image' && selectedImageFiles.length > 0) { const name = selectedImageFiles[0].name; inputFilenameBase = name.substring(0, name.lastIndexOf('.')) || 'file'; }
             if (endpoint === '/convert') { const typeEl = formElement?.querySelector('input[name="conversion_type"]'); if (typeEl) conversionDirection = typeEl.value; }
 
-            // Show loader ONLY inside button
             if(buttonElement) {
                 buttonElement.disabled = true;
                 const convertingTextKeyMap = { '/convert': 'lang-converting', '/convert_image': 'lang-image-converting', '/compress_pdf': 'lang-compressing', '/compress_docx': 'lang-compressing-docx' };
@@ -407,7 +390,6 @@
             .then(({ blob, downloadFilename }) => { const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = downloadFilename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove(); if (endpoint === '/convert_image') { selectedImageFiles = []; updateImageFileDisplay(); } else if (formElement) { formElement.reset(); const statusElId = formElement.id.replace('Form','FileStatus'); const statusEl = document.getElementById(statusElId); if (statusEl) { statusEl.textContent = statusEl.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); } if (endpoint === '/convert' && conversionTypeSelect) { conversionTypeSelect.value = ""; if(actualConversionTypeInput) actualConversionTypeInput.value = ""; } if (endpoint === '/compress_pdf' && compressQualitySelect) { compressQualitySelect.value = 'medium'; } if(buttonElement) { buttonElement.disabled = true; } } hideError(); })
             .catch(error => { console.error(`${endpoint} request failed:`, error); showError(error.message || 'err-unknown'); })
             .finally(() => {
-                // No need to hide separate loadingElement
                 if(buttonElement) { const text = currentTranslations[buttonTextKey] || 'Submit'; buttonElement.innerHTML = text; if (endpoint === '/convert_image') { updateImageFileDisplay(); } else { buttonElement.disabled = true; } }
             });
         }
@@ -415,7 +397,7 @@
         function setupEventListeners() {
             if (languageSelector) languageSelector.addEventListener('change', function() { updateLanguage(this.value); });
 
-            // Card 1: Convert PDF/Office (Pass null for loadingElement)
+            // Card 1: Convert PDF/Office
             if (fileInput && fileStatus && conversionTypeSelect && actualConversionTypeInput && convertForm && convertButton) {
                 fileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = fileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValidSelection = false; if (file) { fileStatus.textContent = file.name; const ext = file.name.split('.').pop().toLowerCase(); if (ext === 'pdf') { conversionTypeSelect.value = 'pdf_docx'; isValidSelection = true; } else if (ext === 'docx') { conversionTypeSelect.value = 'pdf_docx'; isValidSelection = true; } else if (ext === 'ppt' || ext === 'pptx') { conversionTypeSelect.value = 'pdf_ppt'; isValidSelection = true; } else { conversionTypeSelect.value = ""; showError('err-invalid-mime-type'); fileStatus.textContent = noFileText; this.value = null; isValidSelection = false; } if(isValidSelection && file.size > 101*1024*1024) { showError('err-file-too-large'); this.value=null; fileStatus.textContent = noFileText; conversionTypeSelect.value = ""; isValidSelection = false; } } else { fileStatus.textContent = noFileText; conversionTypeSelect.value = ""; isValidSelection = false; } convertButton.disabled = !(isValidSelection && conversionTypeSelect.value !== ""); if(actualConversionTypeInput) actualConversionTypeInput.value = ''; });
                 conversionTypeSelect.addEventListener('change', function() { hideError(); convertButton.disabled = !(fileInput.files && fileInput.files.length > 0 && this.value !== ""); if(actualConversionTypeInput) actualConversionTypeInput.value = ''; });
@@ -423,7 +405,7 @@
                 convertButton.disabled = true;
             } else { console.warn("Missing elements for Card 1"); }
 
-            // Card 2: PDF <-> Image (Pass null for loadingElement)
+            // Card 2: PDF <-> Image
             if (imageDropZone && imageFileInput && imageVerticalFileList && imageDropZoneInstructions && imageConvertForm && imageConvertButton && clearAllImageFilesButton) {
                 imageDropZone.addEventListener('click', (e) => { if (e.target.closest('button') || (imageVerticalFileList && imageVerticalFileList.contains(e.target)) || e.target.closest('label[for="imageFileInput"]')) { return; } imageFileInput.click(); });
                 imageFileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { addImageFiles(e.target.files); } e.target.value = null; });
@@ -435,7 +417,7 @@
                 updateImageFileDisplay();
             } else { console.warn("Missing elements for Card 2"); }
 
-            // Card 3: Compress DOCX (Pass null for loadingElement)
+            // Card 3: Compress DOCX
             const docxCompressEnabled = SOFFICE_AVAILABLE && GS_AVAILABLE;
             if (docxCompressEnabled && compressDocxFileInput && compressDocxFileStatus && compressDocxForm && compressDocxButton) {
                 compressDocxFileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = compressDocxFileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValid = false; if (file) { if (!file.name.toLowerCase().endsWith('.docx')) { showError('err-format-docx'); compressDocxFileStatus.textContent = noFileText; this.value = null; } else if (file.size > 101*1024*1024) { showError('err-file-too-large'); compressDocxFileStatus.textContent = noFileText; this.value = null; } else { compressDocxFileStatus.textContent = file.name; isValid = true; } } else { compressDocxFileStatus.textContent = noFileText; } compressDocxButton.disabled = !isValid; });
@@ -444,7 +426,7 @@
             } else if (!docxCompressEnabled && compressDocxCard) { console.warn("Compress DOCX disabled"); }
               else if (docxCompressEnabled) { console.warn("Missing elements for Card 3"); }
 
-            // Card 4: Compress PDF (Pass null for loadingElement)
+            // Card 4: Compress PDF
             if (GS_AVAILABLE && compressFileInput && compressFileStatus && compressQualitySelect && compressForm && compressButton) {
                 compressFileInput.addEventListener('change', function() { hideError(); const file = this.files[0]; const noFileText = compressFileStatus.dataset.langNoFile || (currentLang === 'vi' ? 'Không có tệp nào được chọn' : 'No file selected'); let isValid = false; if (file) { if (!file.name.toLowerCase().endsWith('.pdf')) { showError('err-format-pdf'); compressFileStatus.textContent = noFileText; this.value = null; } else if (file.size > 101*1024*1024) { showError('err-file-too-large'); compressFileStatus.textContent = noFileText; this.value = null; } else { compressFileStatus.textContent = file.name; isValid = true; } } else { compressFileStatus.textContent = noFileText; } compressButton.disabled = !isValid; });
                 compressForm.addEventListener('submit', function(e) { e.preventDefault(); hideError(); if (!compressFileInput.files || compressFileInput.files.length === 0) { showError('err-select-file'); return; } const file = compressFileInput.files[0]; if (!file.name.toLowerCase().endsWith('.pdf')) { showError('err-format-pdf'); return; } if (file.size > 101*1024*1024) { showError('err-file-too-large'); return; } handleFetch(compressForm, null, compressButton, '/compress_pdf', 'lang-compress-btn'); });
