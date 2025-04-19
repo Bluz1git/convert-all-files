@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"> <!-- Lang attribute sẽ được cập nhật bởi JS -->
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,7 +75,6 @@
 </head>
 <body>
     <div class="main-container">
-        <!-- Nav, Header, Alert -->
         <nav class="bg-white shadow-sm rounded-xl mb-6">
            <div class="max-w-7xl mx-auto px-4 py-2">
                <div class="flex justify-between h-16 items-center">
@@ -97,7 +96,6 @@
             <span class="absolute top-0 bottom-0 right-0 px-4 py-3"> <svg onclick="hideError()" class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> <title>Close</title> <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/> </svg> </span>
        </div>
 
-        <!-- ========== GRID SECTION ========== -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
             <!-- 1. Convert PDF/Office Card -->
@@ -221,15 +219,14 @@
                 </div>
             </div>
 
-        </div> <!-- End grid -->
+        </div>
 
          <footer class="text-center mt-10 py-4 text-sm text-gray-500">
             © 2025 PDF Tools. More features coming soon - I hope you will enjoy my website.
         </footer>
 
-    </div> <!-- End main container -->
+    </div>
 
-    <!-- ========== JAVASCRIPT SECTION ========== -->
     <script>
         const TRANSLATIONS_URL = "{{ translations_url | safe }}";
         const GS_AVAILABLE = {{ gs_available | tojson }};
