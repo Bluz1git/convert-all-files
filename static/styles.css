@@ -1,11 +1,9 @@
-/* === Body Styles === */
 body {
     background-color: #f0f2f5;
-    /* Font-family được đặt trong thẻ style của HTML */
     min-height: 100vh;
 }
 
-/* === Card Styles === */
+/* Card Styles */
 .card {
     border-radius: 20px;
     overflow: hidden; /* Quan trọng để bo góc hoạt động đúng với nội dung bên trong */
@@ -13,7 +11,6 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     background-color: #ffffff;
     border: none;
-    /* Height và display flex được đặt trong thẻ style của HTML */
 }
 
 .card:hover {
@@ -21,15 +18,13 @@ body {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
 
-/* === Custom CSS cho Card Header và Title === */
-/* Các style này đã được chuyển vào thẻ <style> trong HTML để ưu tiên */
-/* Khung màu bao icon và title */
+/* Custom CSS cho Card Header và Title */
 .card-header-box {
     position: relative;
-    padding: 1rem 1rem 1rem 3.5rem; /* p-4, tăng padding trái */
-    border-radius: 12px; /* rounded-xl */
-    margin-bottom: 0.75rem; /* mb-3 */
-    min-height: 45px; /* Chiều cao tối thiểu */
+    padding: 1rem 1rem 1rem 3.5rem;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    min-height: 45px;
     display: flex;
     align-items: center;
 }
@@ -41,19 +36,15 @@ body {
      z-index: 1;
  }
  .card-header-box h3 {
-    font-weight: 600; /* font-semibold */
+    font-weight: 600;
     line-height: 1.4;
-    color: inherit; /* Kế thừa màu từ box */
+    color: inherit;
     width: 100%;
-    font-size: 1.1rem; /* Kích thước H3 */
-    /* position: relative; được đặt inline */
-    /* left: được đặt inline */
+    font-size: 1.1rem;
 }
 /* Định dạng cho phần mô tả */
 .card-description {
-     font-size: 0.875rem; /* text-sm */
-     color: #6b7280; /* text-gray-500 */
-     margin-bottom: 1rem; /* mb-4 */
+     font-size: 0.875rem;
+     color: #6b7280;
+     margin-bottom: 1rem;
 }
-
-/* CSS cho scrollbar được đặt inline trong HTML bằng thẻ <style> */

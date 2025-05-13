@@ -8,13 +8,13 @@ import sys
 import time
 import subprocess
 import logging
-import glob # <--- THÊM IMPORT NÀY
+import glob
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge # Better handling for large files
-from pdf2docx import Converter # Cần cho bước chuyển đổi cuối
+from pdf2docx import Converter
 import tempfile
 import PyPDF2
-import shutil # Cần cho safe_remove, which
+import shutil
 from pdf2image import convert_from_path, pdfinfo_from_path
 from pdf2image.exceptions import PDFInfoNotInstalledError, PDFPageCountError, PDFSyntaxError
 from pptx import Presentation
@@ -23,16 +23,16 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 import zipfile
 try:
-    import magic # MIME Type Detection - Thư viện này có thể khó cài trên Windows
+    import magic
 except ImportError:
     magic = None
     logging.warning("python-magic library not found. MIME type detection might be less reliable.")
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# === Basic Flask App Setup ===
+#Basic Flask App Setup
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# === Configuration ===
+#Configuration
 app.config['MAX_CONTENT_LENGTH'] = 101 * 1024 * 1024  # ~101MB limit server-side
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']
@@ -40,7 +40,7 @@ app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1
 )
 
-# === Logging ===
+#Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - [%(funcName)s] - %(message)s',
@@ -48,7 +48,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# === Security ===
+#Security
 csrf = CSRFProtect(app)
 limiter = Limiter(
     get_remote_address,
@@ -65,8 +65,7 @@ csp = {
     'img-src': ['\'self\'', 'data:'],
     'form-action': '\'self\''
 }
-# Tạm thời tắt CSP nếu bạn đang gặp vấn đề với nó khi debug local
-# talisman = Talisman(app, content_security_policy=None)
+
 talisman = Talisman(
     app,
     content_security_policy=csp,
@@ -78,7 +77,7 @@ talisman = Talisman(
 )
 
 
-# === Constants ===
+
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg'}
 ALLOWED_IMAGE_EXTENSIONS = {'pdf', 'jpg', 'jpeg'}
@@ -94,7 +93,7 @@ LIBREOFFICE_TIMEOUT = 180
 GS_TIMEOUT = 180
 MIME_BUFFER_SIZE = 4096
 
-# === Helper Functions ===
+
 def make_error_response(error_key, status_code=400):
     logger.warning(f"Returning error: {error_key} (Status: {status_code})")
     response_text = f"Conversion failed: {error_key}"
@@ -102,11 +101,11 @@ def make_error_response(error_key, status_code=400):
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
 
-# --- Logic tìm và xác minh LibreOffice (ĐÃ SỬA ĐỂ KIỂM TRA PATH WINDOWS TRƯỚC) ---
+#Tìm và xác minh LibreOffice
 SOFFICE_PATH = None
 potential_paths_win = []
 
-# Chỉ kiểm tra đường dẫn Windows chuẩn trên Windows
+
 if sys.platform == 'win32':
     common_paths = [
         r'C:\Program Files\LibreOffice\program\soffice.exe',
@@ -114,33 +113,30 @@ if sys.platform == 'win32':
     ]
     potential_paths_win.extend(common_paths)
 
-    # Thử tìm trong các đường dẫn Windows chuẩn trước
+
     for path_to_check in potential_paths_win:
         if os.path.isfile(path_to_check):
             logger.info(f"Found potential LO path by checking known Windows location: {path_to_check}")
-            # TRÊN WINDOWS: Chỉ cần file tồn tại là đủ tin tưởng, bỏ qua version check
             SOFFICE_PATH = path_to_check
             logger.info(f"Assuming valid LO on Windows (path exists) and setting path: {SOFFICE_PATH}")
-            break # Đã tìm thấy, thoát vòng lặp
+            break
 
-    # Nếu chưa tìm thấy ở path chuẩn, thử shutil.which trên Windows
+
     if not SOFFICE_PATH:
         logger.info("Could not find LO in known Windows locations, trying shutil.which('soffice.exe')...")
-        soffice_found_which = shutil.which('soffice.exe') # Ưu tiên tìm .exe trên Windows
+        soffice_found_which = shutil.which('soffice.exe')
         if soffice_found_which:
-             # TRÊN WINDOWS: Chỉ cần which tìm thấy là đủ tin tưởng
              SOFFICE_PATH = soffice_found_which
              logger.info(f"Found LO via shutil.which on Windows. Assuming valid and setting path: {SOFFICE_PATH}")
         else:
              logger.warning("shutil.which('soffice.exe') did not find an executable on Windows.")
 
-# Logic cho các hệ điều hành khác (Linux/Mac - Giữ nguyên version check)
-elif not SOFFICE_PATH: # Dùng elif để chỉ chạy phần này nếu không phải Windows VÀ chưa tìm thấy
+# Logic cho các hệ điều hành khác
+elif not SOFFICE_PATH: #chỉ chạy phần này nếu không phải Windows
     logger.info("Not Windows or LO not found yet, trying shutil.which('libreoffice')...")
     soffice_found_which = shutil.which('libreoffice')
     if soffice_found_which:
         try:
-            # Giữ lại version check cho Non-Windows
             version_cmd = [soffice_found_which, '--headless', '--version'] # Dùng --headless ở đây
             result = subprocess.run(version_cmd, capture_output=True, text=True, check=False, timeout=15)
             if result.returncode == 0 and 'LibreOffice' in result.stdout:
@@ -158,18 +154,15 @@ elif not SOFFICE_PATH: # Dùng elif để chỉ chạy phần này nếu không 
 if SOFFICE_PATH:
     logger.info(f"Successfully set LO path for use: {SOFFICE_PATH}")
 else:
-    # Log lỗi nghiêm trọng nếu không tìm thấy bằng mọi cách
     logger.critical("LibreOffice could NOT be set/verified using any method. Conversions requiring it WILL FAIL.")
-# --- Kết thúc logic LibreOffice đã sửa ---
 
-# --- Logic tìm và xác minh Ghostscript (ĐÃ SỬA ĐỂ KIỂM TRA PATH WINDOWS TRƯỚC) ---
+
 GS_PATH = None
 potential_gs_paths = []
-gs_executable_names = [] # Danh sách các tên file .exe/lệnh có thể có
+gs_executable_names = []
 
-# Ưu tiên kiểm tra đường dẫn Windows chuẩn
+
 if sys.platform == 'win32':
-    # Tìm thư mục gốc GS
     gs_base_dir_pf = r'C:\Program Files\gs'
     gs_base_dir_pf86 = r'C:\Program Files (x86)\gs'
     gs_version_dir_pattern_pf = os.path.join(gs_base_dir_pf, 'gs*')
@@ -181,25 +174,20 @@ if sys.platform == 'win32':
     if not possible_gs_dirs:
         logger.warning(f"Could not find Ghostscript version directory in {gs_base_dir_pf} or {gs_base_dir_pf86}")
     else:
-        # Ưu tiên phiên bản mới nhất nếu có nhiều (sắp xếp theo tên thư mục)
-        possible_gs_dirs.sort(reverse=True) # Sắp xếp giảm dần, hy vọng phiên bản cao hơn ở đầu
+        possible_gs_dirs.sort(reverse=True)
         latest_gs_dir = possible_gs_dirs[0]
         bin_path = os.path.join(latest_gs_dir, 'bin')
         if os.path.isdir(bin_path):
-            # Thêm các đường dẫn đầy đủ tiềm năng
-            potential_gs_paths.append(os.path.join(bin_path, 'gswin64c.exe')) # Ưu tiên console 64bit
-            potential_gs_paths.append(os.path.join(bin_path, 'gswin32c.exe')) # Console 32bit
-            potential_gs_paths.append(os.path.join(bin_path, 'gs.exe'))       # Tên gốc
-            # Lưu lại các tên exe để dùng với shutil.which nếu cần
+            potential_gs_paths.append(os.path.join(bin_path, 'gswin64c.exe'))
+            potential_gs_paths.append(os.path.join(bin_path, 'gswin32c.exe'))
+            potential_gs_paths.append(os.path.join(bin_path, 'gs.exe'))
             gs_executable_names.extend(['gswin64c.exe', 'gswin32c.exe', 'gs.exe', 'gs'])
             logger.info(f"Checking for Ghostscript in potential directory: {bin_path}")
         else:
             logger.warning(f"Ghostscript bin directory not found in {latest_gs_dir}")
-# Đặt tên mặc định cho Linux/Mac
 if not gs_executable_names:
     gs_executable_names.append('gs')
 
-# Thử tìm trong các đường dẫn tiềm năng trước (Windows)
 for path_to_check in potential_gs_paths:
     if os.path.isfile(path_to_check):
         logger.info(f"Found potential GS path by checking known location: {path_to_check}")
@@ -208,14 +196,13 @@ for path_to_check in potential_gs_paths:
             if result.returncode == 0 and '.' in result.stdout.strip():
                 logger.info(f"Verified GS path by checking known location: {path_to_check} (Version: {result.stdout.strip()})")
                 GS_PATH = path_to_check
-                break # Đã tìm thấy và xác minh
+                break
             else:
                 logger.warning(f"Known GS path {path_to_check} exists, but version check failed! Code: {result.returncode}, Output: {result.stdout.strip()}")
         except Exception as e:
             logger.warning(f"Error verifying known GS path {path_to_check}: {e}")
-    if GS_PATH: break # Thoát sớm nếu đã tìm thấy
+    if GS_PATH: break
 
-# Nếu vẫn chưa tìm thấy, thử dùng shutil.which với các tên khả thi
 if not GS_PATH:
      logger.info(f"Could not verify GS in known locations, trying shutil.which with {gs_executable_names}...")
      for gs_name in gs_executable_names:
@@ -226,12 +213,11 @@ if not GS_PATH:
                  if result.returncode == 0 and '.' in result.stdout.strip():
                      logger.info(f"Using GS path found via shutil.which('{gs_name}'): {gs_found_which} (Version: {result.stdout.strip()})")
                      GS_PATH = gs_found_which
-                     break # Tìm thấy qua which
+                     break
                  else:
                       logger.warning(f"Found GS path {gs_found_which} via which('{gs_name}'), but version check failed! Code: {result.returncode}, Output: {result.stdout.strip()}")
              except Exception as e:
                   logger.warning(f"Error verifying GS path via which('{gs_name}') {gs_found_which}: {e}")
-         # else: logger.debug(f"shutil.which('{gs_name}') did not find an executable.")
      if not GS_PATH: logger.warning(f"shutil.which failed for all potential names: {gs_executable_names}")
 
 
@@ -240,14 +226,12 @@ if not GS_PATH:
     logger.critical("Ghostscript could NOT be found or verified. PDF Compression WILL FAIL.")
 else:
     logger.info(f"Successfully set GS path for use: {GS_PATH}")
-# --- Kết thúc logic Ghostscript đã sửa ---
 
 
 def _allowed_file_extension(filename, allowed_set):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 
 def safe_remove(item_path, retries=3, delay=0.5):
-    # Giữ nguyên hàm này
     if not item_path or not os.path.exists(item_path): return True
     is_dir = os.path.isdir(item_path); item_type = "directory" if is_dir else "file"
     for i in range(retries):
@@ -259,18 +243,13 @@ def safe_remove(item_path, retries=3, delay=0.5):
     logger.error(f"Failed to remove {item_type} after {retries} attempts: {item_path}"); return False
 
 def get_actual_mime_type(file_storage):
-    # Giữ nguyên hàm này, nhưng thêm kiểm tra magic đã import thành công chưa
     if not magic:
         logger.warning("python-magic not available, skipping MIME type validation.")
-        # Có thể trả về None hoặc một giá trị giả định nếu cần
-        # Hoặc dựa vào phần mở rộng file như một phương án dự phòng yếu hơn
         filename = file_storage.filename
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-        # Giả định dựa trên phần mở rộng - KHÔNG AN TOÀN BẰNG MAGIC
         if ext == 'pdf': return 'application/pdf'
         if ext == 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        # ... thêm các giả định khác nếu muốn, nhưng không khuyến khích
-        return None # Hoặc raise lỗi
+        return None
 
     mime_type = None
     try:
@@ -284,10 +263,6 @@ def get_actual_mime_type(file_storage):
     except Exception as e: logger.error(f"Unexpected error during MIME detection for {file_storage.filename}: {e}")
     return mime_type
 
-# --- Other Helper Functions ---
-# Giữ nguyên các hàm: get_pdf_page_size, setup_slide_size, sort_key_for_pptx_images,
-# _convert_pdf_to_pptx_images, convert_pdf_to_pptx_python, convert_images_to_pdf,
-# convert_pdf_to_image_zip, compress_pdf_ghostscript
 
 def get_pdf_page_size(pdf_path):
     width, height = None, None
@@ -296,7 +271,6 @@ def get_pdf_page_size(pdf_path):
             reader = PyPDF2.PdfReader(f);
             if reader.is_encrypted:
                 try:
-                    # Thử mật khẩu rỗng trước
                     decrypt_result = reader.decrypt('')
                     # Kiểm tra kết quả trả về (có thể khác nhau giữa các phiên bản)
                     if isinstance(decrypt_result, PyPDF2.PasswordType) and decrypt_result == PyPDF2.PasswordType.UNKNOWN_PASSWORD:
@@ -337,22 +311,20 @@ def setup_slide_size(prs, pdf_path):
         pdf_width_pt, pdf_height_pt = get_pdf_page_size(pdf_path)
         if pdf_width_pt is None or pdf_height_pt is None: # Kiểm tra cả hai
             logger.warning("Could not get PDF page size for slide setup. Falling back.")
-            prs.slide_width, prs.slide_height = Inches(10), Inches(7.5) # Default 4:3
+            prs.slide_width, prs.slide_height = Inches(10), Inches(7.5)
         else:
-            pdf_width_in, pdf_height_in = pdf_width_pt / 72.0, pdf_height_pt / 72.0; max_dim = 56.0 # Max PPTX slide dim in inches
-            # Scale down if too large, preserving aspect ratio
+            pdf_width_in, pdf_height_in = pdf_width_pt / 72.0, pdf_height_pt / 72.0; max_dim = 56.0
             if pdf_width_in > max_dim or pdf_height_in > max_dim:
                 ratio = pdf_width_in / pdf_height_in if pdf_height_in > 0 else 1
                 if pdf_width_in >= pdf_height_in:
                     final_width = max_dim
-                    final_height = max_dim / ratio if ratio != 0 else max_dim # Avoid division by zero
+                    final_height = max_dim / ratio if ratio != 0 else max_dim
                 else:
                     final_height = max_dim
                     final_width = max_dim * ratio
                 logger.info(f"PDF dims ({pdf_width_in:.2f}x{pdf_height_in:.2f}) too large, scaled to {final_width:.2f}x{final_height:.2f}")
             else:
                 final_width, final_height = pdf_width_in, pdf_height_in
-            # Ensure dimensions are positive
             if final_width <= 0 or final_height <= 0:
                  logger.warning(f"Calculated non-positive slide dimensions ({final_width}x{final_height}). Falling back.")
                  prs.slide_width, prs.slide_height = Inches(10), Inches(7.5)
@@ -361,7 +333,6 @@ def setup_slide_size(prs, pdf_path):
                  logger.info(f"Set slide size from PDF: {final_width:.2f}in x {final_height:.2f}in")
 
     except ValueError as ve:
-         # Nếu get_pdf_page_size báo lỗi cụ thể, log và fallback
          logger.warning(f"Error getting PDF page size ({ve}). Falling back on slide setup.")
          prs.slide_width, prs.slide_height = Inches(10), Inches(7.5)
     except Exception as e:
@@ -370,27 +341,23 @@ def setup_slide_size(prs, pdf_path):
     return prs
 
 def sort_key_for_pptx_images(filename):
-    # Giữ nguyên
     try: return int(os.path.splitext(filename)[0].split('-')[-1].split('_')[-1])
     except (ValueError, IndexError): return 0
 
 def _convert_pdf_to_pptx_images(input_path, output_path):
-    # Giữ nguyên logic cốt lõi, chỉ đảm bảo lỗi được raise rõ ràng
     temp_dir = None
     success = False
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdfimg_")
         page_count = 0 # Khởi tạo
         try:
-            # Cố gắng lấy page count và kiểm tra mã hóa
             page_count_info = pdfinfo_from_path(input_path, poppler_path=None)
             page_count = page_count_info.get('Pages')
-            # Nếu poppler không lấy được page count, thử với PyPDF2 như một backup
             if page_count is None:
                 logger.warning("pdfinfo failed to get page count, trying PyPDF2...")
                 try:
                     with open(input_path, 'rb') as f:
-                         reader = PyPDF2.PdfReader(f, strict=False) # strict=False có thể bỏ qua lỗi nhỏ
+                         reader = PyPDF2.PdfReader(f, strict=False)
                          if reader.is_encrypted:
                              # Thử decrypt rỗng, nếu lỗi -> protected
                              try:
@@ -427,13 +394,12 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
                       logger.warning(f"Unexpected error checking encrypted PDF: {e_enc}")
                       raise # Raise lỗi đó lên
 
-        # Xử lý các lỗi cụ thể từ pdfinfo/PyPDF2
         except PDFInfoNotInstalledError as e: raise ValueError("err-poppler-missing") from e
         except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
-        except ValueError as ve: # Bắt lỗi err-pdf-protected từ các block try bên trong
+        except ValueError as ve:
              if "err-pdf-protected" in str(ve): raise ve
-             else: raise # Raise lỗi ValueError khác nếu có
-        except Exception as info_err: # Lỗi không mong muốn khác khi lấy info
+             else: raise
+        except Exception as info_err:
              logger.error(f"Unexpected error getting PDF info for PPTX conversion: {info_err}", exc_info=True)
              raise RuntimeError("err-conversion") from info_err
 
@@ -444,24 +410,20 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
              success = True
         else:
             logger.info(f"Converting {page_count} PDF pages to images for PPTX...")
-            # Sử dụng thread_count = 1 có thể ổn định hơn trên một số hệ thống
             images = convert_from_path(input_path, dpi=300, fmt='jpeg', output_folder=temp_dir, thread_count=1, poppler_path=None, strict=False)
             if not images:
-                 # Kiểm tra lại page_count phòng trường hợp convert_from_path lỗi âm thầm
                  if page_count > 0:
                      logger.error("convert_from_path returned no images despite page count > 0.")
                      raise RuntimeError("err-conversion-img")
-                 else: # Trường hợp hy hữu page_count=0 nhưng images=None
+                 else:
                       logger.warning("No images generated for 0-page PDF.")
                       Presentation().save(output_path)
                       success = True
 
-            if images: # Chỉ xử lý nếu có images trả về
+            if images:
                 prs = Presentation()
-                prs = setup_slide_size(prs, input_path) # Thiết lập kích thước slide
-                blank_layout = prs.slide_layouts[6] # Layout trống
-
-                # Sắp xếp ảnh đã tạo (pdf2image thường tạo tên file có dạng ...-01.jpg, ...)
+                prs = setup_slide_size(prs, input_path)
+                blank_layout = prs.slide_layouts[6]
                 gen_imgs = sorted([f for f in os.listdir(temp_dir) if f.lower().endswith(('.jpg', '.jpeg'))], key=sort_key_for_pptx_images)
 
                 if not gen_imgs:
@@ -525,23 +487,20 @@ def _convert_pdf_to_pptx_images(input_path, output_path):
     return success
 
 def convert_pdf_to_pptx_python(input_path, output_path):
-    # Giữ nguyên
     logger.info("Attempting PDF -> PPTX via Python (image-based)...")
     return _convert_pdf_to_pptx_images(input_path, output_path)
 
 def convert_images_to_pdf(image_paths, output_path):
-    # Giữ nguyên hàm này
     image_objects = []
     success = False
     try:
-        sorted_paths = image_paths # Giả sử đã được sắp xếp trước nếu cần
+        sorted_paths = image_paths
         for file_path in sorted_paths:
             filename = os.path.basename(file_path)
             try:
                 with Image.open(file_path) as img:
-                    img.load() # Load image data while file is open
+                    img.load()
                     converted_img = None
-                    # Handle transparency for common modes
                     if img.mode == 'RGBA':
                         logger.debug(f"Converting RGBA image {filename} to RGB with white background.")
                         bg = Image.new('RGB', img.size, (255, 255, 255))
@@ -613,14 +572,12 @@ def convert_images_to_pdf(image_paths, output_path):
     return success
 
 def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
-    # Giữ nguyên hàm này
     temp_dir = None; fmt = img_format.lower(); ext = 'jpg' if fmt in ['jpeg', 'jpg'] else fmt
     success = False
     try:
         temp_dir = tempfile.mkdtemp(prefix="pdf2imgzip_")
         page_count = 0 # Khởi tạo
         try:
-             # Cố gắng lấy page count và kiểm tra mã hóa
              page_count_info = pdfinfo_from_path(input_path, poppler_path=None)
              page_count = page_count_info.get('Pages')
              if page_count is None:
@@ -654,7 +611,7 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
 
         except (PDFInfoNotInstalledError, FileNotFoundError) as e: raise ValueError("err-poppler-missing") from e
         except (PDFPageCountError, PDFSyntaxError) as e: raise ValueError("err-pdf-corrupt") from e
-        except ValueError as ve: # Bắt lỗi err-pdf-protected
+        except ValueError as ve:
              if "err-pdf-protected" in str(ve): raise ve
              else: raise
         except Exception as info_err: logger.error(f"pdfinfo error for zip conversion: {info_err}"); raise ValueError("err-poppler-check-failed") from info_err
@@ -664,7 +621,6 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
             with zipfile.ZipFile(output_zip_path, 'w') as zf: pass
             success = True
         else:
-            # Tạo base name an toàn hơn
             input_basename = os.path.splitext(os.path.basename(input_path))[0]
             safe_base = secure_filename(f"page_{input_basename}")[:100] # Giới hạn độ dài
 
@@ -677,14 +633,12 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
                      success = True
             else:
                 def sort_key_pdf2image(f):
-                    # Cải thiện key sort để xử lý tên file phức tạp hơn
                     try:
-                        # Tìm số cuối cùng trong tên file (sau dấu gạch ngang hoặc gạch dưới)
                         parts = os.path.splitext(f)[0].replace('-', '_').split('_')
                         for part in reversed(parts):
                             if part.isdigit():
                                 return int(part)
-                        return 0 # Không tìm thấy số
+                        return 0
                     except (ValueError, IndexError):
                         logger.warning(f"Cannot get page number from '{f}' for sorting")
                         return 0
@@ -716,7 +670,6 @@ def convert_pdf_to_image_zip(input_path, output_zip_path, img_format='jpeg'):
     return success
 
 def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
-    # Giữ nguyên hàm này
     if not GS_PATH: logger.error("GS_PATH not set."); raise RuntimeError("err-gs-missing")
     success = False
     # Thêm check file input tồn tại
@@ -730,9 +683,9 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
     gs_input_cmd = [input_path]
     cmd = []; log_quality_info = ""
 
-    # Chọn cài đặt chất lượng
+    # Chọn chất lượng
     if quality_level == 'low':
-        ppi = 120 # Hoặc 72 tùy mức độ nén mong muốn
+        ppi = 120
         specific_settings = [
             '-dDownsampleColorImages=true', '-dDownsampleGrayImages=true', '-dDownsampleMonoImages=true',
             f'-dColorImageResolution={ppi}', f'-dGrayImageResolution={ppi}', f'-dMonoImageResolution={ppi}',
@@ -740,7 +693,6 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
             '-dEmbedAllFonts=true', # Giữ lại để tương thích tốt hơn
             '-dSubsetFonts=true',
             '-dAutoRotatePages=/None' # Tránh xoay trang không mong muốn
-            #'-dDetectDuplicateImages=true' # Có thể thêm để giảm size nếu có ảnh trùng lặp
         ]
         cmd = gs_base_cmd + specific_settings + gs_output_cmd + gs_input_cmd
         log_quality_info = f"Quality: low (Target PPI: {ppi})"
@@ -756,19 +708,15 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
 
     logger.info(f"Running Ghostscript ({log_quality_info}): {' '.join(cmd)}")
     try:
-        # Chạy subprocess
         result = subprocess.run(cmd, check=True, timeout=GS_TIMEOUT, capture_output=True, text=True, encoding='utf-8', errors='ignore')
         if result.stdout: logger.info(f"Ghostscript stdout:\n{result.stdout}")
-        if result.stderr: logger.info(f"Ghostscript stderr:\n{result.stderr}") # GS thường ghi thông tin vào stderr
+        if result.stderr: logger.info(f"Ghostscript stderr:\n{result.stderr}")
 
-        # Kiểm tra file output
         if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
             original_size = os.path.getsize(input_path)
             compressed_size = os.path.getsize(output_path)
-            # Cảnh báo nếu file output không nhỏ hơn đáng kể hoặc lớn hơn file gốc
             if compressed_size >= original_size * 0.98 :
                  logger.warning(f"GS produced minimal size reduction or file increase. Original: {original_size}, Compressed: {compressed_size}. This might happen with already optimized PDFs.")
-                 # Quyết định xem có coi đây là thành công hay không. Thường thì vẫn là thành công.
             logger.info(f"GS compression successful: {output_path} (Size: {compressed_size} bytes)")
             success = True
         else:
@@ -777,7 +725,7 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
 
     except subprocess.TimeoutExpired:
         logger.error(f"Ghostscript command timed out ({GS_TIMEOUT}s) for {input_path}.")
-        safe_remove(output_path) # Xóa file output nếu có (thường là rỗng hoặc chưa hoàn thành)
+        safe_remove(output_path) # Xóa file output nếu có
         raise RuntimeError("err-gs-timeout")
     except subprocess.CalledProcessError as gs_err:
         logger.error(f"Ghostscript command failed for {input_path}. Return Code: {gs_err.returncode}")
@@ -808,13 +756,11 @@ def compress_pdf_ghostscript(input_path, output_path, quality_level='medium'):
     except Exception as gs_run_err:
         logger.error(f"Unexpected error running Ghostscript: {gs_run_err}", exc_info=True)
         safe_remove(output_path)
-        raise RuntimeError("err-gs-failed") # Lỗi chung khi chạy GS
+        raise RuntimeError("err-gs-failed")
 
     return success
 
 
-# === Global Error Handlers ===
-# Giữ nguyên
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e): logger.warning(f"CSRF failed: {e.description}"); return make_error_response("err-csrf-invalid", 400)
 @app.errorhandler(RequestEntityTooLarge)
@@ -826,25 +772,16 @@ def handle_generic_exception(e):
      from werkzeug.exceptions import HTTPException
      # Nếu là lỗi HTTP đã biết (như 404, 405), để Flask xử lý mặc định hoặc trả về e
      if isinstance(e, HTTPException):
-         # Log lỗi cụ thể nếu muốn
          logger.warning(f"Caught HTTPException: {e.code} - {e.name} - {e.description}")
-         # Có thể tùy chỉnh response ở đây nếu muốn, hoặc return e để dùng handler mặc định
-         # return make_error_response(f"err-http-{e.code}", e.code)
          return e # Trả về đối tượng lỗi HTTP để Flask xử lý tiếp
-     # Nếu là lỗi không mong muốn khác
+     # Nếu là lỗi khác
      logger.error(f"Unhandled Exception: {e}", exc_info=True)
      return make_error_response("err-unknown", 500)
 
 
-# === Routes ===
-
-# Giữ nguyên các route: /api/translations, /, /convert, /convert_image, /compress_pdf, /compress_docx
-# Các thay đổi chính đã được thực hiện trong logic tìm kiếm LO/GS ở đầu file.
-# Logic bên trong các route này sử dụng các biến SOFFICE_PATH và GS_PATH đã được xác định.
 
 @app.route('/api/translations')
 def get_translations():
-    # Giữ nguyên
     translations = {
         'en': {
             'lang-title': 'PDF & Office Tools', 'lang-subtitle': 'Simple, powerful tools for your documents',
@@ -954,10 +891,8 @@ def get_translations():
 
 @app.route('/')
 def index():
-    # Giữ nguyên
     try:
         translations_url = url_for('get_translations', _external=False)
-        # Các biến này giờ sẽ phản ánh kết quả tìm kiếm mới
         gs_available = GS_PATH is not None
         soffice_available = SOFFICE_PATH is not None
         return render_template('index.html',
@@ -971,8 +906,6 @@ def index():
 @app.route('/convert', methods=['POST'])
 @limiter.limit("10 per minute")
 def convert_file():
-    # Giữ nguyên logic route này
-    # Nó sẽ tự động sử dụng SOFFICE_PATH đã được xác định ở đầu file
     output_path = temp_libreoffice_output = input_path_for_process = None
     saved_input_paths = []; actual_conversion_type = None; start_time = time.time()
     error_key = "err-conversion"; conversion_success = False
@@ -1033,26 +966,24 @@ def convert_file():
                 try:
                     logger.info(f"Starting pdf2docx for {input_path_for_process}")
                     cv = Converter(input_path_for_process)
-                    cv.convert(output_path) # No start/end arguments needed in basic usage
-                    cv.close() # Quan trọng: đóng file sau khi convert
-                    # Kiểm tra file output tồn tại và có size > 0
+                    cv.convert(output_path)
+                    cv.close()
                     if os.path.isfile(output_path) and os.path.getsize(output_path) > 0:
                         conversion_success = True
                         logger.info(f"pdf2docx successful: {output_path}")
                     else:
                         logger.error(f"pdf2docx ran but output file is missing or empty: {output_path}")
-                        error_key = "err-conversion" # Lỗi chung
-                except (ValueError, RuntimeError, PDFPageCountError, PDFSyntaxError, Exception) as pdf2docx_err: # Bắt nhiều loại lỗi hơn
+                        error_key = "err-conversion"
+                except (ValueError, RuntimeError, PDFPageCountError, PDFSyntaxError, Exception) as pdf2docx_err:
                     err_str = str(pdf2docx_err).lower()
                     if "encrypted" in err_str or "password" in err_str or "decrypt" in err_str or "err-pdf-protected" in err_str: error_key = "err-pdf-protected"
                     elif "corrupt" in err_str or "eof marker" in err_str or "invalid" in err_str or "err-pdf-corrupt" in err_str: error_key = "err-pdf-corrupt"
-                    elif "no pages" in err_str or "err-pdf-no-pages" in err_str: error_key = "err-pdf-no-pages" # Thêm lỗi ko có trang
+                    elif "no pages" in err_str or "err-pdf-no-pages" in err_str: error_key = "err-pdf-no-pages"
                     else: logger.error(f"pdf2docx failed: {pdf2docx_err}", exc_info=True); error_key = "err-conversion"
                 finally:
-                    # Đảm bảo cv được close ngay cả khi có lỗi (nếu nó đã được khởi tạo)
                     if cv:
                          try: cv.close()
-                         except Exception: pass # Bỏ qua lỗi khi close nếu có
+                         except Exception: pass
                 if not conversion_success: raise RuntimeError(error_key)
 
             elif actual_conversion_type in ['docx_to_pdf', 'ppt_to_pdf']:
@@ -1068,7 +999,6 @@ def convert_file():
                         conversion_success = True
                         logger.info(f"LO conversion successful: {output_path}")
                     else:
-                         # Kiểm tra xem có lỗi stderr cụ thể không
                          if result.stderr and "error" in result.stderr.lower():
                               logger.error(f"LO stderr indicates error during conversion: {result.stderr}")
                               error_key = "err-libreoffice"
@@ -1105,7 +1035,6 @@ def convert_file():
                  except Exception as py_ppt_err:
                       error_key = "err-unknown"; logger.error(f"Unexpected Python PDF->PPTX error: {py_ppt_err}", exc_info=True)
 
-                 # Fallback logic giữ nguyên nhưng giờ dựa vào error_key đã được set
                  can_fallback = ( not conversion_success and SOFFICE_PATH and error_key not in ["err-pdf-corrupt", "err-pdf-protected", "err-poppler-missing"] )
                  if can_fallback:
                     logger.info(f"Python PDF->PPTX failed ({error_key}), attempting LO fallback...")
@@ -1207,7 +1136,6 @@ def convert_file():
 @app.route('/convert_image', methods=['POST'])
 @limiter.limit("10 per minute")
 def convert_image_route():
-    # Giữ nguyên logic route này
     output_path = input_path_for_pdf_input = temp_upload_dir = None
     saved_input_paths = []; actual_conversion_type = None; output_filename = None
     start_time = time.time(); error_key = "err-conversion"; conversion_success = False
@@ -1363,8 +1291,6 @@ def convert_image_route():
 @app.route('/compress_pdf', methods=['POST'])
 @limiter.limit("10 per minute")
 def compress_pdf_route():
-    # Giữ nguyên logic route này
-    # Nó sẽ tự động sử dụng GS_PATH đã được xác định ở đầu file
     input_path = output_path = None; saved_input_paths = []
     start_time = time.time(); error_key = "err-gs-failed"; compression_success = False
     response_to_send = None
@@ -1454,8 +1380,6 @@ def compress_pdf_route():
 @app.route('/compress_docx', methods=['POST'])
 @limiter.limit("10 per minute")
 def compress_docx_route():
-    # Giữ nguyên logic route này
-    # Nó sẽ tự động sử dụng SOFFICE_PATH và GS_PATH đã được xác định
     input_path_docx = temp_pdf_uncompressed = temp_pdf_compressed = final_output_docx = None
     saved_input_paths = []; intermediate_files = []
     start_time = time.time(); error_key = "err-conversion"; process_success = False
@@ -1497,7 +1421,7 @@ def compress_docx_route():
         final_output_docx = os.path.join(UPLOAD_FOLDER, f"{final_output_filename_base}.docx")
         final_download_name = f"{final_output_filename_base}.docx"
 
-        # --- Step 1: Convert DOCX to Uncompressed PDF ---
+        #Convert DOCX to Uncompressed PDF
         lo_success = False; lo_direct_output_path = None # Khởi tạo để cleanup
         try:
             cmd_lo = [SOFFICE_PATH, '--headless', '--convert-to', 'pdf', '--outdir', output_dir, input_path_docx]
@@ -1527,7 +1451,7 @@ def compress_docx_route():
         except Exception as lo_run_err: logger.error(f"Unexpected LO error DOCX->PDF: {lo_run_err}", exc_info=True); error_key = "err-libreoffice"; safe_remove(lo_direct_output_path)
         if not lo_success: raise RuntimeError(error_key)
 
-        # --- Step 2: Compress the intermediate PDF ---
+        #Compress the intermediate PDF
         gs_success = False
         if os.path.exists(temp_pdf_uncompressed) and os.path.getsize(temp_pdf_uncompressed) > 0:
             try:
@@ -1540,9 +1464,8 @@ def compress_docx_route():
         else:
              logger.error(f"Intermediate uncompressed PDF '{temp_pdf_uncompressed}' missing/empty after LO step.")
              raise RuntimeError("err-libreoffice") # Lỗi từ bước trước
-        # if not gs_success: raise RuntimeError(error_key) # Không cần nữa vì các exception đã được raise
 
-        # --- Step 3: Convert Compressed PDF back to DOCX ---
+        #Convert Compressed PDF back to DOCX
         pdf2docx_success = False
         if os.path.exists(temp_pdf_compressed) and os.path.getsize(temp_pdf_compressed) > 0:
             cv = None
@@ -1573,7 +1496,7 @@ def compress_docx_route():
              error_key = "err-gs-failed" # Lỗi từ bước trước
         if not pdf2docx_success: raise RuntimeError(error_key)
 
-        # --- Step 4: Handle Success ---
+        #Handle Success
         process_success = True # Đã vượt qua các bước
         if final_output_docx and os.path.exists(final_output_docx) and os.path.getsize(final_output_docx) > 0:
             try:
@@ -1624,7 +1547,6 @@ def compress_docx_route():
 
 @app.teardown_appcontext
 def cleanup_old_files(exception=None):
-    # Giữ nguyên logic dọn dẹp này
     if not os.path.exists(UPLOAD_FOLDER): return
     logger.debug("Running teardown cleanup...")
     try:
@@ -1636,11 +1558,6 @@ def cleanup_old_files(exception=None):
              logger.error(f"Teardown listdir error for {UPLOAD_FOLDER}: {list_err}")
              return
         for item_name in items:
-            # Bỏ qua các thư mục tạm đặc biệt (có thể bạn không dùng nữa)
-            # if item_name and (item_name.startswith("img2pdf_") or item_name.startswith("pdfimg_") or item_name.startswith("pdf2imgzip_")):
-            #      logger.debug(f"Teardown skipping special temp dir/file: {item_name}")
-            #      continue
-            # Chỉ xóa file (không xóa thư mục) trong uploads
             path = os.path.join(UPLOAD_FOLDER, item_name)
             try:
                  if os.path.isfile(path): # Chỉ xóa file
@@ -1676,18 +1593,14 @@ if __name__ == '__main__':
     logger.info(f"Rate Limiting Enabled: Yes (Default limits active)")
 
     port = int(os.environ.get('PORT', 5003))
-    host = os.environ.get('HOST', '0.0.0.0') # Nghe trên tất cả các interface
-    # Kiểm tra biến môi trường FLASK_DEBUG hoặc một biến khác nếu muốn
-    # Sử dụng giá trị từ Run Configuration nếu chạy qua PyCharm
+    host = os.environ.get('HOST', '0.0.0.0')
     run_debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
 
     logger.info(f"Starting server on {host}:{port} - Debug: {run_debug_mode}")
 
     if run_debug_mode:
         logger.warning("Running in Flask DEVELOPMENT mode (Debug=True, Werkzeug server).")
-        # Khi debug=True, app.run() sử dụng server Werkzeug với reloader
-        # Không cần waitress ở đây
-        app.run(host=host, port=port, debug=True, threaded=True) # use_reloader mặc định là True khi debug=True
+        app.run(host=host, port=port, debug=True, threaded=True)
     else:
         logger.info("Running in PRODUCTION mode (Debug=False, Waitress server).")
         try:
@@ -1696,5 +1609,4 @@ if __name__ == '__main__':
         except ImportError:
             logger.critical("Waitress not found! Install waitress for production.")
             logger.warning("FALLING BACK TO FLASK DEVELOPMENT SERVER (Werkzeug) WITHOUT DEBUG.")
-            # Fallback về server dev của Flask nhưng tắt debug nếu waitress không có
             app.run(host=host, port=port, debug=False, threaded=True)
