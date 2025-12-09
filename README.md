@@ -13,6 +13,7 @@ Thay vì copy-paste mù quáng, tôi sử dụng code này để quan sát cách
 1. **Cấu trúc thư mục:** Cách phân chia `static` (chứa CSS/JS), `templates` (chứa HTML) và file xử lý chính `app.py`.
 2. **Quy trình hoạt động:** Cách Backend nhận file và xử lý logic cơ bản.
 3. **Deployment:** Tìm hiểu vai trò của các file cấu hình như `Dockerfile`, `Procfile` và `requirements.txt` khi đưa web lên môi trường Internet (Railway/Contabo).
+4. ....Và nhiều kinh nghiệm khi vận hành một ứng dụng trên website.
 
 ---
 *Dự án này chỉ mang tính chất lưu trữ tài liệu học tập cá nhân, không đại diện cho năng lực coding hiện tại của tôi.*
@@ -35,6 +36,6 @@ Instead of blindly copy-pasting, I use this code to observe how a Python Web pro
 1. **Folder Structure:** Understanding the separation of `static` (CSS/JS), `templates` (HTML), and the main processing file `app.py`.
 2. **Workflow:** How the Backend receives files and processes basic logic.
 3. **Deployment:** Learning the role of configuration files like `Dockerfile`, `Procfile`, and `requirements.txt` when deploying a web app to the Internet (Railway/Contabo).
-
+4. ...And gaining experience in operating a web application.
 ---
 *This project is solely for personal study and archival purposes; it does not represent my current coding abilities.*
